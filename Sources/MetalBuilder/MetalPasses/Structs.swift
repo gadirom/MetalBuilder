@@ -1,0 +1,49 @@
+import MetalKit
+import SwiftUI
+
+public protocol BufferProtocol{
+    var mtlBuffer: MTLBuffer? { get }
+    var offset: Int { get }
+    var index: Int { get }
+    var count: Int { get }
+    
+    func create(device: MTLDevice) throws
+}
+
+struct Buffer<T>: BufferProtocol{
+    func create(device: MTLDevice) throws {
+        try container.create(device: device)
+    }
+    
+    let container: MTLBufferContainer<T>
+    let offset: Int
+    let index: Int
+    
+    var mtlBuffer: MTLBuffer?{
+        container.buffer
+    }
+    var count: Int{
+        container.count
+    }
+}
+struct Texture{
+    let container: MTLTextureContainer
+    let index: Int
+}
+
+protocol BytesProtocol{
+    func encode(encoder: (UnsafeRawPointer, Int, Int)->())
+}
+struct Bytes<T>: BytesProtocol{
+    let binding: Binding<T>
+    let index: Int
+    
+    func encode(encoder: (UnsafeRawPointer, Int, Int)->()){
+        withUnsafeBytes(of: binding.wrappedValue){ pointer in
+            encoder(pointer.baseAddress!,
+                    MemoryLayout<T>.stride,
+                    index)
+        }
+    }
+}
+
