@@ -83,6 +83,9 @@ final class ComputePass: MetalPass{
             }
             computeCommandEncoder.setTexture(texture, index: tex.index)
         }
+        if let index = component.drawableTextureIndex{
+            computeCommandEncoder.setTexture(drawable?.texture, index: index)
+        }
         //Set threads configuration
         try setGrid(drawable)
         //Dispatch
