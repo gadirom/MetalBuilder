@@ -50,7 +50,7 @@ final class ComputePass: MetalPass{
             size = MTLSize(width: buf.count, height: 1, depth: 1)
         }
         let w = computePiplineState.threadExecutionWidth
-        let h = min(size.height, computePiplineState.maxTotalThreadsPerThreadgroup)
+        let h = min(size.height, computePiplineState.maxTotalThreadsPerThreadgroup / w)
         
         threadsPerThreadGroup = MTLSize(width: w, height: h, depth: 1)
         threadGroupsPerGrid = MTLSize(
