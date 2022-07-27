@@ -56,9 +56,9 @@ public final class MetalBuilderRenderer{
                 addTextures(newTexs: [mpsUnaryComponent.inTexture, mpsUnaryComponent.outTexture])
                 passes.append(MPSUnaryPass(mpsUnaryComponent))
             }
-            if let blitComponent = component as? Blit{
-                addTextures(newTexs: [blitComponent.inTexture, blitComponent.outTexture])
-                passes.append(BlitPass(blitComponent))
+            if let blitTextureComponent = component as? BlitTexture{
+                addTextures(newTexs: [blitTextureComponent.inTexture, blitTextureComponent.outTexture])
+                passes.append(BlitTexturePass(blitTextureComponent))
             }
         }
         //setup passes

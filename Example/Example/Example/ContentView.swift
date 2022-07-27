@@ -90,8 +90,6 @@ struct ContentView: View {
                 MPSUnary{ [self] in MPSImageGaussianBlur(device: $0, sigma: blurRadius)}
                     .source(targetTexture)
                     .toDrawable()
-//                Blit()
-//                    .source(targetTexture)
                 
                 //let _ = print("compile")
             }

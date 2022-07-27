@@ -19,16 +19,23 @@ enum MetalBuilderBufferError: Error {
 case bufferNotCreated
 }
 
-public final class MTLBufferContainer<T>{
-    public var buffer: MTLBuffer?
-    public var pointer: UnsafeMutablePointer<T>?
+public class BufferContainer{
+    var buffer: MTLBuffer?
     public let count: Int
+    public var elementSize: Int?
     
     init(count: Int) {
         self.count = count
     }
+}
+
+public final class MTLBufferContainer<T>: BufferContainer{
+    //public var buffer: MTLBuffer?
+    public var pointer: UnsafeMutablePointer<T>?
+    
     func create(device: MTLDevice) throws{
-        let length = MemoryLayout<T>.stride*count
+        elementSize = MemoryLayout<T>.stride
+        let length = elementSize!*count
         buffer = device.makeBuffer(length: length)
         if let buffer = buffer{
             pointer = buffer.contents().bindMemory(to: T.self, capacity: length)
