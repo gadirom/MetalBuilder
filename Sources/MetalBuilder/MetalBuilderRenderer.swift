@@ -60,6 +60,11 @@ public final class MetalBuilderRenderer{
                 addTextures(newTexs: [blitTextureComponent.inTexture, blitTextureComponent.outTexture])
                 passes.append(BlitTexturePass(blitTextureComponent))
             }
+            if let blitBufferComponent = component as? BlitBuffer{
+//                try createBuffers(buffers: [blitBufferComponent.inBuffer!,
+//                                            blitBufferComponent.outBuffer!])
+                passes.append(BlitBufferPass(blitBufferComponent))
+            }
         }
         //setup passes
         for pass in passes{
