@@ -20,6 +20,9 @@ public struct Compute: MetalBuilderComponent{
     
     var kernelArguments: [MetalFunctionArgument] = []
     
+    var bufferIndexCounter = 0
+    var TextureIndexCounter = 0
+    
     public init(_ kernel: String){
         self.kernel = kernel
     }
@@ -42,17 +45,26 @@ public struct Compute: MetalBuilderComponent{
 
 // chaining functions for result builder
 public extension Compute{
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, index: Int)->Compute{
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Compute{
         var c = self
         let buf = Buffer(container: container, offset: offset, index: index)
         c.buffers.append(buf)
         return c
     }
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument)->Compute{
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument)->Compute{
         var c = self
         c.kernelArguments.append(.buffer(argument))
         let buf = Buffer(container: container, offset: offset, index: argument.index)
         c.buffers.append(buf)
+        return c
+    }
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
+                   space: String, type: String?=nil, name: String?=nil) -> Compute{
+        
+        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name, index: bufferIndexCounter)
+
+        var c = self.buffer(container, offset: offset, argument: argument)
+        c.bufferIndexCounter += 1
         return c
     }
     func bytes<T>(_ binding: Binding<T>, index: Int)->Compute{
@@ -84,6 +96,12 @@ public extension Compute{
     func drawableTexture(index: Int)->Compute{
         var c = self
         c.drawableTextureIndex = index
+        return c
+    }
+    func drawableTexture(argument: MetalTextureArgument)->Compute{
+        var c = self
+        c.kernelArguments.append(.texture(argument))
+        c.drawableTextureIndex = argument.index
         return c
     }
     func grid(size: Binding<MTLSize>)->Compute{

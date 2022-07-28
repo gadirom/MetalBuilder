@@ -50,8 +50,12 @@ struct ContentView: View {
     @MetalState var dilateSize = 3
     @MetalState var laplacianBias: Float = 0.5
     
-    @MetalBuffer<Particle>(count: particleCount) var particlesBuffer
-    @MetalBuffer<Vertex>(count: particleCount*3) var vertexBuffer
+    @MetalBuffer<Particle>(count: particleCount,
+                           metalType: "Particle",
+                           metalName: "particles") var particlesBuffer
+    @MetalBuffer<Vertex>(count: particleCount*3,
+                         metalType: "Vertex",
+                         metalName: "vertices") var vertexBuffer
     
     @MetalState var vertexCount = 3 * particleCount
     @MetalState var particleScale: Float = 1
@@ -64,14 +68,8 @@ struct ContentView: View {
         VStack{
             MetalBuilderView(librarySource: metalFunctions, isDrawing: $isDrawing){ viewportSize in
                 Compute("particleFunction")
-                    .buffer(particlesBuffer, offset: 0,
-                            argument: .init(space: "device", type: "Particle",
-                                            name: "particles",
-                                            index: 0))
-                    .buffer(vertexBuffer, offset: 0,
-                            argument: .init(space: "device", type: "Vertex",
-                                            name: "vertices",
-                                            index: 1))
+                    .buffer(particlesBuffer, offset: 0, space: "device")
+                    .buffer(vertexBuffer, offset: 0, space: "device")
                     .bytes(viewportSize,
                            argument: .init(space: "constant", type: "uint2",
                                            name: "viewport", index: 2))
@@ -82,9 +80,7 @@ struct ContentView: View {
                     //.grid(size: $mSize)
                 Render(vertex: "vertexShader", fragment: "fragmentShader")
                     .toTexture(targetTexture)
-                    .vertexBuf(vertexBuffer, offset: 0,
-                               argument: .init(space: "constant", type: "Vertex",
-                                               name: "vertices", index: 0))
+                    .vertexBuf(vertexBuffer, offset: 0)
                     .vertexBytes(viewportSize,
                            argument: .init(space: "constant", type: "uint2",
                                            name: "viewport", index: 2))
@@ -94,6 +90,7 @@ struct ContentView: View {
                     l.bias = laplacianBias
                     l.encode(commandBuffer: commandBuffer, inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
                 }
+                //Seems that Laplacian can't be modified through superclass init!
 //                MPSUnary{MPSImageLaplacian(device: $0)}
 //                    .source(targetTexture)
 //                    .value($laplacianBias, for: "bias")

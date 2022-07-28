@@ -7,3 +7,7 @@ public enum MetalResultBuilder{
 }
 
 public typealias MetalBuilderResult = [MetalBuilderComponent]
+
+enum MetalBuilderResultBuilderError: Error {
+case bufferArgumentError(String), textureArgumentError(String)
+}

@@ -61,6 +61,37 @@ public struct MetalBufferArgument{
         self.name = name
         self.index = index
     }
+    public init<T>(_ container: MTLBufferContainer<T>,
+                    space: String, type: String?=nil, name: String?=nil, index: Int) throws{
+        
+        var t: String?
+        if let type = container.metalType{
+            t = type
+        }
+        if let type = type{
+            t = type
+        }
+        guard let type = t
+        else {
+            throw MetalBuilderResultBuilderError
+                .bufferArgumentError("No Metal type for buffer!")
+        }
+        
+        var n: String?
+        if let name = container.metalName{
+            n = name
+        }
+        if let name = name{
+            n = name
+        }
+        guard let name = n
+        else {
+            throw MetalBuilderResultBuilderError
+                .bufferArgumentError("No Metal name for buffer!")
+        }
+
+        self.init(space: space, type: type, name: name, index: index)
+    }
 }
 
 public struct MetalBytesArgument{

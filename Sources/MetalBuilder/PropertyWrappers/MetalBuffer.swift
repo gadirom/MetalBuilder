@@ -2,6 +2,9 @@
 import SwiftUI
 import MetalKit
 
+/// Declares an MTLBufferContainer state
+///
+/// metalType and metalName - supposed type and name for the buffer in MSL code
 @propertyWrapper
 public final class MetalBuffer<T>{
     public var wrappedValue: MTLBufferContainer<T>
@@ -10,8 +13,8 @@ public final class MetalBuffer<T>{
         self.wrappedValue = wrappedValue
     }
     
-    public init(count: Int){
-        self.wrappedValue = MTLBufferContainer<T>(count: count)
+    public init(count: Int, metalType: String? = nil, metalName: String? = nil){
+        self.wrappedValue = MTLBufferContainer<T>(count: count, metalType: metalType, metalName: metalName)
     }
 }
 
@@ -20,17 +23,28 @@ case bufferNotCreated
 }
 
 public class BufferContainer{
+    
     var buffer: MTLBuffer?
+    
     public let count: Int
     public var elementSize: Int?
     
-    init(count: Int) {
+    public var metalType: String?
+    public var metalName: String?
+    
+    init(count: Int, metalType: String? = nil, metalName: String? = nil) {
         self.count = count
+        
+        self.metalType = metalType
+        self.metalName = metalName
     }
 }
 
+/// Container class for MTLBuffer
+///
+/// You can access it's content on CPU through 'pointer'
 public final class MTLBufferContainer<T>: BufferContainer{
-    //public var buffer: MTLBuffer?
+
     public var pointer: UnsafeMutablePointer<T>?
     
     func create(device: MTLDevice) throws{

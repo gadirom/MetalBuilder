@@ -62,6 +62,9 @@ public struct Render: MetalBuilderComponent{
     
     var vertexArguments: [MetalFunctionArgument] = []
     var fragmentArguments: [MetalFunctionArgument] = []
+    
+    var vertexBufferCounter = 0
+    var fragmentBufferCounter = 0
     public init(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle, start: Int = 0, count: Int = 3){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -83,17 +86,26 @@ public extension Render{
         r.vertexCount = count
         return r
     }
-    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, index: Int)->Render{
+    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Render{
         var r = self
         let buf = Buffer(container: container, offset: offset, index: index)
         r.vertexBufs.append(buf)
         return r
     }
-    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument)->Render{
+    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument)->Render{
         var r = self
         r.vertexArguments.append(MetalFunctionArgument.buffer(argument))
         let buf = Buffer(container: container, offset: offset, index: argument.index)
         r.vertexBufs.append(buf)
+        return r
+    }
+    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
+                   space: String = "constant", type: String?=nil, name: String?=nil) -> Render{
+        
+        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name, index: vertexBufferCounter)
+
+        var r = self.vertexBuf(container, offset: offset, argument: argument)
+        r.vertexBufferCounter += 1
         return r
     }
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, index: Int)->Render{
@@ -107,6 +119,15 @@ public extension Render{
         r.fragmentArguments.append(.buffer(argument))
         let buf = Buffer(container: container, offset: offset, index: argument.index)
         r.fragBufs.append(buf)
+        return r
+    }
+    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
+                   space: String, type: String?=nil, name: String?=nil) -> Render{
+        
+        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name, index: fragmentBufferCounter)
+
+        var r = self.fragBuf(container, offset: offset, argument: argument)
+        r.fragmentBufferCounter += 1
         return r
     }
     func vertexBytes<T>(_ binding: Binding<T>, index: Int)->Render{
