@@ -64,17 +64,30 @@ struct ContentView: View {
         VStack{
             MetalBuilderView(librarySource: metalFunctions, isDrawing: $isDrawing){ viewportSize in
                 Compute("particleFunction")
-                    .buffer(particlesBuffer, offset: 0, index: 0)
-                    .buffer(vertexBuffer, offset: 0, index: 1)
-                    .bytes(viewportSize, index: 2)
-                    .bytes($particleScale, index: 3)
+                    .buffer(particlesBuffer, offset: 0,
+                            argument: .init(space: "device", type: "Particle",
+                                            name: "particles",
+                                            index: 0))
+                    .buffer(vertexBuffer, offset: 0,
+                            argument: .init(space: "device", type: "Vertex",
+                                            name: "vertices",
+                                            index: 1))
+                    .bytes(viewportSize,
+                           argument: .init(space: "constant", type: "uint2",
+                                           name: "viewport", index: 2))
+                    .bytes($particleScale,
+                           argument: .init(space: "constant", type: "float",
+                                           name: "scale", index: 3))
                     .threadsFromBuffer(0)
                     //.grid(size: $mSize)
                 Render(vertex: "vertexShader", fragment: "fragmentShader")
                     .toTexture(targetTexture)
-                    //.viewport($viewport)
-                    .vertexBuf(vertexBuffer, offset: 0, index: 0)
-                    .vertexBytes(viewportSize, index: 1)
+                    .vertexBuf(vertexBuffer, offset: 0,
+                               argument: .init(space: "constant", type: "Vertex",
+                                               name: "vertices", index: 0))
+                    .vertexBytes(viewportSize,
+                           argument: .init(space: "constant", type: "uint2",
+                                           name: "viewport", index: 2))
                     .primitives(count: vertexCount)
                 CPUCode{ [self] device, commandBuffer, drawable in
                     let l = MPSImageLaplacian(device: device)

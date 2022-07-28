@@ -60,6 +60,8 @@ public struct Render: MetalBuilderComponent{
     
     var colorAttachments: [Int: ColorAttachment] = defaultColorAttachments
     
+    var vertexArguments: [MetalFunctionArgument] = []
+    var fragmentArguments: [MetalFunctionArgument] = []
     public init(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle, start: Int = 0, count: Int = 3){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -87,9 +89,23 @@ public extension Render{
         r.vertexBufs.append(buf)
         return r
     }
+    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument)->Render{
+        var r = self
+        r.vertexArguments.append(MetalFunctionArgument.buffer(argument))
+        let buf = Buffer(container: container, offset: offset, index: argument.index)
+        r.vertexBufs.append(buf)
+        return r
+    }
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, index: Int)->Render{
         var r = self
         let buf = Buffer(container: container, offset: offset, index: index)
+        r.fragBufs.append(buf)
+        return r
+    }
+    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument)->Render{
+        var r = self
+        r.fragmentArguments.append(.buffer(argument))
+        let buf = Buffer(container: container, offset: offset, index: argument.index)
         r.fragBufs.append(buf)
         return r
     }
@@ -99,9 +115,23 @@ public extension Render{
         r.vertexBytes.append(bytes)
         return r
     }
+    func vertexBytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument)->Render{
+        var r = self
+        r.vertexArguments.append(.bytes(argument))
+        let bytes = Bytes(binding: binding, index: argument.index)
+        r.vertexBytes.append(bytes)
+        return r
+    }
     func fragBytes<T>(_ binding: Binding<T>, index: Int)->Render{
         var r = self
         let bytes = Bytes(binding: binding, index: index)
+        r.fragBytes.append(bytes)
+        return r
+    }
+    func fragBytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument)->Render{
+        var r = self
+        r.fragmentArguments.append(.bytes(argument))
+        let bytes = Bytes(binding: binding, index: argument.index)
         r.fragBytes.append(bytes)
         return r
     }
@@ -111,9 +141,23 @@ public extension Render{
         r.vertexTextures.append(tex)
         return r
     }
+    func vertexTexture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Render{
+        var r = self
+        r.vertexArguments.append(.texture(argument))
+        let tex = Texture(container: container, index: argument.index)
+        r.vertexTextures.append(tex)
+        return r
+    }
     func fragTexture(_ container: MTLTextureContainer, index: Int)->Render{
         var r = self
         let tex = Texture(container: container, index: index)
+        r.fragTextures.append(tex)
+        return r
+    }
+    func fragTexture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Render{
+        var r = self
+        r.fragmentArguments.append(.texture(argument))
+        let tex = Texture(container: container, index: argument.index)
         r.fragTextures.append(tex)
         return r
     }

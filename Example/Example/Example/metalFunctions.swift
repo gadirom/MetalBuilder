@@ -14,29 +14,24 @@ struct Particle{
      float angvelo;
 };
 
-struct Vertex
-{
+struct Vertex{
     vector_float2 position;
     vector_float4 color;
 };
 
 // Vertex shader outputs and fragment shader inputs
-struct RasterizerData
-{
+struct RasterizerData{
     float4 position [[position]];
     float4 color; //[[flat]];   // - use this flag to disable color interpolation
 };
 
 vertex RasterizerData
-vertexShader(uint vertexID [[vertex_id]],
-             constant Vertex *vertices [[buffer(0)]],
-             constant vector_uint2 *viewportSizePointer [[buffer(1)]])
-{
+vertexShader(uint vertexID [[vertex_id]]){
     RasterizerData out;
 
     float2 pixelSpacePosition = vertices[vertexID].position.xy;
 
-    vector_float2 viewportSize = vector_float2(*viewportSizePointer);
+    float2 viewportSize = float2(viewport);
     
     out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
     out.position.xy = pixelSpacePosition / (viewportSize / 2.0);
@@ -47,17 +42,12 @@ vertexShader(uint vertexID [[vertex_id]],
     return out;
 }
 
-fragment float4 fragmentShader(RasterizerData in [[stage_in]])
-{
+fragment float4 fragmentShader(RasterizerData in [[stage_in]]){
     // Return the interpolated color.
     return in.color;
 }
 
-kernel void particleFunction(device Particle *particles [[ buffer(0) ]],
-                           device Vertex *vertices [[buffer(1)]],
-                constant vector_uint2 *viewportSizePointer [[buffer(2)]],
-                constant float &scale [[buffer(3)]],
-                           uint id [[ thread_position_in_grid ]]){
+kernel void particleFunction(uint id [[ thread_position_in_grid ]]){
 
 Particle particle = particles[id];
 float size = particle.size*scale;
@@ -84,7 +74,7 @@ vertices[j].position = position + float2(size*sinA, size*cosA);
 vertices[j+1].position = position + float2(size*sinA23, size*cosA23);
 vertices[j+2].position = position + float2(size*sinA43, size*cosA43);
 
-vector_float2 viewportSize = vector_float2(*viewportSizePointer);
+float2 viewportSize = float2(viewport);
 
 position += particle.velocity;
 particles[id].position = position;

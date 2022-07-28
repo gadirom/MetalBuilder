@@ -18,6 +18,8 @@ public struct Compute: MetalBuilderComponent{
     var drawableTextureIndex: Int?
     var gridFit: GridFit?
     
+    var kernelArguments: [MetalFunctionArgument] = []
+    
     public init(_ kernel: String){
         self.kernel = kernel
     }
@@ -46,15 +48,36 @@ public extension Compute{
         c.buffers.append(buf)
         return c
     }
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument)->Compute{
+        var c = self
+        c.kernelArguments.append(.buffer(argument))
+        let buf = Buffer(container: container, offset: offset, index: argument.index)
+        c.buffers.append(buf)
+        return c
+    }
     func bytes<T>(_ binding: Binding<T>, index: Int)->Compute{
-            var c = self
-            let bytes = Bytes(binding: binding, index: index)
-            c.bytes.append(bytes)
-            return c
+        var c = self
+        let bytes = Bytes(binding: binding, index: index)
+        c.bytes.append(bytes)
+        return c
+    }
+    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument)->Compute{
+        var c = self
+        c.kernelArguments.append(.bytes(argument))
+        let bytes = Bytes(binding: binding, index: argument.index)
+        c.bytes.append(bytes)
+        return c
     }
     func texture(_ container: MTLTextureContainer, index: Int)->Compute{
         var c = self
         let tex = Texture(container: container, index: index)
+        c.textures.append(tex)
+        return c
+    }
+    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Compute{
+        var c = self
+        c.kernelArguments.append(.texture(argument))
+        let tex = Texture(container: container, index: argument.index)
         c.textures.append(tex)
         return c
     }

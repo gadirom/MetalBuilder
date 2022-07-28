@@ -5,13 +5,14 @@ public typealias MetalContent = (Binding<simd_uint2>)->MetalBuilderResult
 
 public final class MetalBuilderRenderer{
     
-    var commandQueue : MTLCommandQueue!
-    var device : MTLDevice!
+    var commandQueue: MTLCommandQueue!
+    var device: MTLDevice!
     
     var passes: [MetalPass] = []
     var textures: [MTLTextureContainer] = []
     
     var pixelFormat: MTLPixelFormat?
+    
     @MetalState var viewportSize: simd_uint2 = [0, 0]
     
     public init(device: MTLDevice,
@@ -20,61 +21,85 @@ public final class MetalBuilderRenderer{
                 @MetalResultBuilder metalContent: MetalContent,
                 options: MTLCompileOptions? = nil) throws{
         
+        self.device = device
+        
+        var librarySource = librarySource
+        
         do{
         
-        let result = metalContent($viewportSize)
-        self.device = device
-        self.pixelFormat = pixelFormat
-        commandQueue =  self.device.makeCommandQueue()
-        var library : MTLLibrary!
+            let result = metalContent($viewportSize)
+        
+            //init passes
+            for component in result{
+                if let computeComponent = component as? Compute{
+                    passes.append(ComputePass(computeComponent))
+                    addTextures(newTexs: computeComponent.textures.map{ $0.container })
+                    try createBuffers(buffers: computeComponent.buffers)
+                    
+                    if librarySource != ""{
+                        let kernel = MetalFunction.compute(computeComponent.kernel)
+                        try addDeclaration(of: computeComponent.kernelArguments,
+                                           toHeaderOf: kernel, in: &librarySource)
+                    }
+                }
+                if let renderComponent = component as? Render{
+                    passes.append(RenderPass(renderComponent))
+                    addTextures(newTexs: renderComponent.vertexTextures.map{ $0.container })
+                    addTextures(newTexs: renderComponent.fragTextures.map{ $0.container })
+                    addTextures(newTexs: renderComponent.colorAttachments.values.map{ $0.texture })
+                    try createBuffers(buffers: renderComponent.vertexBufs)
+                    try createBuffers(buffers: renderComponent.fragBufs)
+                    
+                    if librarySource != ""{
+                        let vertex = MetalFunction.vertex(renderComponent.vertexFunc)
+                        try addDeclaration(of: renderComponent.vertexArguments,
+                                           toHeaderOf: vertex, in: &librarySource)
+                        let fragment = MetalFunction.fragment(renderComponent.fragmentFunc)
+                        try addDeclaration(of: renderComponent.fragmentArguments,
+                                           toHeaderOf: fragment, in: &librarySource)
+                    }
+                    
+                }
+                if let cpuCodeComponent = component as? CPUCode{
+                    passes.append(CPUCodePass(cpuCodeComponent))
+                }
+                if let mpsUnaryComponent = component as? MPSUnary{
+                    addTextures(newTexs: [mpsUnaryComponent.inTexture, mpsUnaryComponent.outTexture])
+                    passes.append(MPSUnaryPass(mpsUnaryComponent))
+                }
+                if let blitTextureComponent = component as? BlitTexture{
+                    addTextures(newTexs: [blitTextureComponent.inTexture, blitTextureComponent.outTexture])
+                    passes.append(BlitTexturePass(blitTextureComponent))
+                }
+                if let blitBufferComponent = component as? BlitBuffer{
+    //                try createBuffers(buffers: [blitBufferComponent.inBuffer!,
+    //                                            blitBufferComponent.outBuffer!])
+                    passes.append(BlitBufferPass(blitBufferComponent))
+                }
+            }
+        
+            //init Library
+            self.pixelFormat = pixelFormat
+            var library : MTLLibrary!
 
-        if librarySource == ""{
-            library = self.device.makeDefaultLibrary()
-        }else{
-            library = try self.device.makeLibrary(source: librarySource, options: options)
-        }
-    
-        //init passes
-        for component in result{
-            if let computeComponent = component as? Compute{
-                passes.append(ComputePass(computeComponent))
-                addTextures(newTexs: computeComponent.textures.map{ $0.container })
-                try createBuffers(buffers: computeComponent.buffers)
+            if librarySource == ""{
+                library = self.device.makeDefaultLibrary()
+            }else{
+                library = try self.device.makeLibrary(source: librarySource, options: options)
             }
-            if let renderComponent = component as? Render{
-                passes.append(RenderPass(renderComponent))
-                addTextures(newTexs: renderComponent.vertexTextures.map{ $0.container })
-                addTextures(newTexs: renderComponent.fragTextures.map{ $0.container })
-                addTextures(newTexs: renderComponent.colorAttachments.values.map{ $0.texture })
-                try createBuffers(buffers: renderComponent.vertexBufs)
-                try createBuffers(buffers: renderComponent.fragBufs)
+            commandQueue =  self.device.makeCommandQueue()
+            
+            //setup passes
+            for pass in passes{
+                try pass.setup(device: device, library: library)
             }
-            if let cpuCodeComponent = component as? CPUCode{
-                passes.append(CPUCodePass(cpuCodeComponent))
+            
+            //create textures
+            for tex in textures{
+                try tex.create(device: device,
+                               viewportSize: viewportSize,
+                               pixelFormat: pixelFormat)
             }
-            if let mpsUnaryComponent = component as? MPSUnary{
-                addTextures(newTexs: [mpsUnaryComponent.inTexture, mpsUnaryComponent.outTexture])
-                passes.append(MPSUnaryPass(mpsUnaryComponent))
-            }
-            if let blitTextureComponent = component as? BlitTexture{
-                addTextures(newTexs: [blitTextureComponent.inTexture, blitTextureComponent.outTexture])
-                passes.append(BlitTexturePass(blitTextureComponent))
-            }
-            if let blitBufferComponent = component as? BlitBuffer{
-//                try createBuffers(buffers: [blitBufferComponent.inBuffer!,
-//                                            blitBufferComponent.outBuffer!])
-                passes.append(BlitBufferPass(blitBufferComponent))
-            }
-        }
-        //setup passes
-        for pass in passes{
-            try pass.setup(device: device, library: library)
-        }
-        //create textures
-        for tex in textures{
-            try tex.create(device: device, viewportSize: viewportSize, pixelFormat: pixelFormat)
-            print("texture created")
-        }
             
         }catch{ print(error) }
     }
