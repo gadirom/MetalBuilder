@@ -7,10 +7,8 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
     var context: MetalBuilderRenderingContext
     
-    @MetalBuffer<Particle>(metalType: "Particle",
-                           metalName: "particles") var particlesBuffer
-    @MetalBuffer<Vertex>(metalType: "Vertex",
-                         metalName: "vertices") var vertexBuffer
+    @MetalBuffer<Particle>(metalName: "particles") var particlesBuffer
+    @MetalBuffer<Vertex>(metalName: "vertices") var vertexBuffer
     
     @MetalBinding var particleScale: Float
     
@@ -28,20 +26,6 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
         }
     
     let librarySource = """
-
-    struct Particle{
-        float4 color;
-        float2 position;
-        float2 velocity;
-         float size;
-         float angle;
-         float angvelo;
-    };
-
-    struct Vertex{
-        vector_float2 position;
-        vector_float4 color;
-    };
 
     kernel void particleFunction(uint id [[ thread_position_in_grid ]]){
 

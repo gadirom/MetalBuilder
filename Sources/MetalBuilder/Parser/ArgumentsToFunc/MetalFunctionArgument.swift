@@ -47,22 +47,28 @@ public struct MetalTextureArgument{
 
 public struct MetalBufferArgument{
     let space: String
-    let type: String
+    var type: String?
     let name: String
     let index: Int
+    let swiftType: Any.Type
+    var swiftTypeToMetal: SwiftTypeToMetal{
+        SwiftTypeToMetal(swiftType: swiftType,
+                         metalType: type)
+    }
     var string: String{
         var h = "_NAMESPACE_ _TYPE_* _NAME_ [[buffer(_INDEX_)]]"
         h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)
-        h = h.replacingOccurrences(of: "_TYPE_", with: type)
+        h = h.replacingOccurrences(of: "_TYPE_", with: type!)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
         h = h.replacingOccurrences(of: "_INDEX_", with: "\(index)")
         return h
     }
-    public init(space: String, type: String, name: String, index: Int) {
+    public init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int) {
         self.space = space
         self.type = type
         self.name = name
         self.index = index
+        self.swiftType = swiftType
     }
     public init<T>(_ container: MTLBufferContainer<T>,
                     space: String, type: String?=nil, name: String?=nil, index: Int) throws{
@@ -74,11 +80,11 @@ public struct MetalBufferArgument{
         if let type = type{
             t = type
         }
-        guard let type = t
-        else {
-            throw MetalBuilderFunctionArgumentsError
-                .bufferArgumentError("No Metal type for buffer!")
-        }
+//        guard let type = t
+//        else {
+//            throw MetalBuilderFunctionArgumentsError
+//                .bufferArgumentError("No Metal type for buffer!")
+//        }
         
         var n: String?
         if let name = container.metalName{
@@ -93,7 +99,7 @@ public struct MetalBufferArgument{
                 .bufferArgumentError("No Metal name for buffer!")
         }
 
-        self.init(space: space, type: type, name: name, index: index)
+        self.init(swiftType: T.self, space: space, type: t, name: name, index: index)
     }
 }
 

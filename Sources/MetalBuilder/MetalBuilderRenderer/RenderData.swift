@@ -13,6 +13,8 @@ struct RenderData{
     //that's why I keep track on them
     var textures: [MTLTextureContainer] = []
     
+    var functionsAndArgumentsToAddToMetal: [FunctionAndArguments] = []
+    
     //var libraryBindings: [LibraryContainer] = []
     
     var pixelFormat: MTLPixelFormat?
@@ -90,9 +92,13 @@ struct RenderData{
                 try data.createBuffers(buffers: computeComponent.buffers, device: device)
                 
                 if librarySource != ""{
+                
+                    //arguments for functions
                     let kernel = MetalFunction.compute(computeComponent.kernel)
-                    try addDeclaration(of: computeComponent.kernelArguments,
-                                       toHeaderOf: kernel, in: &librarySource)
+                    let funcAndArg = FunctionAndArguments(function: kernel,
+                                                          arguments: computeComponent.kernelArguments)
+                    data.functionsAndArgumentsToAddToMetal
+                        .append(funcAndArg)
                 }
             }
             //Render
@@ -105,12 +111,19 @@ struct RenderData{
                 try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
                 
                 if librarySource != ""{
+                    
+                    //arguments for functions
                     let vertex = MetalFunction.vertex(renderComponent.vertexFunc)
-                    try addDeclaration(of: renderComponent.vertexArguments,
-                                       toHeaderOf: vertex, in: &librarySource)
-                    let fragment = MetalFunction.fragment(renderComponent.fragmentFunc)
-                    try addDeclaration(of: renderComponent.fragmentArguments,
-                                       toHeaderOf: fragment, in: &librarySource)
+                    let vertexAndArg = FunctionAndArguments(function: vertex,
+                                                            arguments: renderComponent.vertexArguments)
+                    data.functionsAndArgumentsToAddToMetal
+                        .append(vertexAndArg)
+                    
+                    let fragment = MetalFunction.vertex(renderComponent.vertexFunc)
+                    let fragAndArg = FunctionAndArguments(function: fragment,
+                                                            arguments: renderComponent.fragmentArguments)
+                    data.functionsAndArgumentsToAddToMetal
+                        .append(fragAndArg)
                 }
                 
             }
@@ -189,6 +202,10 @@ struct RenderData{
             if librarySource == ""{
                 libraryContainer.library = device.makeDefaultLibrary()
             }else{
+                
+                try parse(library: &librarySource,
+                          funcArguments: data.functionsAndArgumentsToAddToMetal)
+                
                 switch options.libraryPrefix{
                 case .`default`: librarySource = kMetalBuilderDefaultLibraryPrefix + librarySource
                 case .custom(let prefix): librarySource = prefix + librarySource
@@ -253,9 +270,20 @@ struct RenderData{
         }
     }
     
+    static func addSwiftTypes(from buffers: [BufferProtocol], to swiftTypes: inout [SwiftTypeToMetal]){
+        for buf in buffers {
+            if let type = buf.swiftTypeToMetal{
+                swiftTypes.append(type)
+            }
+        }
+    }
+    
     mutating func append(_ data: RenderData){
         passes.append(contentsOf: data.passes)
         textures.append(contentsOf: data.textures)
+        
+        functionsAndArgumentsToAddToMetal
+            .append(contentsOf: data.functionsAndArgumentsToAddToMetal)
         
         //libraryBindings.append(contentsOf: data.libraryBindings)
     }
