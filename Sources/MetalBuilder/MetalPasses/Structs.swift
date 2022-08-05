@@ -9,6 +9,7 @@ public protocol BufferProtocol{
     var elementSize: Int { get }
     var count: Int { get }
     
+    var swiftTypeToMetal: SwiftTypeToMetal? { get }
     func create(device: MTLDevice) throws
 }
 
@@ -30,6 +31,14 @@ struct Buffer<T>: BufferProtocol{
     }
     var elementSize: Int{
         container.elementSize!
+    }
+    var swiftTypeToMetal: SwiftTypeToMetal?{
+        if T.self is MetalStruct.Type{
+            return SwiftTypeToMetal(swiftType: T.self,
+                                    metalType: container.metalType)
+        }else{
+            return nil
+        }
     }
 }
 struct Texture{

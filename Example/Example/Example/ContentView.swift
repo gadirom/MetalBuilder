@@ -18,19 +18,19 @@ public let isLaplacian = true
 
 public let bkgColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
 
-struct Particle{
-    var color: simd_float4
-    var position: simd_float2
-    var velocity: simd_float2
-    var size: Float
-    var angle: Float
-    var angvelo: Float
+struct Particle: MetalStruct{
+    var color: simd_float4 = [0, 0, 0, 0]
+    var position: simd_float2 = [0, 0]
+    var velocity: simd_float2 = [0, 0]
+    var size: Float = 0
+    var angle: Float = 0
+    var angvelo: Float = 0
 }
 
-struct Vertex
+struct Vertex: MetalStruct
 {
-    var position: simd_float2
-    var color: simd_float4
+    var position: simd_float2 = [0, 0]
+    var color: simd_float4 = [0, 0, 0, 0]
 }
 
 struct ContentView: View {
@@ -51,10 +51,8 @@ struct ContentView: View {
     @MetalState var laplacianBias: Float = 0.5
     
     @MetalBuffer<Particle>(count: particleCount,
-                           metalType: "Particle",
                            metalName: "particles") var particlesBuffer
     @MetalBuffer<Vertex>(count: particleCount*3,
-                         metalType: "Vertex",
                          metalName: "vertices") var vertexBuffer
     
     @MetalState var vertexCount = 3 * particleCount

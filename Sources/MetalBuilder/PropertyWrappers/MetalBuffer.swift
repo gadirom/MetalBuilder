@@ -17,7 +17,9 @@ public final class MetalBuffer<T>{
         self.wrappedValue = wrappedValue
     }
     
-    public init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil){
+    public init(count: Int? = nil,
+                metalType: String? = nil,
+                metalName: String? = nil){
         self.wrappedValue = MTLBufferContainer<T>(count: count, metalType: metalType, metalName: metalName)
     }
 }
