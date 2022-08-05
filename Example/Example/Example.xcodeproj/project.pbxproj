@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		003BE1232894CF8100797903 /* ComputeBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003BE1222894CF8100797903 /* ComputeBlock.swift */; };
 		0055B51D288CDCDA008580B0 /* ExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0055B51C288CDCDA008580B0 /* ExampleApp.swift */; };
 		0055B51F288CDCDA008580B0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0055B51E288CDCDA008580B0 /* ContentView.swift */; };
 		0055B521288CDCDB008580B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0055B520288CDCDB008580B0 /* Assets.xcassets */; };
@@ -16,6 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		003BE1222894CF8100797903 /* ComputeBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputeBlock.swift; sourceTree = "<group>"; };
 		0055B519288CDCDA008580B0 /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0055B51C288CDCDA008580B0 /* ExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleApp.swift; sourceTree = "<group>"; };
 		0055B51E288CDCDA008580B0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -60,6 +62,7 @@
 			children = (
 				0055B51C288CDCDA008580B0 /* ExampleApp.swift */,
 				0055B51E288CDCDA008580B0 /* ContentView.swift */,
+				003BE1222894CF8100797903 /* ComputeBlock.swift */,
 				0055B52F288CDE82008580B0 /* metalFunctions.swift */,
 				0055B520288CDCDB008580B0 /* Assets.xcassets */,
 				0055B522288CDCDB008580B0 /* Preview Content */,
@@ -166,6 +169,7 @@
 				0055B51F288CDCDA008580B0 /* ContentView.swift in Sources */,
 				0055B530288CDE82008580B0 /* metalFunctions.swift in Sources */,
 				0055B51D288CDCDA008580B0 /* ExampleApp.swift in Sources */,
+				003BE1232894CF8100797903 /* ComputeBlock.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

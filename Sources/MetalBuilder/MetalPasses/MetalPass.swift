@@ -1,6 +1,7 @@
 import MetalKit
 
 protocol MetalPass{
-    func setup(device: MTLDevice, library: MTLLibrary) throws
+    var libraryContainer: LibraryContainer? { get set }
+    func setup(device: MTLDevice) throws
     func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) throws
 }

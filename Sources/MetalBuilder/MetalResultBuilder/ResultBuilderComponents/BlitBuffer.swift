@@ -6,8 +6,9 @@ import SwiftUI
 ///
 /// initializes a blit pass
 public struct BlitBuffer: MetalBuilderComponent{
-    var inBuffer: BufferContainer?
-    var outBuffer: BufferContainer?
+    
+    var inBuffer: BufferProtocol?
+    var outBuffer: BufferProtocol?
     
     var sourceOffset: Int = 0
     var destinationOffset: Int = 0
@@ -21,12 +22,14 @@ public struct BlitBuffer: MetalBuilderComponent{
 public extension BlitBuffer{
     func source<T>(_ container: MTLBufferContainer<T>)->BlitBuffer{
         var b = self
-        b.inBuffer = container
+        let buffer = Buffer(container: container, offset: 0, index: 0)
+        b.inBuffer = buffer
         return b
     }
     func destination<T>(_ container: MTLBufferContainer<T>)->BlitBuffer{
         var b = self
-        b.outBuffer = container
+        let buffer = Buffer(container: container, offset: 0, index: 0)
+        b.inBuffer = buffer
         return b
     }
     func count(count: Int)->BlitBuffer{

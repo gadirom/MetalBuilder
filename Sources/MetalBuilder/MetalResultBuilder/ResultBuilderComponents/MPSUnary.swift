@@ -7,6 +7,7 @@ import MetalPerformanceShaders
 /// initializes an MPSUnary kernel
 /// if no destination is set tries to encode in place
 public struct MPSUnary: MetalBuilderComponent{
+    
     let initCode: (MTLDevice)->MPSUnaryImageKernel
     var inTexture: MTLTextureContainer?
     var outTexture: MTLTextureContainer?

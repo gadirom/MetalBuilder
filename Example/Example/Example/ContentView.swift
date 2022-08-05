@@ -60,47 +60,48 @@ struct ContentView: View {
     @MetalState var vertexCount = 3 * particleCount
     @MetalState var particleScale: Float = 1
     
-    @MetalState var isDrawing = false
+    @State var isDrawing = false
+    @State var n = 1
+    @State var laplacianPasses = 0
+    
 //    @MetalState var mSize = MTLSize(width: particleCount, height: 1, depth: 1)
 //    @MetalState var viewport = MTLViewport(originX: 0.0, originY: 0.0, width: 100, height: 100, znear: 0.0, zfar: 1.0)
     
     var body: some View {
         VStack{
-            MetalBuilderView(librarySource: metalFunctions, isDrawing: $isDrawing){ viewportSize in
-                Compute("particleFunction")
-                    .buffer(particlesBuffer, offset: 0, space: "device")
-                    .buffer(vertexBuffer, offset: 0, space: "device")
-                    .bytes(viewportSize,
-                           argument: .init(space: "constant", type: "uint2",
-                                           name: "viewport", index: 2))
-                    .bytes($particleScale,
-                           argument: .init(space: "constant", type: "float",
-                                           name: "scale", index: 3))
-                    .threadsFromBuffer(0)
-                    //.grid(size: $mSize)
+            MetalBuilderView(librarySource: metalFunctions, isDrawing: $isDrawing){ context in
+                ComputeBlock(context: context,
+                             particlesBuffer: $particlesBuffer,
+                             vertexBuffer: $vertexBuffer,
+                             particleScale: $particleScale)
                 Render(vertex: "vertexShader", fragment: "fragmentShader")
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
-                    .vertexBytes(viewportSize,
+                    .vertexBytes(context.$viewportSize,
                            argument: .init(space: "constant", type: "uint2",
                                            name: "viewport", index: 2))
                     .primitives(count: vertexCount)
-                CPUCode{ [self] device, commandBuffer, drawable in
-                    let l = MPSImageLaplacian(device: device)
-                    l.bias = laplacianBias
-                    l.encode(commandBuffer: commandBuffer, inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
-                }
-                //Seems that Laplacian can't be modified through superclass init!
-//                MPSUnary{MPSImageLaplacian(device: $0)}
-//                    .source(targetTexture)
-//                    .value($laplacianBias, for: "bias")
-                MPSUnary{MPSImageAreaMax(device: $0,
-                                         kernelWidth: dilateSize, kernelHeight: dilateSize)}
+                EncodeGroup{
+                    EncodeGroup{
+                        ManualEncode{ [self] device, commandBuffer, drawable in
+                            let l = MPSImageLaplacian(device: device)
+                            l.bias = laplacianBias
+                            l.encode(commandBuffer: commandBuffer, inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
+                        }
+                    }.repeating($laplacianPasses)
+                    //Seems that Laplacian can't be initialized through superclass init!
+    //                MPSUnary{MPSImageLaplacian(device: $0)}
+    //                    .source(targetTexture)
+    //                    .value($laplacianBias, for: "bias")
+                    MPSUnary{MPSImageAreaMax(device: $0,
+                                             kernelWidth: dilateSize, kernelHeight: dilateSize)}
+                        .source(targetTexture)
+                    MPSUnary{ [self] in MPSImageGaussianBlur(device: $0, sigma: blurRadius)}
+                        .source(targetTexture)
+                        //.toDrawable()
+                }.repeating($n)
+                BlitTexture()
                     .source(targetTexture)
-                MPSUnary{ [self] in MPSImageGaussianBlur(device: $0, sigma: blurRadius)}
-                    .source(targetTexture)
-                    .toDrawable()
-                
                 //let _ = print("compile")
             }
             .onResize{ size in
@@ -109,13 +110,30 @@ struct ContentView: View {
                                 viewportSize: size)
                 isDrawing = true
             }
-            Slider(value: $blurRadius, in: 0...100)
+            Slider(value: $blurRadius.binding, in: 0...5)
             Slider(value: $fDilate, in: 0...10)
                 .onChange(of: fDilate) { newValue in
                     dilateSize = Int(fDilate*10)*2+1
                 }
-            Slider(value: $laplacianBias, in: 0...1)
-            Slider(value: $particleScale, in: 0...10)
+            Slider(value: $laplacianBias.binding, in: 0...1)
+            Slider(value: $particleScale.binding, in: 0...10)
+            HStack{
+                Stepper("Number of passes for effects: \(n)") {
+                    n += 1
+                } onDecrement: {
+                    if n>0{
+                        n -= 1
+                    }
+                }
+                Stepper("Number of passes for laplacian: \(laplacianPasses)") {
+                    laplacianPasses += 1
+                } onDecrement: {
+                    if laplacianPasses>0{
+                        laplacianPasses -= 1
+                    }
+                }
+            }
+
         }
     }
 }

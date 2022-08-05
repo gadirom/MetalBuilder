@@ -2,15 +2,18 @@
 import MetalKit
 import SwiftUI
 
-// draw code pass
-final class CPUCodePass: MetalPass{
-    let component: CPUCode
+// manual encoding pass
+final class ManualEncodePass: MetalPass{
+    var libraryContainer: LibraryContainer?
+    
+    let component: ManualEncode
     
     var device: MTLDevice!
-    init(_ component: CPUCode){
+    
+    init(_ component: ManualEncode){
         self.component = component
     }
-    func setup(device: MTLDevice, library: MTLLibrary) {
+    func setup(device: MTLDevice) {
         self.device = device
     }
     func encode(_ commandBuffer: MTLCommandBuffer, _ drawable: CAMetalDrawable?) {

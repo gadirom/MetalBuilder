@@ -7,6 +7,7 @@ import SwiftUI
 /// initializes a blit pass
 /// if no destination is set tries to copy to drawable
 public struct BlitTexture: MetalBuilderComponent{
+    
     var inTexture: MTLTextureContainer?
     var outTexture: MTLTextureContainer?
     

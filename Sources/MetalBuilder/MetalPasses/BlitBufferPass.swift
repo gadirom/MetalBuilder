@@ -3,12 +3,14 @@ import SwiftUI
 
 // BlitBuffer pass
 class BlitBufferPass: MetalPass{
+    var libraryContainer: LibraryContainer?
+    
     let component: BlitBuffer
     
     init(_ component: BlitBuffer){
         self.component = component
     }
-    func setup(device: MTLDevice, library: MTLLibrary){
+    func setup(device: MTLDevice){
     }
     func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
         
@@ -22,7 +24,7 @@ class BlitBufferPass: MetalPass{
             print("BlitBuffer: no outBuffer!")
             return
         }
-        let elementSize = inBuffer.elementSize!
+        let elementSize = inBuffer.elementSize
         let count: Int
         if let c = component.count{
             count = c
@@ -35,8 +37,8 @@ class BlitBufferPass: MetalPass{
         let outOffset = component.destinationOffset*size
 
         let blitBufferEncoder = commandBuffer.makeBlitCommandEncoder()
-        blitBufferEncoder?.copy(from: inBuffer.buffer!, sourceOffset: inOffset,
-                                to: outBuffer.buffer!, destinationOffset: outOffset,
+        blitBufferEncoder?.copy(from: inBuffer.mtlBuffer!, sourceOffset: inOffset,
+                                to: outBuffer.mtlBuffer!, destinationOffset: outOffset,
                                 size: size)
         blitBufferEncoder?.endEncoding()
     }

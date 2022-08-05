@@ -41,6 +41,7 @@ var defaultColorAttachments =
                        )]
 /// Render Component
 public struct Render: MetalBuilderComponent{
+    
     let vertexFunc: String
     let fragmentFunc: String
     
@@ -140,6 +141,13 @@ public extension Render{
         var r = self
         r.vertexArguments.append(.bytes(argument))
         let bytes = Bytes(binding: binding, index: argument.index)
+        r.vertexBytes.append(bytes)
+        return r
+    }
+    func vertexBytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Render{
+        var r = self
+        r.vertexArguments.append(.bytes(argument))
+        let bytes = Bytes(binding: binding.binding, index: argument.index)
         r.vertexBytes.append(bytes)
         return r
     }

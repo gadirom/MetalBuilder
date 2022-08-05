@@ -1,6 +1,10 @@
 
 import Foundation
 
+enum MetalBuilderFunctionArgumentsError: Error {
+case bufferArgumentError(String), textureArgumentError(String)
+}
+
 public enum MetalFunctionArgument{
     case texture(MetalTextureArgument), buffer(MetalBufferArgument), bytes(MetalBytesArgument)
     
@@ -19,7 +23,6 @@ public enum MetalFunctionArgument{
         }
     }
 }
-
 
 public struct MetalTextureArgument{
     let type: String
@@ -73,7 +76,7 @@ public struct MetalBufferArgument{
         }
         guard let type = t
         else {
-            throw MetalBuilderResultBuilderError
+            throw MetalBuilderFunctionArgumentsError
                 .bufferArgumentError("No Metal type for buffer!")
         }
         
@@ -86,7 +89,7 @@ public struct MetalBufferArgument{
         }
         guard let name = n
         else {
-            throw MetalBuilderResultBuilderError
+            throw MetalBuilderFunctionArgumentsError
                 .bufferArgumentError("No Metal name for buffer!")
         }
 

@@ -13,18 +13,23 @@ public enum MetalBuilderComputeError: Error{
 
 //Compute Pass
 final class ComputePass: MetalPass{
+    var libraryContainer: LibraryContainer?
+    
     var component: Compute
     
     var computePiplineState: MTLComputePipelineState!
     var threadsPerThreadGroup: MTLSize!
     var threadGroupsPerGrid: MTLSize!
     
-    init(_ component: Compute){
+    init(_ component: Compute, libraryContainer: LibraryContainer){
         self.component = component
+        self.libraryContainer = libraryContainer
     }
-    func setup(device: MTLDevice, library: MTLLibrary) throws{
+    func setup(device: MTLDevice) throws{
         try component.setup()
-        let function = library.makeFunction(name: component.kernel)
+        let function = libraryContainer!.library!.makeFunction(name: component.kernel)
+        libraryContainer = nil
+        
         computePiplineState =
             try device.makeComputePipelineState(function: function!)
     }

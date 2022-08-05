@@ -10,6 +10,7 @@ enum GridFit{
 }
 /// Compute Component
 public struct Compute: MetalBuilderComponent{
+    
     let kernel: String
     var buffers: [BufferProtocol] = []
     var bytes: [BytesProtocol] = []
@@ -77,6 +78,13 @@ public extension Compute{
         var c = self
         c.kernelArguments.append(.bytes(argument))
         let bytes = Bytes(binding: binding, index: argument.index)
+        c.bytes.append(bytes)
+        return c
+    }
+    func bytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Compute{
+        var c = self
+        c.kernelArguments.append(.bytes(argument))
+        let bytes = Bytes(binding: binding.binding, index: argument.index)
         c.bytes.append(bytes)
         return c
     }
