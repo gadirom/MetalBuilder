@@ -6,12 +6,12 @@ public struct MetalBuilderView: UIViewRepresentable {
     
     public let librarySource: String
     @Binding public var isDrawing: Bool
-    @MetalResultBuilder public let metalContent: (Binding<simd_uint2>)->MetalBuilderResult
+    @MetalResultBuilder public let metalContent: MetalRenderingContent
     let onResizeCode: ((CGSize)->())?
     
     public init(librarySource: String,
                 isDrawing: Binding<Bool>,
-                @MetalResultBuilder metalContent: @escaping (Binding<simd_uint2>) -> MetalBuilderResult) {
+                @MetalResultBuilder metalContent: @escaping MetalRenderingContent){
         self.init(librarySource: librarySource,
                   isDrawing: isDrawing,
                   metalContent: metalContent,
@@ -19,7 +19,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     }
     init(librarySource: String,
          isDrawing: Binding<Bool>,
-         @MetalResultBuilder metalContent: @escaping (Binding<simd_uint2>) -> MetalBuilderResult,
+         metalContent: @escaping MetalRenderingContent,
          onResizeCode: ((CGSize)->())?) {
         self.librarySource = librarySource
         self._isDrawing = isDrawing
@@ -78,13 +78,13 @@ public struct MetalBuilderView: UIViewRepresentable {
             }
         }
         
-        func setupRenderer(librarySource: String, pixelFormat: MTLPixelFormat, metalContent: (Binding<simd_uint2>)->MetalBuilderResult){
+        func setupRenderer(librarySource: String, pixelFormat: MTLPixelFormat, metalContent: MetalRenderingContent){
             do{
                 renderer =
                 try MetalBuilderRenderer(device: device,
-                                         librarySource: librarySource,
                                          pixelFormat: pixelFormat,
-                                         metalContent: metalContent)
+                                         librarySource: librarySource,
+                                         renderingContent: metalContent)
             }catch{ print(error) }
         }
         

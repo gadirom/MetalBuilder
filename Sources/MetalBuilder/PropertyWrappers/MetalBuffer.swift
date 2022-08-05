@@ -9,11 +9,15 @@ import MetalKit
 public final class MetalBuffer<T>{
     public var wrappedValue: MTLBufferContainer<T>
     
+    public var projectedValue: MetalBuffer<T>{
+        self
+    }
+    
     public init(wrappedValue: MTLBufferContainer<T>){
         self.wrappedValue = wrappedValue
     }
     
-    public init(count: Int, metalType: String? = nil, metalName: String? = nil){
+    public init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil){
         self.wrappedValue = MTLBufferContainer<T>(count: count, metalType: metalType, metalName: metalName)
     }
 }
@@ -26,13 +30,13 @@ public class BufferContainer{
     
     var buffer: MTLBuffer?
     
-    public let count: Int
+    public let count: Int?
     public var elementSize: Int?
     
     public var metalType: String?
     public var metalName: String?
     
-    init(count: Int, metalType: String? = nil, metalName: String? = nil) {
+    init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil) {
         self.count = count
         
         self.metalType = metalType
@@ -49,7 +53,7 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     func create(device: MTLDevice) throws{
         elementSize = MemoryLayout<T>.stride
-        let length = elementSize!*count
+        let length = elementSize!*count!
         buffer = device.makeBuffer(length: length)
         if let buffer = buffer{
             pointer = buffer.contents().bindMemory(to: T.self, capacity: length)

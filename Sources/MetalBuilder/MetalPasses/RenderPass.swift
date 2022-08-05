@@ -9,17 +9,22 @@ public enum MetalBuilderRenderError: Error{
 
 //Render Pass
 final class RenderPass: MetalPass{
+    var libraryContainer: LibraryContainer?
+    
     var component: Render
     
     var renderPiplineState: MTLRenderPipelineState!
     
-    init(_ component: Render){
+    init(_ component: Render, libraryContainer: LibraryContainer){
         self.component = component
+        self.libraryContainer = libraryContainer
     }
-    func setup(device: MTLDevice, library: MTLLibrary) throws{
+    func setup(device: MTLDevice) throws{
         try component.setup()
-        let vertexFunction = library.makeFunction(name: component.vertexFunc)
-        let fragmentFunction = library.makeFunction(name: component.fragmentFunc)
+        let vertexFunction = libraryContainer!.library!.makeFunction(name: component.vertexFunc)
+        let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
+        libraryContainer = nil
+        
         let descriptor = MTLRenderPipelineDescriptor()
         descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
         descriptor.vertexFunction = vertexFunction

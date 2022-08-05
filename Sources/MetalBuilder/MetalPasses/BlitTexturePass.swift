@@ -3,12 +3,14 @@ import SwiftUI
 
 // BlitTexture pass
 class BlitTexturePass: MetalPass{
+    var libraryContainer: LibraryContainer?
+    
     let component: BlitTexture
     
     init(_ component: BlitTexture){
         self.component = component
     }
-    func setup(device: MTLDevice, library: MTLLibrary){
+    func setup(device: MTLDevice){
     }
     func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
         if let inTexture = component.inTexture?.texture{

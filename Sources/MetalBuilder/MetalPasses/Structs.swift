@@ -5,12 +5,15 @@ public protocol BufferProtocol{
     var mtlBuffer: MTLBuffer? { get }
     var offset: Int { get }
     var index: Int { get }
+    
+    var elementSize: Int { get }
     var count: Int { get }
     
     func create(device: MTLDevice) throws
 }
 
 struct Buffer<T>: BufferProtocol{
+    
     func create(device: MTLDevice) throws {
         try container.create(device: device)
     }
@@ -23,7 +26,10 @@ struct Buffer<T>: BufferProtocol{
         container.buffer
     }
     var count: Int{
-        container.count
+        container.count!
+    }
+    var elementSize: Int{
+        container.elementSize!
     }
 }
 struct Texture{
