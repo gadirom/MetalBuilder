@@ -61,7 +61,7 @@ struct ContentView: View {
                 Render(vertex: "vertexShader", fragment: "fragmentShader")
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
-                    .vertexBytes(context.$viewportSize, space: "constant", name: "viewport", index: 2)
+                    .vertexBytes(context.$viewportSize, space: "constant")
                     .primitives(count: vertexCount)
                 EncodeGroup{
                     EncodeGroup{

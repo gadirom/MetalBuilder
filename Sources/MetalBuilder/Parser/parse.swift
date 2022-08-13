@@ -65,7 +65,7 @@ func parse(library: inout String,
                     if bytes.type == nil{// if no type provided trying to assess an ordinary type (float, int, ect.)
                         let swiftType = String(describing: type.swiftType)
                         
-                        guard let metalType = swiftTypesToMetalTypes[swiftType] else {
+                        guard let metalType = metalType(for: swiftType) else {
                             throw MetalBuilderParserError
                                 .wrongType("Bytes for function " +
                                            funcArguments[funcAndArgID].function.name +

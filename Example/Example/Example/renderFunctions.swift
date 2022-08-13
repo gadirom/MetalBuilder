@@ -13,10 +13,10 @@ vertexShader(uint vertexID [[vertex_id]]){
 
     float2 pixelSpacePosition = vertices[vertexID].position.xy;
 
-    float2 viewportSize = float2(viewport);
+    float2 viewport = float2(viewportSize);
     
     out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
-    out.position.xy = pixelSpacePosition / (viewportSize / 2.0);
+    out.position.xy = pixelSpacePosition / (viewport / 2.0);
 
     out.color = vertices[vertexID].color;
 

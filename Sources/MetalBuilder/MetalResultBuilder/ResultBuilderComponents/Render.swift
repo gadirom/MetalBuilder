@@ -159,7 +159,7 @@ public extension Render{
         r.vertexBytes.append(bytes)
         return r
     }
-    func vertexBytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?)->Render{
+    func vertexBytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Render{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
         return vertexBytes(binding, argument: argument)
     }

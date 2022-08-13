@@ -18,10 +18,8 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
             Compute("particleFunction")
                 .buffer(particlesBuffer, offset: 0, space: "device")
                 .buffer(vertexBuffer, offset: 0, space: "device")
-                .bytes(context.$viewportSize, space: "constant", type: "uint2",
-                                       name: "viewport", index: 2)
-                .bytes($particleScale, space: "constant", type: "float",
-                                       name: "scale", index: 3)
+                .bytes(context.$viewportSize)
+                .bytes($particleScale, name: "scale")
                 .threadsFromBuffer(0)
         }
     
@@ -54,13 +52,13 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     vertices[j+1].position = position + float2(size*sinA23, size*cosA23);
     vertices[j+2].position = position + float2(size*sinA43, size*cosA43);
 
-    float2 viewportSize = float2(viewport);
+    float2 viewport = float2(viewportSize);
 
     position += particle.velocity;
     particles[id].position = position;
 
-    if (position.x < -viewportSize.x/2 || position.x > viewportSize.x/2) particles[id].velocity.x *= -1.0;
-    if (position.y < -viewportSize.y/2  || position.y > viewportSize.y/2) particles[id].velocity.y *= -1.0;
+    if (position.x < -viewport.x/2 || position.x > viewport.x/2) particles[id].velocity.x *= -1.0;
+    if (position.y < -viewport.y/2  || position.y > viewport.y/2) particles[id].velocity.y *= -1.0;
 
     particles[id].angle += particle.angvelo;
 
