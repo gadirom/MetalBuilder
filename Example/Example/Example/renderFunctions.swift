@@ -1,5 +1,5 @@
 
-public let metalFunctions = """
+public let renderFunctions = """
 
 // Vertex shader outputs and fragment shader inputs
 struct RasterizerData{

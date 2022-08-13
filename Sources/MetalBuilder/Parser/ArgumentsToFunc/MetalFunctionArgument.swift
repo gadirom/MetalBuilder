@@ -10,16 +10,16 @@ public enum MetalFunctionArgument{
     
     var string: String{
         switch self{
-        case .texture(let p): return p.string
-        case .buffer(let p): return p.string
-        case .bytes(let p): return p.string
+        case .texture(let arg): return arg.string
+        case .buffer(let arg): return arg.string
+        case .bytes(let arg): return arg.string
         }
     }
     var index: Int{
         switch self{
-        case .texture(let p): return p.index
-        case .buffer(let p): return p.index
-        case .bytes(let p): return p.index
+        case .texture(let arg): return arg.index!
+        case .buffer(let arg): return arg.index!
+        case .bytes(let arg): return arg.index!
         }
     }
 }
@@ -28,16 +28,16 @@ public struct MetalTextureArgument{
     let type: String
     let access: String
     let name: String
-    let index: Int
+    var index: Int?
     var string: String{
         var h = "texture2d<_TYPE_, access::_ACCESS_> _NAME_ [[texture(_INDEX_)]]"
         h = h.replacingOccurrences(of: "_TYPE_", with: type)
         h = h.replacingOccurrences(of: "_ACCESS_", with: access)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
-        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index)")
+        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
         return h
     }
-    public init(type: String, access: String, name: String, index: Int) {
+    public init(type: String, access: String, name: String, index: Int?=nil) {
         self.type = type
         self.access = access
         self.name = name
@@ -49,7 +49,7 @@ public struct MetalBufferArgument{
     let space: String
     var type: String?
     let name: String
-    let index: Int
+    var index: Int?
     let swiftType: Any.Type
     var swiftTypeToMetal: SwiftTypeToMetal{
         SwiftTypeToMetal(swiftType: swiftType,
@@ -60,10 +60,10 @@ public struct MetalBufferArgument{
         h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)
         h = h.replacingOccurrences(of: "_TYPE_", with: type!)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
-        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index)")
+        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
         return h
     }
-    public init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int) {
+    init(swiftType: Any.Type, space: String, type: String?=nil, name: String, index: Int?=nil) {
         self.space = space
         self.type = type
         self.name = name
@@ -71,7 +71,7 @@ public struct MetalBufferArgument{
         self.swiftType = swiftType
     }
     public init<T>(_ container: MTLBufferContainer<T>,
-                    space: String, type: String?=nil, name: String?=nil, index: Int) throws{
+                    space: String, type: String?=nil, name: String?=nil, index: Int?=nil) throws{
         
         var t: String?
         if let type = container.metalType{
@@ -105,21 +105,44 @@ public struct MetalBufferArgument{
 
 public struct MetalBytesArgument{
     let space: String
-    let type: String
+    var type: String?
     let name: String
-    let index: Int
+    var index: Int?
+    let swiftType: Any.Type
+    var swiftTypeToMetal: SwiftTypeToMetal{
+        SwiftTypeToMetal(swiftType: swiftType,
+                         metalType: type)
+    }
     var string: String{
         var h = "_NAMESPACE_ _TYPE_& _NAME_ [[buffer(_INDEX_)]]"
         h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)
-        h = h.replacingOccurrences(of: "_TYPE_", with: type)
+        h = h.replacingOccurrences(of: "_TYPE_", with: type!)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
-        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index)")
+        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
         return h
     }
-    public init(space: String, type: String, name: String, index: Int) {
+    init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int?) {
+        self.swiftType = swiftType
         self.space = space
         self.type = type
         self.name = name
         self.index = index
+    }
+    init<T>(binding: MetalBinding<T>, space: String, type: String?=nil, name: String?=nil, index: Int?=nil){
+        var n: String
+        if let name = name {
+            n = name
+        }else{
+            n = binding.metalName!
+        }
+        var t: String?
+        if let type = type {
+            t = type
+        }else{
+            t = binding.metalType
+        }
+        
+        self.init(swiftType: T.self, space: space, type: t, name: n, index: index)
+
     }
 }

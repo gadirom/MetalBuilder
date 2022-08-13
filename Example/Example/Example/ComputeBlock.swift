@@ -7,6 +7,8 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
     var context: MetalBuilderRenderingContext
     
+    //As of Swift 5.6 the arguments of MetalBuffer property wrapper are ignored
+    //when the variable is supposed to receive it's value from synthesised init
     @MetalBuffer<Particle>(metalName: "particles") var particlesBuffer
     @MetalBuffer<Vertex>(metalName: "vertices") var vertexBuffer
     
@@ -16,12 +18,10 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
             Compute("particleFunction")
                 .buffer(particlesBuffer, offset: 0, space: "device")
                 .buffer(vertexBuffer, offset: 0, space: "device")
-                .bytes(context.$viewportSize,
-                       argument: .init(space: "constant", type: "uint2",
-                                       name: "viewport", index: 2))
-                .bytes($particleScale,
-                       argument: .init(space: "constant", type: "float",
-                                       name: "scale", index: 3))
+                .bytes(context.$viewportSize, space: "constant", type: "uint2",
+                                       name: "viewport", index: 2)
+                .bytes($particleScale, space: "constant", type: "float",
+                                       name: "scale", index: 3)
                 .threadsFromBuffer(0)
         }
     

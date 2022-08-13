@@ -9,6 +9,10 @@ public struct SwiftTypeToMetal {
     let metalType: String?
 }
 
+enum MetalBuilderParserError: Error{
+    case syntaxError(String), wrongType(String)
+}
+
 func parse(library: inout String,
            funcArguments: [FunctionAndArguments]) throws{
     
@@ -19,11 +23,11 @@ func parse(library: inout String,
         for argID in funcArguments[funcAndArgID].arguments.indices{
             let arg = funcArguments[funcAndArgID]
                 .arguments[argID]
-            if case let .buffer(buf) = arg{
+            switch arg{
+            case .buffer(let buf):
                 let type = buf.swiftTypeToMetal
-                let metalDeclaration = metalTypeDeclaration(from: type.swiftType,
-                                                            name: type.metalType)
-                if let metalDeclaration = metalDeclaration{
+                if let metalDeclaration = metalTypeDeclaration(from: type.swiftType,
+                                                            name: type.metalType){
                     if !metalTypeNames.contains(metalDeclaration.typeName) {
                         metalTypeNames.append(metalDeclaration.typeName)
                         library = metalDeclaration.declaration + library
@@ -38,7 +42,49 @@ func parse(library: inout String,
                            .arguments[argID] = argNew
                     }
                 }
+                
+                
+            case .bytes(let bytes):
+                let type = bytes.swiftTypeToMetal
+                if let metalDeclaration = metalTypeDeclaration(from: type.swiftType,
+                                                               name: type.metalType){
+                    if !metalTypeNames.contains(metalDeclaration.typeName) {
+                        metalTypeNames.append(metalDeclaration.typeName)
+                        library = metalDeclaration.declaration + library
+                    }
+                    
+                    if bytes.type == nil{// add type name to function declaration if there was no type set in the component
+                        var bytesArg = bytes
+                        bytesArg.type = metalDeclaration.typeName
+                        let argNew: MetalFunctionArgument =
+                            .bytes(bytesArg)
+                        funcArguments[funcAndArgID]
+                           .arguments[argID] = argNew
+                    }
+                }else{
+                    if bytes.type == nil{// if no type provided trying to assess an ordinary type (float, int, ect.)
+                        let swiftType = String(describing: type.swiftType)
+                        
+                        guard let metalType = swiftTypesToMetalTypes[swiftType] else {
+                            throw MetalBuilderParserError
+                                .wrongType("Bytes for function " +
+                                           funcArguments[funcAndArgID].function.name +
+                                           " " +
+                                           funcArguments[funcAndArgID].function.name +
+                                           " are wrong type: "+swiftType)
+                        }
+                        var bytesArg = bytes
+                        bytesArg.type = metalType
+                        let argNew: MetalFunctionArgument =
+                            .bytes(bytesArg)
+                        funcArguments[funcAndArgID]
+                           .arguments[argID] = argNew
+                    }
+                }
+                
+            default: break
             }
+       
         }
     }
     for funcAndArg in funcArguments {

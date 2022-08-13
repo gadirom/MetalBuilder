@@ -16,11 +16,61 @@ public final class MetalBuffer<T>{
     public init(wrappedValue: MTLBufferContainer<T>){
         self.wrappedValue = wrappedValue
     }
-    
+    /// Initalizer of MetalBuffer property wrapper
+    ///
+    ///
+    /// - Parameters:
+    ///   - count: size of the buffer, i.e. buffer elements count
+    ///   - metalType: type that will be used to address this buffer in Metal library code
+    ///   - metalName: name that will be used to address this buffer in Metal library code
+    /// DISCLAMER!
+    /// This initializer allows Swift to synthesize deferred init of the variable
+    /// Yet, as of Swift 5.6 it isn't done correctly and it isn't called for initialization of the corresponding property
+    /// Thus, any arguments of this init will be ignored if you use in like this:
+    /// struct Test{
+    ///    @MetalBuffer(metalName: "buffer" var buffer
+    /// }
+    /// If you init Test like this: test = Test(buffer: buffer)
+    /// the 'metalName' argument will be ignored.
+    ///
     public init(count: Int? = nil,
                 metalType: String? = nil,
                 metalName: String? = nil){
         self.wrappedValue = MTLBufferContainer<T>(count: count, metalType: metalType, metalName: metalName)
+    }
+    public init(_ descriptor: BufferDescriptor){
+        self.wrappedValue = MTLBufferContainer<T>(count: descriptor.count, metalType: descriptor.metalType, metalName: descriptor.metalName)
+    }
+}
+
+public struct BufferDescriptor{
+    var count: Int?
+    var metalType: String?
+    var metalName: String?
+
+    public init(count: Int? = nil,
+                metalType: String? = nil,
+                metalName: String? = nil){
+        self.count = count
+        self.metalName = metalName
+        self.metalType = metalType
+    }
+}
+public extension BufferDescriptor{
+    func count(_ n: Int) -> BufferDescriptor {
+        var d = self
+        d.count = n
+        return d
+    }
+    func metalName(_ name: String) -> BufferDescriptor {
+        var d = self
+        d.metalName = name
+        return d
+    }
+    func metalType(_ type: String) -> BufferDescriptor {
+        var d = self
+        d.metalType = type
+        return d
     }
 }
 
