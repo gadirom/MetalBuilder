@@ -1,17 +1,7 @@
+
 import MetalKit
 
-///protocol for a struct to be automatically declared in Metal library source
-///
-///the Swift types allowed:
-///SIMDN<type>,  2<N<4, type - any key from swiftTypesToMetalTypes dictionary
-///For the scalar type use Float
-///
-///Unfortunately, there is no native way of differing between scalar Swift types,
-///hence only one scalar type is allowed: Float
-public protocol MetalStruct{
-    init()
-}
-    ///returns string containing the C-struct declaration
+///returns string containing the C-struct declaration
 func metalTypeDeclaration<T>(from swiftType: T, name: String?) -> MetalTypeDeclaration?{
     guard let type = swiftType as? MetalStruct.Type
     else{ return nil }
@@ -47,26 +37,44 @@ struct MetalTypeDeclaration{
 
 func reflectedTypeToMetalType(_ type: String)->String?{
     var metalType = ""
-    
-    if let simdRange = type.range(of: "SIMD"){
-        let dimRange = type[simdRange.lowerBound...]
-        guard let dim = dimRange.rangeOfCharacter(from: ["2", "3", "4"])
-        else { return nil }
-        let typeRange = type[dim.lowerBound...]
-        
-        var mType: String?
-        for type in swiftTypesToMetalTypes{
-            if let _ = typeRange.range(of: type.key){
-                mType = type.value
-            }
-        }
-        guard let mType = mType
-        else{ return nil }
-        metalType += mType
-        metalType += type[dim]
+
+    if let type = simdTypeToMetal(type){
+        metalType = type
     }else{
         //if SIMD not found assumng that type is float!!
         metalType += "float"
     }
-        return metalType
+    return metalType
 }
+
+func metalType(for swiftType: String)->String?{
+
+    if let metalType = simdTypeToMetal(swiftType){
+        return metalType
+    }
+    //if SIMD not found trying to get non-vector type
+    if let metalType = swiftTypesToMetalTypes[swiftType]{
+        return metalType
+    }
+    return nil
+}
+
+func simdTypeToMetal(_ simdType: String)->String?{
+    guard let simdRange = simdType.range(of: "SIMD")
+    else{ return nil }
+    let dimRange = simdType[simdRange.lowerBound...]
+    guard let dim = dimRange.rangeOfCharacter(from: ["2", "3", "4"])
+    else { return nil }
+    let typeRange = simdType[dim.lowerBound...]
+    
+    var mType: String?
+    for type in swiftTypesToMetalTypes{
+        if let _ = typeRange.range(of: type.key){
+            mType = type.value
+        }
+    }
+    guard let mType = mType
+    else{ return nil }
+    return mType+simdType[dim]
+}
+

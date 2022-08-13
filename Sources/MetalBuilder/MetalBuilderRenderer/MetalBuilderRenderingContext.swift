@@ -1,5 +1,5 @@
 import MetalKit
 
 public final class MetalBuilderRenderingContext{
-    @MetalState public var viewportSize: simd_uint2 = [0,0]
+    @MetalState(metalName: "viewportSize") public var viewportSize: simd_uint2 = [0,0]
 }

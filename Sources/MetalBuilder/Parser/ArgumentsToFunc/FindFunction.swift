@@ -1,10 +1,6 @@
 
 import Foundation
 
-enum MetalBuilderParserError: Error{
-    case syntaxError(String)
-}
-
 // find function "prefix some_type name" and returns range of "("...
 func findFunction(_ function: MetalFunction, in source: String) throws -> Range<Substring.Index>{
     let prefix = function.prefix

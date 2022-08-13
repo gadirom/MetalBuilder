@@ -18,21 +18,6 @@ public let isLaplacian = true
 
 public let bkgColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
 
-struct Particle: MetalStruct{
-    var color: simd_float4 = [0, 0, 0, 0]
-    var position: simd_float2 = [0, 0]
-    var velocity: simd_float2 = [0, 0]
-    var size: Float = 0
-    var angle: Float = 0
-    var angvelo: Float = 0
-}
-
-struct Vertex: MetalStruct
-{
-    var position: simd_float2 = [0, 0]
-    var color: simd_float4 = [0, 0, 0, 0]
-}
-
 struct ContentView: View {
     
     @MetalTexture(
@@ -50,8 +35,9 @@ struct ContentView: View {
     @MetalState var dilateSize = 3
     @MetalState var laplacianBias: Float = 0.5
     
-    @MetalBuffer<Particle>(count: particleCount,
-                           metalName: "particles") var particlesBuffer
+    @MetalBuffer<Particle>(BufferDescriptor()
+        .count(particleCount)
+        .metalName("particles")) var particlesBuffer
     @MetalBuffer<Vertex>(count: particleCount*3,
                          metalName: "vertices") var vertexBuffer
     
@@ -67,7 +53,7 @@ struct ContentView: View {
     
     var body: some View {
         VStack{
-            MetalBuilderView(librarySource: metalFunctions, isDrawing: $isDrawing){ context in
+            MetalBuilderView(librarySource: renderFunctions, isDrawing: $isDrawing){ context in
                 ComputeBlock(context: context,
                              particlesBuffer: $particlesBuffer,
                              vertexBuffer: $vertexBuffer,
@@ -75,9 +61,7 @@ struct ContentView: View {
                 Render(vertex: "vertexShader", fragment: "fragmentShader")
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
-                    .vertexBytes(context.$viewportSize,
-                           argument: .init(space: "constant", type: "uint2",
-                                           name: "viewport", index: 2))
+                    .vertexBytes(context.$viewportSize, space: "constant")
                     .primitives(count: vertexCount)
                 EncodeGroup{
                     EncodeGroup{
