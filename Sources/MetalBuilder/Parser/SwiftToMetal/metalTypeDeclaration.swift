@@ -65,14 +65,15 @@ func simdTypeToMetal(_ simdType: String)->String?{
     let dimRange = simdType[simdRange.lowerBound...]
     guard let dim = dimRange.rangeOfCharacter(from: ["2", "3", "4"])
     else { return nil }
-    let typeRange = simdType[dim.lowerBound...]
+    let postSIMDRange = simdType[dim.lowerBound...]
     
-    var mType: String?
-    for type in swiftTypesToMetalTypes{
-        if let _ = typeRange.range(of: type.key){
-            mType = type.value
-        }
-    }
+    let rightBracket = postSIMDRange.rangeOfCharacter(from: [">"])!
+    let leftTypeIndex = simdType.index(simdRange.upperBound, offsetBy: 2)
+    let rightTypeIndex = simdType.index(rightBracket.lowerBound, offsetBy: -1)
+    let type = String(simdType[leftTypeIndex...rightTypeIndex])
+    
+    let mType = swiftTypesToMetalTypes[type]
+    
     guard let mType = mType
     else{ return nil }
     return mType+simdType[dim]
