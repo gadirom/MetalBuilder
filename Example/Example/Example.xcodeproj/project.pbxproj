@@ -12,8 +12,8 @@
 		0055B51F288CDCDA008580B0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0055B51E288CDCDA008580B0 /* ContentView.swift */; };
 		0055B521288CDCDB008580B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0055B520288CDCDB008580B0 /* Assets.xcassets */; };
 		0055B524288CDCDB008580B0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0055B523288CDCDB008580B0 /* Preview Assets.xcassets */; };
-		0055B52E288CDD26008580B0 /* MetalBuilder in Frameworks */ = {isa = PBXBuildFile; productRef = 0055B52D288CDD26008580B0 /* MetalBuilder */; };
 		0055B530288CDE82008580B0 /* renderFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0055B52F288CDE82008580B0 /* renderFunctions.swift */; };
+		00695B5D28AC42B300E969C8 /* MetalBuilder in Frameworks */ = {isa = PBXBuildFile; productRef = 00695B5C28AC42B300E969C8 /* MetalBuilder */; };
 		0083637528A7F9D500A49D67 /* Structs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0083637428A7F9D500A49D67 /* Structs.swift */; };
 /* End PBXBuildFile section */
 
@@ -26,6 +26,7 @@
 		0055B523288CDCDB008580B0 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		0055B52B288CDD04008580B0 /* MetalBuilder */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = MetalBuilder; path = ../..; sourceTree = "<group>"; };
 		0055B52F288CDE82008580B0 /* renderFunctions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = renderFunctions.swift; sourceTree = "<group>"; };
+		00695B5B28AC42A800E969C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0083637428A7F9D500A49D67 /* Structs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Structs.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -34,7 +35,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0055B52E288CDD26008580B0 /* MetalBuilder in Frameworks */,
+				00695B5D28AC42B300E969C8 /* MetalBuilder in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,6 +63,7 @@
 		0055B51B288CDCDA008580B0 /* Example */ = {
 			isa = PBXGroup;
 			children = (
+				00695B5B28AC42A800E969C8 /* Info.plist */,
 				0055B51C288CDCDA008580B0 /* ExampleApp.swift */,
 				0055B51E288CDCDA008580B0 /* ContentView.swift */,
 				0083637428A7F9D500A49D67 /* Structs.swift */,
@@ -113,7 +115,7 @@
 			);
 			name = Example;
 			packageProductDependencies = (
-				0055B52D288CDD26008580B0 /* MetalBuilder */,
+				00695B5C28AC42B300E969C8 /* MetalBuilder */,
 			);
 			productName = Example;
 			productReference = 0055B519288CDCDA008580B0 /* Example.app */;
@@ -305,6 +307,7 @@
 				DEVELOPMENT_TEAM = J75UGCLYPW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Example/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -334,6 +337,7 @@
 				DEVELOPMENT_TEAM = J75UGCLYPW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Example/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -376,7 +380,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		0055B52D288CDD26008580B0 /* MetalBuilder */ = {
+		00695B5C28AC42B300E969C8 /* MetalBuilder */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MetalBuilder;
 		};

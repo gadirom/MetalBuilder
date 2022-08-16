@@ -18,7 +18,18 @@ public let isLaplacian = true
 
 public let bkgColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
 
+let desc = UniformsDescriptor()
+    .float("size", range: (0...0.1), value: 0.05)
+    .float3("color")
+    .float4("color4")
+    .float("position", range: -200...200)
+    .float("op")
+
 struct ContentView: View {
+    
+    @State var u = UniformsContainer(
+        desc, type: "Unif"
+    )
     
     @MetalTexture(
         TextureDescriptor()
