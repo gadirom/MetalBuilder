@@ -5,6 +5,8 @@ import MetalPerformanceShaders
 
 // MPSUnaryPass
 class MPSUnaryPass: MetalPass{
+    let restartEncode = false
+    
     var libraryContainer: LibraryContainer?
     
     let component: MPSUnary

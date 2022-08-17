@@ -3,6 +3,8 @@ import SwiftUI
 
 // MPSUnaryPass
 class EncodeGroupPass: MetalPass{
+    let restartEncode = false
+    
     var libraryContainer: LibraryContainer?
     let passes: [MetalPass]
     let repeating: Binding<Int>

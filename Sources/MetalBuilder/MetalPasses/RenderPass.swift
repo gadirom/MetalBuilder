@@ -9,6 +9,7 @@ public enum MetalBuilderRenderError: Error{
 
 //Render Pass
 final class RenderPass: MetalPass{
+    let restartEncode = false
     var libraryContainer: LibraryContainer?
     
     var component: Render

@@ -3,6 +3,7 @@ import SwiftUI
 
 // BlitBuffer pass
 class BlitBufferPass: MetalPass{
+    let restartEncode = false
     var libraryContainer: LibraryContainer?
     
     let component: BlitBuffer
