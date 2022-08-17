@@ -9,7 +9,10 @@ enum GridFit{
          buffer(Int)
 }
 /// Compute Component
-public struct Compute: MetalBuilderComponent{
+public struct Compute: MetalBuilderComponent, UniformsReceiver{
+    
+    var uniformsContainers: [UniformsContainer] = []
+    var uniformsNames: [String?] = []
     
     let kernel: String
     var buffers: [BufferProtocol] = []
