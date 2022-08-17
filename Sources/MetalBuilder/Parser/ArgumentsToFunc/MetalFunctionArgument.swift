@@ -6,7 +6,9 @@ case bufferArgumentError(String), textureArgumentError(String)
 }
 
 public enum MetalFunctionArgument{
-    case texture(MetalTextureArgument), buffer(MetalBufferArgument), bytes(MetalBytesArgument)
+    case texture(MetalTextureArgument),
+         buffer(MetalBufferArgument),
+         bytes(MetalBytesArgument)
     
     var string: String{
         switch self{
@@ -109,6 +111,7 @@ public struct MetalBytesArgument{
     let name: String
     var index: Int?
     let swiftType: Any.Type
+    let metalDeclaration: MetalTypeDeclaration?
     var swiftTypeToMetal: SwiftTypeToMetal{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
@@ -121,12 +124,14 @@ public struct MetalBytesArgument{
         h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
         return h
     }
-    init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int?) {
+    init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int?=nil, metalDeclaration: MetalTypeDeclaration?=nil) {
         self.swiftType = swiftType
         self.space = space
         self.type = type
         self.name = name
         self.index = index
+        
+        self.metalDeclaration = metalDeclaration
     }
     init<T>(binding: MetalBinding<T>, space: String, type: String?=nil, name: String?=nil, index: Int?=nil){
         var n: String
@@ -143,6 +148,17 @@ public struct MetalBytesArgument{
         }
         
         self.init(swiftType: T.self, space: space, type: t, name: n, index: index)
-
+    }
+    init(uniformsContainer: UniformsContainer, name: String?){
+        let type = uniformsContainer.metalType
+        let metalDeclaration = uniformsContainer.metalDeclaration
+        let metalName: String
+        if let name = name{
+            metalName = name
+        }else{
+            metalName = uniformsContainer.metalName!
+        }
+        self.init(swiftType: Any.self, space: "constant",
+                  type: type, name: metalName, metalDeclaration: metalDeclaration)
     }
 }

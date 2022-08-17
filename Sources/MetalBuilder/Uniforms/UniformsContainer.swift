@@ -9,22 +9,31 @@ public final class UniformsContainer: ObservableObject{
     var dict: OrderedDictionary<String, Property>
     var mtlBuffer: MTLBuffer!
     var pointer: UnsafeRawPointer?
-    var metalDeclaration: String
+    var metalDeclaration: MetalTypeDeclaration
+    var metalType: String?
     var metalName: String?
-    let length: Int = 0
+    let length: Int
     let saveToDefaults: Bool
+    
+    var pointerBinding: Binding<UnsafeRawPointer?>{
+        Binding<UnsafeRawPointer?>(
+            get: { self.pointer }, set: { _ in })
+    }
     
     internal init(dict: OrderedDictionary<String, Property>,
                   mtlBuffer: MTLBuffer? = nil,
                   pointer: UnsafeRawPointer? = nil,
-                  metalDeclaration: String = "",
+                  metalDeclaration: MetalTypeDeclaration,
+                  metalType: String? = nil,
                   metalName: String? = nil,
+                  length: Int,
                   saveToDefaults: Bool) {
         self.dict = dict
         self.mtlBuffer = mtlBuffer
         self.pointer = pointer
         self.metalDeclaration = metalDeclaration
         self.metalName = metalName
+        self.length = length
         self.saveToDefaults = saveToDefaults
     }
 }
@@ -36,31 +45,43 @@ public extension UniformsContainer{
          saveToDefaults: Bool = true){
         var dict = u.dict
         var offset = 0
-        var metalDeclaration = "struct " + (type ?? "Uniforms")
-        metalDeclaration += "{\n"
+        var metalType: String
+        if let type = type{
+            metalType = type
+        }else{
+            metalType = "Uniforms"
+        }
+        var declaration = "struct " + metalType
+        declaration += "{\n"
         for t in u.dict{
             let metalType = uniformsTypesToMetalTypes[t.value.type]!
             var property = t.value
             property.offset = offset
             dict[t.key] = property
             offset += metalType.length
-            metalDeclaration += "   "
-            metalDeclaration += t.key + " " + metalType.string + ";\n"
+            declaration += "   "
+            declaration += metalType.string + " " + t.key + ";\n"
         }
-        metalDeclaration += "};\n"
+        declaration += "};\n"
+        
+        let metalDeclaration = MetalTypeDeclaration(typeName: metalType,
+                                                    declaration: declaration)
 
         self.init(dict: dict,
                   metalDeclaration: metalDeclaration,
                   metalName: name,
+                  length: offset,
                   saveToDefaults: saveToDefaults)
     }
     
     /// Setups Uniforms Container before rendering
     /// - Parameter device: MTLDevice
     func setup(device: MTLDevice){
-        var bytes = dict.values.flatMap{ $0.initValue }
-        mtlBuffer = device.makeBuffer(bytes: &bytes, length: length)
-        bufferAllocated = true
+        if pointer == nil{
+            var bytes = dict.values.flatMap{ $0.initValue }
+            mtlBuffer = device.makeBuffer(bytes: &bytes, length: length)
+            bufferAllocated = true
+        }
     }
 }
  

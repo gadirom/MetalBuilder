@@ -14,7 +14,6 @@
 		0055B524288CDCDB008580B0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0055B523288CDCDB008580B0 /* Preview Assets.xcassets */; };
 		0055B530288CDE82008580B0 /* renderFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0055B52F288CDE82008580B0 /* renderFunctions.swift */; };
 		00695B5D28AC42B300E969C8 /* MetalBuilder in Frameworks */ = {isa = PBXBuildFile; productRef = 00695B5C28AC42B300E969C8 /* MetalBuilder */; };
-		0083637528A7F9D500A49D67 /* Structs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0083637428A7F9D500A49D67 /* Structs.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +26,6 @@
 		0055B52B288CDD04008580B0 /* MetalBuilder */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = MetalBuilder; path = ../..; sourceTree = "<group>"; };
 		0055B52F288CDE82008580B0 /* renderFunctions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = renderFunctions.swift; sourceTree = "<group>"; };
 		00695B5B28AC42A800E969C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		0083637428A7F9D500A49D67 /* Structs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Structs.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,7 +64,6 @@
 				00695B5B28AC42A800E969C8 /* Info.plist */,
 				0055B51C288CDCDA008580B0 /* ExampleApp.swift */,
 				0055B51E288CDCDA008580B0 /* ContentView.swift */,
-				0083637428A7F9D500A49D67 /* Structs.swift */,
 				003BE1222894CF8100797903 /* ComputeBlock.swift */,
 				0055B52F288CDE82008580B0 /* renderFunctions.swift */,
 				0055B520288CDCDB008580B0 /* Assets.xcassets */,
@@ -171,7 +168,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0083637528A7F9D500A49D67 /* Structs.swift in Sources */,
 				0055B51F288CDCDA008580B0 /* ContentView.swift in Sources */,
 				0055B530288CDE82008580B0 /* renderFunctions.swift in Sources */,
 				0055B51D288CDCDA008580B0 /* ExampleApp.swift in Sources */,

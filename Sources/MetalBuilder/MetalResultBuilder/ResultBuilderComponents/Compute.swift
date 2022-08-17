@@ -9,10 +9,7 @@ enum GridFit{
          buffer(Int)
 }
 /// Compute Component
-public struct Compute: MetalBuilderComponent, UniformsReceiver{
-    
-    var uniformsContainers: [UniformsContainer] = []
-    var uniformsNames: [String?] = []
+public struct Compute: MetalBuilderComponent{
     
     let kernel: String
     var buffers: [BufferProtocol] = []
@@ -26,6 +23,8 @@ public struct Compute: MetalBuilderComponent, UniformsReceiver{
     
     var bufferIndexCounter = 0
     var textureIndexCounter = 0
+    
+    var uniforms: [UniformsContainer] = []
     
     public init(_ kernel: String){
         self.kernel = kernel
@@ -106,6 +105,18 @@ public extension Compute{
     func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Compute{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name, index: index)
         return bytes(binding, argument: argument)
+    }
+    func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> Compute{
+        var c = self
+        c.uniforms.append(uniforms)
+        var argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
+        argument.index = checkBufferIndex(c: &c, index: argument.index)
+        c.kernelArguments.append(.bytes(argument))
+        let bytes = RawBytes(binding: uniforms.pointerBinding,
+                             length: uniforms.length,
+                             index: argument.index!)
+        c.bytes.append(bytes)
+        return c
     }
     /// Modifier that passes a texture for a compute kernel
     /// - Parameters:

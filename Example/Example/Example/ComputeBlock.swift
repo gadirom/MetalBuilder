@@ -1,5 +1,22 @@
 import MetalBuilder
 import SwiftUI
+import MetalKit
+
+
+struct Particle: MetalStruct{
+    var color: simd_float4 = [0, 0, 0, 0]
+    var position: simd_float2 = [0, 0]
+    var velocity: simd_float2 = [0, 0]
+    var size: Float = 0
+    var angle: Float = 0
+    var angvelo: Float = 0
+}
+
+struct Vertex: MetalStruct
+{
+    var position: simd_float2 = [0, 0]
+    var color: simd_float4 = [0, 0, 0, 0]
+}
 
 struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
@@ -14,12 +31,15 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
     @MetalBinding var particleScale: Float
     
+    let u: UniformsContainer
+    
     var metalContent: MetalContent{
             Compute("particleFunction")
                 .buffer(particlesBuffer, offset: 0, space: "device")
                 .buffer(vertexBuffer, offset: 0, space: "device")
                 .bytes(context.$viewportSize)
                 .bytes($particleScale, name: "scale")
+                .uniforms(u)
                 .threadsFromBuffer(0)
         }
     
@@ -36,8 +56,8 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     int j = id * 3;
 
     vertices[j].color = float4(color.rgb, 0.5);
-    vertices[j+1].color = float4(color.rgb * 0.5, 0.5);
-    vertices[j+2].color = float4(color.rgb * 0.3, 1);
+    vertices[j+1].color = float4((color.rgb + u.color)/2., 0.5);
+    vertices[j+2].color = float4(u.color, 1);
 
     float pi = 3.14;
 

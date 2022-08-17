@@ -1,14 +1,18 @@
 import SwiftUI
 import OrderedCollections
 
-struct UniformsView: View {
+public struct UniformsView: View {
     
-    @ObservedObject var uniforms: UniformsContainer
+    public init(_ uniforms: UniformsContainer){
+        self.uniforms = uniforms
+    }
+    
+    @ObservedObject public var uniforms: UniformsContainer
+    
     @State var values: [[Float]] = []
-    
     @State var defaultsLoaded = false
     
-    var body: some View {
+    public var body: some View {
         ScrollView{
             VStack{
                 HStack{
@@ -56,6 +60,7 @@ struct UniformsView: View {
         }
     }
 }
+//private methods
 extension UniformsView{
     func saveToDefaults(value: [Float], name: String){
         let key = keyForName(name)
