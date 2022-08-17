@@ -28,6 +28,7 @@ public final class UniformsContainer: ObservableObject{
         self.saveToDefaults = saveToDefaults
     }
 }
+//init and setup
 public extension UniformsContainer{
     convenience init(_ u: UniformsDescriptor,
          type: String? = nil,
@@ -54,11 +55,17 @@ public extension UniformsContainer{
                   saveToDefaults: saveToDefaults)
     }
     
+    /// Setups Uniforms Container before rendering
+    /// - Parameter device: MTLDevice
     func setup(device: MTLDevice){
         var bytes = dict.values.flatMap{ $0.initValue }
         mtlBuffer = device.makeBuffer(bytes: &bytes, length: length)
         bufferAllocated = true
     }
+}
+ 
+//Modify and get state of properties with this functions
+public extension UniformsContainer{
     func setFloat(_ value: Float, for key: String){
         guard let property = dict[key]
         else{ return }
@@ -82,14 +89,12 @@ public extension UniformsContainer{
     func setSize(_ size: CGSize, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = [Float(size.width),
-                                                                                                                    Float(size.height)]
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = [Float(size.width), Float(size.height)]
     }
     func setPoint(_ point: CGPoint, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = [Float(point.x),
-                                                                                                                    Float(point.y)]
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = [Float(point.x), Float(point.y)]
     }
     func setRGBA(_ color: Color, for key: String){
         guard let property = dict[key]
@@ -130,6 +135,10 @@ public extension UniformsContainer{
         else{ return nil }
         return mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: 1).pointee
     }
+}
+//import and export Uniforms
+extension UniformsContainer{
+    ///Returns uniforms encoded into json
     var json: Data?{
         var dictToEncode: [String: Encodable] = [:]
         for p in dict{
@@ -154,6 +163,12 @@ public extension UniformsContainer{
             return nil
         }
     }
+    
+    /// Import uniforms from json data
+    /// - Parameters:
+    ///   - json: json data
+    ///   - type: Metal type that will be useed to address uniforms in Metal library code
+    ///   - name: Name of variable by which uniforms will be accessible in Metal library code
     func `import`(json: Data, type: String? = nil, name: String? = nil){
         guard let object = try? JSONSerialization.jsonObject(with: json)
         else { return }

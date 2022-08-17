@@ -40,7 +40,10 @@ var defaultColorAttachments =
                         set: { _ in } )
                        )]
 /// Render Component
-public struct Render: MetalBuilderComponent{
+public struct Render: MetalBuilderComponent, UniformsReceiver{
+    
+    var uniformsContainers: [UniformsContainer] = []
+    var uniformsNames: [String?] = []
     
     let vertexFunc: String
     let fragmentFunc: String
