@@ -2,9 +2,10 @@
 import MetalKit
 import SwiftUI
 
-/// Draw Code Component
+/// ManualEncode Component
 ///
-/// runs plain code in draw function
+/// runs plain code in the  `draw` function.
+/// Use this component to manually encode dispatches on current Command Buffer
 public struct ManualEncode: MetalBuilderComponent{
     
     let code: (MTLDevice, MTLCommandBuffer, CAMetalDrawable?) -> ()

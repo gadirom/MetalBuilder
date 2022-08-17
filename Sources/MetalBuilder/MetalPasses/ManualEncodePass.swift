@@ -4,6 +4,7 @@ import SwiftUI
 
 // manual encoding pass
 final class ManualEncodePass: MetalPass{
+    let restartEncode = false
     var libraryContainer: LibraryContainer?
     
     let component: ManualEncode

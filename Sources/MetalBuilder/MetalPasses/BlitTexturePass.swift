@@ -3,6 +3,7 @@ import SwiftUI
 
 // BlitTexture pass
 class BlitTexturePass: MetalPass{
+    let restartEncode = false
     var libraryContainer: LibraryContainer?
     
     let component: BlitTexture

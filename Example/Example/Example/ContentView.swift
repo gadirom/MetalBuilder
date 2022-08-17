@@ -77,6 +77,9 @@ struct ContentView: View {
                     .primitives(count: vertexCount)
                 EncodeGroup{
                     EncodeGroup{
+                        CPUCompute{
+                            blurRadius+=0.1
+                        }
                         ManualEncode{ [self] device, commandBuffer, drawable in
                             let l = MPSImageLaplacian(device: device)
                             l.bias = laplacianBias

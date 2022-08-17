@@ -131,6 +131,10 @@ struct RenderData{
             if let manualEncodeComponent = component as? ManualEncode{
                 data.passes.append(ManualEncodePass(manualEncodeComponent))
             }
+            //CPUCompute
+            if let cpuComponentComponent = component as? CPUCompute{
+                data.passes.append(CPUComputePass(cpuComponentComponent))
+            }
             //MPSUnary
             if let mpsUnaryComponent = component as? MPSUnary{
                 data.addTextures(newTexs: [mpsUnaryComponent.inTexture, mpsUnaryComponent.outTexture])

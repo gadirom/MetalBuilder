@@ -13,6 +13,7 @@ public enum MetalBuilderComputeError: Error{
 
 //Compute Pass
 final class ComputePass: MetalPass{
+    let restartEncode = false
     var libraryContainer: LibraryContainer?
     
     var component: Compute
