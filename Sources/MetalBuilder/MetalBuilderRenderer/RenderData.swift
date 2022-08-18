@@ -122,7 +122,7 @@ struct RenderData{
                     data.functionsAndArgumentsToAddToMetal
                         .append(vertexAndArg)
                     
-                    let fragment = MetalFunction.vertex(renderComponent.vertexFunc)
+                    let fragment = MetalFunction.fragment(renderComponent.fragmentFunc)
                     let fragAndArg = FunctionAndArguments(function: fragment,
                                                             arguments: renderComponent.fragmentArguments)
                     data.functionsAndArgumentsToAddToMetal

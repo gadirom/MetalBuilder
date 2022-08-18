@@ -110,7 +110,7 @@ public extension Compute{
         var c = self
         c.uniforms.append(uniforms)
         var argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
-        argument.index = checkBufferIndex(c: &c, index: argument.index)
+        argument.index = checkBufferIndex(c: &c, index: nil)
         c.kernelArguments.append(.bytes(argument))
         let bytes = RawBytes(binding: uniforms.pointerBinding,
                              length: uniforms.length,
