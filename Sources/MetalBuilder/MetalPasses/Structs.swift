@@ -49,6 +49,17 @@ struct Texture{
 protocol BytesProtocol{
     func encode(encoder: (UnsafeRawPointer, Int, Int)->())
 }
+
+struct RawBytes: BytesProtocol{
+    let binding: Binding<UnsafeRawPointer?>
+    let length: Int
+    let index:Int
+    
+    func encode(encoder: (UnsafeRawPointer, Int, Int)->()){
+        encoder(binding.wrappedValue!, length, index)
+        }
+}
+
 struct Bytes<T>: BytesProtocol{
     let binding: Binding<T>
     let index: Int

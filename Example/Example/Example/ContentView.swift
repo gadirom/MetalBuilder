@@ -22,11 +22,7 @@ struct ContentView: View {
     
     let uniforms = UniformsContainer(
         UniformsDescriptor()
-            .float("size", range: (0...0.1), value: 0.05)
-            .float3("color")
-            .float4("color4")
-            .float("position", range: -200...200)
-            .float("op"),
+            .float3("color", range: 0...1),
         type: "Unif",
         name: "u"
     )
@@ -68,7 +64,8 @@ struct ContentView: View {
                 ComputeBlock(context: context,
                              particlesBuffer: $particlesBuffer,
                              vertexBuffer: $vertexBuffer,
-                             particleScale: $particleScale)
+                             particleScale: $particleScale,
+                             u: uniforms)
                 Render(vertex: "vertexShader", fragment: "fragmentShader")
                     //.uniforms(uniforms, name: "uni")
                     .toTexture(targetTexture)
@@ -107,6 +104,7 @@ struct ContentView: View {
                                 viewportSize: size)
                 isDrawing = true
             }
+            UniformsView(uniforms)
             Slider(value: $blurRadius.binding, in: 0...5)
             Slider(value: $fDilate, in: 0...10)
                 .onChange(of: fDilate) { newValue in

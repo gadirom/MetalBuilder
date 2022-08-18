@@ -4,7 +4,7 @@ struct FunctionAndArguments{
     var arguments: [MetalFunctionArgument]
 }
 
-public struct SwiftTypeToMetal {
+public struct SwiftTypeToMetal{
     let swiftType: Any.Type
     let metalType: String?
 }
@@ -45,9 +45,15 @@ func parse(library: inout String,
                 
                 
             case .bytes(let bytes):
+                let metalDeclaration: MetalTypeDeclaration?
                 let type = bytes.swiftTypeToMetal
-                if let metalDeclaration = metalTypeDeclaration(from: type.swiftType,
-                                                               name: type.metalType){
+                if let decl = bytes.metalDeclaration{
+                    metalDeclaration = decl
+                }else{
+                    metalDeclaration = metalTypeDeclaration(from: type.swiftType,
+                                                            name: type.metalType)
+                }
+                if let metalDeclaration = metalDeclaration{
                     if !metalTypeNames.contains(metalDeclaration.typeName) {
                         metalTypeNames.append(metalDeclaration.typeName)
                         library = metalDeclaration.declaration + library

@@ -12,6 +12,7 @@ struct RenderData{
     //some of these textures needs to be recreated on resize
     //that's why I keep track on them
     var textures: [MTLTextureContainer] = []
+    //var uniforms: [UniformsContainer] = []
     
     var functionsAndArgumentsToAddToMetal: [FunctionAndArguments] = []
     
@@ -90,6 +91,7 @@ struct RenderData{
                 data.passes.append(ComputePass(computeComponent, libraryContainer: libraryContainer))
                 data.addTextures(newTexs: computeComponent.textures.map{ $0.container })
                 try data.createBuffers(buffers: computeComponent.buffers, device: device)
+                data.createUniforms(computeComponent.uniforms, device: device)
                 
                 if librarySource != ""{
                 
@@ -109,6 +111,7 @@ struct RenderData{
                 data.addTextures(newTexs: renderComponent.colorAttachments.values.map{ $0.texture })
                 try data.createBuffers(buffers: renderComponent.vertexBufs, device: device)
                 try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
+                //data.createUniforms(renderComponent.uniforms, device: device)
                 
                 if librarySource != ""{
                     
@@ -230,6 +233,22 @@ struct RenderData{
             }
         textures.append(contentsOf: newTextures)
     }
+    
+    func createUniforms(_ u: [UniformsContainer], device: MTLDevice){
+        _ = u.map{ u in
+            u.setup(device: device)
+        }
+    }
+//    //adds only unique textures
+//    mutating func addUniforms(newUnis: [UniformsContainer]){
+//        let newUniforms = newUnis
+//            .filter{ newUni in
+//                !textures.contains{ oldUni in
+//                    newUni === oldUni
+//                }
+//            }
+//        uniforms.append(contentsOf: newUniforms)
+//    }
     
     func createTextures(context: MetalBuilderRenderingContext, device: MTLDevice) throws{
         //create textures
