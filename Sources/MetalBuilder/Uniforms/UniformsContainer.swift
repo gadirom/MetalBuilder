@@ -80,6 +80,7 @@ public extension UniformsContainer{
         if pointer == nil{
             var bytes = dict.values.flatMap{ $0.initValue }
             mtlBuffer = device.makeBuffer(bytes: &bytes, length: length)
+            pointer = UnsafeRawPointer(mtlBuffer.contents())
             bufferAllocated = true
         }
     }
@@ -164,7 +165,7 @@ extension UniformsContainer{
         var dictToEncode: [String: Encodable] = [:]
         for p in dict{
             let type = p.value.type
-            let pointer = mtlBuffer.contents().advanced(by: p.value.offset)
+            let pointer = self.pointer!.advanced(by: p.value.offset)
             let value: Encodable
             switch type{
             case .float: value = pointer.bindMemory(to: Float.self, capacity: 1).pointee
