@@ -67,7 +67,7 @@ struct ContentView: View {
                              particleScale: $particleScale,
                              u: uniforms)
                 Render(vertex: "vertexShader", fragment: "fragmentShader")
-                    //.uniforms(uniforms, name: "uni")
+                    .uniforms(uniforms)//, name: "uni")
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
                     .vertexBytes(context.$viewportSize, space: "constant")

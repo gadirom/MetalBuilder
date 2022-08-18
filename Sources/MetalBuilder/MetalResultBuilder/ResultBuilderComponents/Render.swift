@@ -69,6 +69,8 @@ public struct Render: MetalBuilderComponent{
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
     
+    var uniforms: [UniformsContainer] = []
+    
     public init(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle, start: Int = 0, count: Int = 3){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -176,6 +178,21 @@ public extension Render{
         r.fragmentArguments.append(.bytes(argument))
         let bytes = Bytes(binding: binding, index: argument.index!)
         r.fragBytes.append(bytes)
+        return r
+    }
+    func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> Render{
+        var r = self
+        r.uniforms.append(uniforms)
+        var argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
+        argument.index = checkVertexBufferIndex(r: &r, index: nil)
+        r.vertexArguments.append(.bytes(argument))
+        argument.index = checkFragmentBufferIndex(r: &r, index: nil)
+        r.fragmentArguments.append(.bytes(argument))
+        let bytes = RawBytes(binding: uniforms.pointerBinding,
+                             length: uniforms.length,
+                             index: argument.index!)
+        r.fragBytes.append(bytes)
+        r.vertexBytes.append(bytes)
         return r
     }
     func vertexTexture(_ container: MTLTextureContainer, index: Int)->Render{
