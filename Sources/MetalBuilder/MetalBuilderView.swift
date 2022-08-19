@@ -5,23 +5,28 @@ import SwiftUI
 public struct MetalBuilderView: UIViewRepresentable {
     
     public let librarySource: String
+    public let helpers: String
     @Binding public var isDrawing: Bool
     @MetalResultBuilder public let metalContent: MetalRenderingContent
     let onResizeCode: ((CGSize)->())?
     
     public init(librarySource: String,
+                helpers: String = "",
                 isDrawing: Binding<Bool>,
                 @MetalResultBuilder metalContent: @escaping MetalRenderingContent){
         self.init(librarySource: librarySource,
+                  helpers: helpers,
                   isDrawing: isDrawing,
                   metalContent: metalContent,
                   onResizeCode: nil)
     }
     init(librarySource: String,
+         helpers: String,
          isDrawing: Binding<Bool>,
          metalContent: @escaping MetalRenderingContent,
          onResizeCode: ((CGSize)->())?) {
         self.librarySource = librarySource
+        self.helpers = helpers
         self._isDrawing = isDrawing
         self.metalContent = metalContent
         self.onResizeCode = onResizeCode
@@ -29,6 +34,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     
     public func onResize(perform: @escaping (CGSize)->())->MetalBuilderView{
         MetalBuilderView(librarySource: librarySource,
+                         helpers: helpers,
                          isDrawing: $isDrawing,
                          metalContent: metalContent,
                          onResizeCode: perform)
@@ -54,6 +60,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         mtkView.isPaused = false
         
         context.coordinator.setupRenderer(librarySource: librarySource,
+                                          helpers: helpers,
                                           pixelFormat: mtkView.colorPixelFormat,
                                           metalContent: metalContent)
         
@@ -78,12 +85,13 @@ public struct MetalBuilderView: UIViewRepresentable {
             }
         }
         
-        func setupRenderer(librarySource: String, pixelFormat: MTLPixelFormat, metalContent: MetalRenderingContent){
+        func setupRenderer(librarySource: String, helpers: String, pixelFormat: MTLPixelFormat, metalContent: MetalRenderingContent){
             do{
                 renderer =
                 try MetalBuilderRenderer(device: device,
                                          pixelFormat: pixelFormat,
                                          librarySource: librarySource,
+                                         helpers: helpers,
                                          renderingContent: metalContent)
             }catch{ print(error) }
         }

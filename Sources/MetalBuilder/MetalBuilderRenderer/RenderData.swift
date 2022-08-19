@@ -16,10 +16,9 @@ struct RenderData{
     
     var functionsAndArgumentsToAddToMetal: [FunctionAndArguments] = []
     
-    //var libraryBindings: [LibraryContainer] = []
-    
+//    var helpers = ""
+
     var pixelFormat: MTLPixelFormat?
-    //var device: MTLDevice!
     
     var context: MetalBuilderRenderingContext!
     
@@ -27,6 +26,7 @@ struct RenderData{
     
     init(from renderingContent: MetalRenderingContent,
          librarySource: String,
+         helpers: String,
          options: MetalBuilderCompileOptions,
          context: MetalBuilderRenderingContext,
          device: MTLDevice,
@@ -43,6 +43,7 @@ struct RenderData{
                                     pixelFormat: pixelFormat,
                                     content: content,
                                     librarySource: librarySource,
+                                    helpers: helpers,
                                     options: options,
                                     context: context)
         self.append(data)
@@ -55,16 +56,19 @@ struct RenderData{
                         pixelFormat: MTLPixelFormat,
                         content: MetalContent,
                         librarySource: String,
+                        helpers: String,
                         options: MetalBuilderCompileOptions,
                         context: MetalBuilderRenderingContext) throws -> Self{
         
         var librarySource = librarySource
+        var helpers = helpers
         let libraryContainer = LibraryContainer()
         
         return try compile(device: device,
                            pixelFormat: pixelFormat,
                            content: content,
                            librarySource: &librarySource,
+                           helpers: &helpers,
                            libraryContainer: libraryContainer,
                            options: options,
                            context: context,
@@ -75,6 +79,7 @@ struct RenderData{
                         pixelFormat: MTLPixelFormat,
                         content: MetalContent,
                         librarySource: inout String,
+                        helpers: inout String,
                         libraryContainer: LibraryContainer,
                         options: MetalBuilderCompileOptions,
                         context: MetalBuilderRenderingContext,
@@ -162,6 +167,7 @@ struct RenderData{
                     pixelFormat: pixelFormat,
                     content: encodeGroupComponent.metalContent,
                     librarySource: &librarySource,
+                    helpers: &helpers,
                     libraryContainer: libraryContainer,
                     options: options,
                     context: context,
@@ -180,6 +186,7 @@ struct RenderData{
                         pixelFormat: pixelFormat,
                         content: buildingBlockComponent.metalContent,
                         librarySource: buildingBlockComponent.librarySource,
+                        helpers: buildingBlockComponent.helpers,
                         options: options,
                         context: context
                     )
@@ -187,12 +194,14 @@ struct RenderData{
                 }else{
                     //compile to shared library
                     librarySource = buildingBlockComponent.librarySource + librarySource
+                    helpers += buildingBlockComponent.helpers
                     
                     let blockData = try compile(
                         device: device,
                         pixelFormat: pixelFormat,
                         content: buildingBlockComponent.metalContent,
                         librarySource: &librarySource,
+                        helpers: &helpers,
                         libraryContainer: libraryContainer,
                         options: options,
                         context: context,
@@ -213,10 +222,12 @@ struct RenderData{
                 try parse(library: &librarySource,
                           funcArguments: data.functionsAndArgumentsToAddToMetal)
                 
+                let libraryPrefix: String
                 switch options.libraryPrefix{
-                case .`default`: librarySource = kMetalBuilderDefaultLibraryPrefix + librarySource
-                case .custom(let prefix): librarySource = prefix + librarySource
+                case .`default`: libraryPrefix = kMetalBuilderDefaultLibraryPrefix
+                case .custom(let prefix): libraryPrefix = prefix
                 }
+                librarySource = libraryPrefix + helpers + librarySource
                 libraryContainer.library = try device.makeLibrary(source: librarySource, options: options.mtlCompileOptions)
             }
         }

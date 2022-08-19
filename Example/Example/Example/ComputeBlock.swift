@@ -18,6 +18,14 @@ struct Vertex: MetalStruct
     var color: simd_float4 = [0, 0, 0, 0]
 }
 
+let sincos2 = """
+        float2 sincos2(float a){
+                     float cosa;
+                     float sina = sincos(a, cosa);
+                     return float2(sina, cosa);
+        }
+"""
+
 struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
     let compileOptions: MetalBuilderCompileOptions? = nil //MetalBuilderCompileOptions(mtlCompileOptions: nil, libraryPrefix: .default)
@@ -42,6 +50,8 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
                 .uniforms(u)
                 .threadsFromBuffer(0)
         }
+   
+    let helpers: String = sincos2
     
     let librarySource = """
 
@@ -61,16 +71,13 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
 
     float pi = 3.14;
 
-    float sinA = sin(angle);
-    float sinA23 = sin(angle+pi*2/3);
-    float sinA43 = sin(angle+pi*4/3);
-    float cosA = cos(angle);
-    float cosA23 = cos(angle+pi*2/3);
-    float cosA43 = cos(angle+pi*4/3);
+    float2 scA = sincos2(angle);
+    float2 scA23 = sincos2(angle+pi*2/3);
+    float2 scA43 = sincos2(angle+pi*4/3);
 
-    vertices[j].position = position + float2(size*sinA, size*cosA);
-    vertices[j+1].position = position + float2(size*sinA23, size*cosA23);
-    vertices[j+2].position = position + float2(size*sinA43, size*cosA43);
+    vertices[j].position = position + size*scA;
+    vertices[j+1].position = position + size*scA23;
+    vertices[j+2].position = position + size*scA43;
 
     float2 viewport = float2(viewportSize);
 

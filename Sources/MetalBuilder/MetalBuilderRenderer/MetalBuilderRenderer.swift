@@ -41,6 +41,7 @@ public extension MetalBuilderRenderer{
     convenience init(device: MTLDevice,
                 pixelFormat: MTLPixelFormat,
                 librarySource: String,
+                helpers: String,
                 options: MetalBuilderCompileOptions = .default,
                 renderingContent: MetalRenderingContent) throws{
         
@@ -54,11 +55,12 @@ public extension MetalBuilderRenderer{
         do{
         
             renderData = try RenderData(from: renderingContent,
-                                              librarySource: librarySource,
-                                              options: options,
-                                              context: context,
-                                              device: device,
-                                              pixelFormat: pixelFormat)
+                                        librarySource: librarySource,
+                                        helpers: helpers,
+                                        options: options,
+                                        context: context,
+                                        device: device,
+                                        pixelFormat: pixelFormat)
             
         }catch{
             print(error)
