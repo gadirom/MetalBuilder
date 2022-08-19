@@ -7,6 +7,7 @@ public struct MetalBuilderCompileOptions{
     
     public static let `default` = MetalBuilderCompileOptions(mtlCompileOptions: nil, libraryPrefix: .default)
     
+    
     public init(mtlCompileOptions: MTLCompileOptions?, libraryPrefix: MetalBuilderLibraryPrefix) {
         self.mtlCompileOptions = mtlCompileOptions
         self.libraryPrefix = libraryPrefix
