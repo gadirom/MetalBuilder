@@ -73,7 +73,7 @@ public extension Compute{
         return c
     }
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
-                   space: String, type: String?=nil, name: String?=nil) -> Compute{
+                   space: String="constant", type: String?=nil, name: String?=nil) -> Compute{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
         return self.buffer(container, offset: offset, argument: argument)

@@ -130,7 +130,7 @@ public extension Render{
         return r
     }
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
-                   space: String, type: String?=nil, name: String?=nil) -> Render{
+                   space: String="constant", type: String?=nil, name: String?=nil) -> Render{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
 
