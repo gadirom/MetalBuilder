@@ -1,7 +1,7 @@
 
 import Foundation
 
-enum MetalFunction{
+enum MetalFunction: Equatable{
     case vertex(String), fragment(String), compute(String)
     var prefix: String{
         switch self{
