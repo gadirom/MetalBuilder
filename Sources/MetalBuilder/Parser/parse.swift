@@ -17,6 +17,7 @@ func parse(library: inout String,
            funcArguments: [FunctionAndArguments]) throws{
     
     var funcArguments = funcArguments
+    deleteDublicateFuncs(&funcArguments)
     var metalTypeNames: [String] = []
 
     for funcAndArgID in funcArguments.indices{
@@ -98,4 +99,14 @@ func parse(library: inout String,
                            toHeaderOf: funcAndArg.function, in: &library)
     }
     print(library)
+}
+
+func deleteDublicateFuncs(_ fa: inout [FunctionAndArguments]){
+    var faOut: [FunctionAndArguments] = []
+    for f in fa{
+        if !faOut.contains(where: { $0.function == f.function }){
+            faOut.append(f)
+        }
+    }
+    fa = faOut
 }
