@@ -176,6 +176,7 @@ struct RenderData{
                 data.textures.append(contentsOf: groupData.textures)
                 let groupPass = EncodeGroupPass(groupData.passes, repeating: encodeGroupComponent.repeating)
                 data.passes.append(groupPass)
+                data.functionsAndArgumentsToAddToMetal.append(contentsOf: groupData.functionsAndArgumentsToAddToMetal)
             }
             //Building Block
             if let buildingBlockComponent = component as? MetalBuildingBlock{
