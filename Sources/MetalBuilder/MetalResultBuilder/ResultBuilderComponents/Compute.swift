@@ -106,6 +106,11 @@ public extension Compute{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name, index: index)
         return bytes(binding, argument: argument)
     }
+    func bytes<T>(_ binding: Binding<T>, space: String = "constant", type: String?=nil, name: String, index: Int?=nil)->Compute{
+        let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
+        let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name, index: index)
+        return bytes(binding, argument: argument)
+    }
     func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> Compute{
         var c = self
         c.uniforms.append(uniforms)

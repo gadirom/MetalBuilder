@@ -40,6 +40,12 @@ public struct MetalBinding<T>{
         self.metalType = metalType
         self.metalName = metalName
     }
+    public init(binding: Binding<T>,
+                metalType: String?, metalName: String?){
+        self.binding = binding
+        self.metalType = metalType
+        self.metalName = metalName
+    }
 }
 
 public struct BytesDescriptor{

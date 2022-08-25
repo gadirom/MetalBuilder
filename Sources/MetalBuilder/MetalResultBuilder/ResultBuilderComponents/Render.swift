@@ -165,9 +165,23 @@ public extension Render{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
         return vertexBytes(binding, argument: argument)
     }
+    func vertexBytes<T>(_ binding: Binding<T>, space: String = "constant", type: String?=nil, name: String, index: Int?=nil)->Render{
+        let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
+        let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name)
+        return vertexBytes(binding, argument: argument)
+    }
     func fragBytes<T>(_ binding: Binding<T>, index: Int)->Render{
         var r = self
         let bytes = Bytes(binding: binding, index: index)
+        r.fragBytes.append(bytes)
+        return r
+    }
+    func fragBytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Render{
+        var r = self
+        var argument = argument
+        argument.index = checkFragmentBufferIndex(r: &r, index: argument.index)
+        r.fragmentArguments.append(.bytes(argument))
+        let bytes = Bytes(binding: binding.binding, index: argument.index!)
         r.fragBytes.append(bytes)
         return r
     }
@@ -179,6 +193,15 @@ public extension Render{
         let bytes = Bytes(binding: binding, index: argument.index!)
         r.fragBytes.append(bytes)
         return r
+    }
+    func fragBytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Render{
+        let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
+        return fragBytes(binding, argument: argument)
+    }
+    func fragBytes<T>(_ binding: Binding<T>, space: String = "constant", type: String?=nil, name: String, index: Int?=nil)->Render{
+        let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
+        let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name)
+        return fragBytes(binding, argument: argument)
     }
     func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> Render{
         var r = self
