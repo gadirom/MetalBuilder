@@ -63,20 +63,21 @@ public extension Compute{
         c.buffers.append(buf)
         return c
     }
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument)->Compute{
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument, fitThreads: Bool=false)->Compute{
         var c = self
         var argument = argument
         argument.index = checkBufferIndex(c: &c, index: argument.index)
         c.kernelArguments.append(.buffer(argument))
         let buf = Buffer(container: container, offset: offset, index: argument.index!)
         c.buffers.append(buf)
+        c.gridFit = .buffer(argument.index!)
         return c
     }
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
-                   space: String="constant", type: String?=nil, name: String?=nil) -> Compute{
+                   space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false) -> Compute{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
-        return self.buffer(container, offset: offset, argument: argument)
+        return self.buffer(container, offset: offset, argument: argument, fitThreads: fitThreads)
     }
     func bytes<T>(_ binding: Binding<T>, index: Int)->Compute{
         var c = self
