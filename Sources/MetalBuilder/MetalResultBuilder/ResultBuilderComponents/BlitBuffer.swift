@@ -29,7 +29,7 @@ public extension BlitBuffer{
     func destination<T>(_ container: MTLBufferContainer<T>)->BlitBuffer{
         var b = self
         let buffer = Buffer(container: container, offset: 0, index: 0)
-        b.inBuffer = buffer
+        b.outBuffer = buffer
         return b
     }
     func count(count: Int)->BlitBuffer{
