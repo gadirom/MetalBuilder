@@ -70,7 +70,9 @@ public extension Compute{
         c.kernelArguments.append(.buffer(argument))
         let buf = Buffer(container: container, offset: offset, index: argument.index!)
         c.buffers.append(buf)
-        c.gridFit = .buffer(argument.index!)
+        if fitThreads{
+            c.gridFit = .buffer(argument.index!)
+        }
         return c
     }
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
