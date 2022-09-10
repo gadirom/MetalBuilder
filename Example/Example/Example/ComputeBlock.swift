@@ -43,12 +43,11 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
     var metalContent: MetalContent{
             Compute("particleFunction")
-                .buffer(particlesBuffer, offset: 0, space: "device")
+                .buffer(particlesBuffer, offset: 0, space: "device", fitThreads: true)
                 .buffer(vertexBuffer, offset: 0, space: "device")
                 .bytes(context.$viewportSize)
                 .bytes($particleScale, name: "scale")
                 .uniforms(u)
-                .threadsFromBuffer(0)
         }
    
     let helpers: String = sincos2
