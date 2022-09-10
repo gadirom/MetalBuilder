@@ -75,7 +75,7 @@ struct ContentView: View {
                 EncodeGroup{
                     EncodeGroup{
                         CPUCompute{
-                            blurRadius+=0.1
+                            //blurRadius+=0.1
                         }
                         ManualEncode{ [self] device, commandBuffer, drawable in
                             let l = MPSImageLaplacian(device: device)
