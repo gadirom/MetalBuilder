@@ -62,7 +62,8 @@ public struct MetalBuilderView: UIViewRepresentable {
         context.coordinator.setupRenderer(librarySource: librarySource,
                                           helpers: helpers,
                                           pixelFormat: mtkView.colorPixelFormat,
-                                          metalContent: metalContent)
+                                          metalContent: metalContent,
+                                          scaleFactor: Float(mtkView.contentScaleFactor))
         
         return mtkView
     }
@@ -85,7 +86,10 @@ public struct MetalBuilderView: UIViewRepresentable {
             }
         }
         
-        func setupRenderer(librarySource: String, helpers: String, pixelFormat: MTLPixelFormat, metalContent: MetalRenderingContent){
+        func setupRenderer(librarySource: String, helpers: String,
+                           pixelFormat: MTLPixelFormat,
+                           metalContent: MetalRenderingContent,
+                           scaleFactor: Float){
             do{
                 renderer =
                 try MetalBuilderRenderer(device: device,
@@ -93,6 +97,7 @@ public struct MetalBuilderView: UIViewRepresentable {
                                          librarySource: librarySource,
                                          helpers: helpers,
                                          renderingContent: metalContent)
+                renderer?.setScaleFactor(scaleFactor)
             }catch{ print(error) }
         }
         
