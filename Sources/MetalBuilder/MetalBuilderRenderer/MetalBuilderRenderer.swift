@@ -80,6 +80,9 @@ public extension MetalBuilderRenderer{
 
         endEncode(commandBuffer: commandBuffer, drawable: drawable)
     }
+    func setScaleFactor(_ sf: Float){
+        renderData.context.scaleFactor = sf
+    }
     func setSize(size: CGSize){
         renderData.context.viewportSize = simd_uint2([UInt32(size.width), UInt32(size.height)])
         //update textures
