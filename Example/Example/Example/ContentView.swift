@@ -74,7 +74,7 @@ struct ContentView: View {
                     .primitives(count: vertexCount)
                 EncodeGroup{
                     EncodeGroup{
-                        CPUCompute{
+                        CPUCompute{ _ in
                             //blurRadius+=0.1
                         }
                         ManualEncode{ [self] device, commandBuffer, drawable in

@@ -20,7 +20,7 @@ case textureNotCreated, noDescriptor, descriptorSizeContainsZero
 }
 
 public final class MTLTextureContainer{
-    public var descriptor: TextureDescriptor
+    var descriptor: TextureDescriptor
     public var texture: MTLTexture?
     
     init(_ descriptor: TextureDescriptor){

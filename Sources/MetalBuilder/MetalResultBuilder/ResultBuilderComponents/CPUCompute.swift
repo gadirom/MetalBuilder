@@ -10,9 +10,9 @@ import SwiftUI
 /// The subsequent components will be encoded in a separate Command Buffer.
 public struct CPUCompute: MetalBuilderComponent{
     
-    let code: () -> ()
+    let code: (MTLDevice) -> ()
     
-    public init(code: @escaping () -> ()) {
+    public init(code: @escaping (MTLDevice) -> ()) {
         self.code = code
     }
 }
