@@ -16,7 +16,7 @@ final class CPUComputePass: MetalPass{
         self.component = component
     }
     func setup(device: MTLDevice) {
-       // self.device = device
+        self.device = device
     }
     func encode(_ commandBuffer: MTLCommandBuffer, _ drawable: CAMetalDrawable?) {
         component.code(device)
