@@ -35,6 +35,9 @@ public extension EncodeGroup{
         d.repeating = n
         return d
     }
+    func repeating(_ n: MetalBinding<Int>)->EncodeGroup{
+        return repeating(n.binding)
+    }
     func repeating(_ n: Int)->EncodeGroup{
         var d = self
         d.repeating = Binding<Int>.constant(n)

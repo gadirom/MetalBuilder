@@ -80,7 +80,7 @@ case bufferNotCreated
 
 public class BufferContainer{
     
-    var buffer: MTLBuffer?
+    public var buffer: MTLBuffer?
     
     public let count: Int?
     public var elementSize: Int?
