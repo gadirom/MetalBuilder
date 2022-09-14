@@ -62,7 +62,7 @@ public extension MTLTextureContainer{
         let bytesPerRow = MemoryLayout<T>.size * region!.size.width
         let bytesPerImage = bytesPerRow*region!.size.height * region!.size.depth
         var array = [T](repeating: T.init(repeating: 0 as! T.Scalar), count: bytesPerImage)
-        texArray.withUnsafeMutableBytes{ bts in
+        array.withUnsafeMutableBytes{ bts in
             texture!.getBytes(bts.baseAddress!,
                              bytesPerRow: bytesPerRow,
                              from: region!,
