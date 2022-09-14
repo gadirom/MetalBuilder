@@ -117,8 +117,10 @@ public final class MTLBufferContainer<T>: BufferContainer{
                 .bufferNotCreated
         }
     }
-    
-    public func getData(count: Int? = nil) -> Data{
+}
+//load and store data
+public extension MTLBufferContainer{
+    func getData(count: Int? = nil) -> Data{
         var count = count
         if count != nil{
             count = self.count
@@ -128,7 +130,7 @@ public final class MTLBufferContainer<T>: BufferContainer{
         return data
     }
     
-    public func load(data: Data, count: Int? = nil){
+    func load(data: Data, count: Int? = nil){
         var count = count
         if count != nil{
             count = self.count

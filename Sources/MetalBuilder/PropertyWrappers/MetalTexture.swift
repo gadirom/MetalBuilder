@@ -49,6 +49,9 @@ public final class MTLTextureContainer{
         }
         self.texture = texture
     }
+}
+//load and store data
+public extension MTLTextureContainer{
     func getData<T>(type: T.Type, region: MTLRegion?=nil)->Data{
         var region = region
         if region == nil{
@@ -69,7 +72,7 @@ public final class MTLTextureContainer{
         let data = Data(bytes: &texArray, count: bytesPerImage)
         return data
     }
-    public func load<T>(data: Data, type: T.Type, region: MTLRegion? = nil){
+    func load<T>(data: Data, type: T.Type, region: MTLRegion? = nil){
         var region = region
         if region == nil{
             region = MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
