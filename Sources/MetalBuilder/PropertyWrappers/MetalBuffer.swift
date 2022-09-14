@@ -103,7 +103,16 @@ public final class MTLBufferContainer<T>: BufferContainer{
 
     public var pointer: UnsafeMutablePointer<T>?
     
+    public var data: Data{
+        let length = elementSize!*count!
+        let data = Data(bytes: buffer!.contents(), count: length)
+        return data
+    }
+    
+    weak var device: MTLDevice?
+    
     func create(device: MTLDevice) throws{
+        self.device = device
         elementSize = MemoryLayout<T>.stride
         let length = elementSize!*count!
         buffer = device.makeBuffer(length: length)
@@ -112,6 +121,16 @@ public final class MTLBufferContainer<T>: BufferContainer{
         }else{
             throw MetalBuilderBufferError
                 .bufferNotCreated
+        }
+    }
+    
+    public func from(data: Data){
+        let length = elementSize!*count!
+        data.withUnsafeBytes{ bts in
+            buffer = device!.makeBuffer(bytes: bts.baseAddress!, length: length)
+            if let buffer = buffer{
+                pointer = buffer.contents().bindMemory(to: T.self, capacity: length)
+            }
         }
     }
 }
