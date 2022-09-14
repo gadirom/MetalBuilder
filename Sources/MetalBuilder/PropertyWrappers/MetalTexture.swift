@@ -49,7 +49,7 @@ public final class MTLTextureContainer{
         }
         self.texture = texture
     }
-    func getData<T>(device: MTLDevice, type: T.Type, region: MTLRegion?=nil)->Data{
+    func getData<T>(type: T.Type, region: MTLRegion?=nil)->Data{
         var region = region
         if region == nil{
             region = MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
