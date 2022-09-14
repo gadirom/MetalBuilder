@@ -52,24 +52,23 @@ public final class MTLTextureContainer{
 }
 //load and store data
 public extension MTLTextureContainer{
-    func getData<T>(type: T.Type, region: MTLRegion?=nil)->Data{
+    func getData<T:SIMD >(type: T.Type, region: MTLRegion?=nil)->Data{
         var region = region
         if region == nil{
             region = MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
                                size: MTLSize(width: texture!.width,
                                              height: texture!.height, depth: 1))
         }
-        let bytesPerRow = MemoryLayout<T>.size *
-                                                            region!.size.width
+        let bytesPerRow = MemoryLayout<T>.size * region!.size.width
         let bytesPerImage = bytesPerRow*region!.size.height * region!.size.depth
-        var texArray = [SIMD4<UInt8>](repeating: SIMD4<UInt8>(repeating: 0), count: bytesPerImage)
+        var array = [T](repeating: T.init(repeating: 0 as! T.Scalar), count: bytesPerImage)
         texArray.withUnsafeMutableBytes{ bts in
             texture!.getBytes(bts.baseAddress!,
                              bytesPerRow: bytesPerRow,
                              from: region!,
                              mipmapLevel: 0)
         }
-        let data = Data(bytes: &texArray, count: bytesPerImage)
+        let data = Data(bytes: &array, count: bytesPerImage)
         return data
     }
     func load<T>(data: Data, type: T.Type, region: MTLRegion? = nil){
