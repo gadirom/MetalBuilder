@@ -122,7 +122,7 @@ public final class MTLBufferContainer<T>: BufferContainer{
 public extension MTLBufferContainer{
     func getData(count: Int? = nil) -> Data{
         var count = count
-        if count != nil{
+        if count == nil{
             count = self.count
         }
         let length = elementSize!*count!
@@ -132,7 +132,7 @@ public extension MTLBufferContainer{
     
     func load(data: Data, count: Int? = nil){
         var count = count
-        if count != nil{
+        if count == nil{
             count = self.count
         }
         let length = elementSize!*count!
