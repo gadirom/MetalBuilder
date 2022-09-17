@@ -139,13 +139,16 @@ public extension Compute{
         c.textures.append(tex)
         return c
     }
-    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Compute{
+    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument, fitThreads: Bool=false)->Compute{
         var c = self
         var argument = argument
         argument.index = checkTextureIndex(c: &c, index: argument.index)
         c.kernelArguments.append(.texture(argument))
         let tex = Texture(container: container, index: argument.index!)
         c.textures.append(tex)
+        if fitThreads{
+            c.gridFit = .fitTexture(container)
+        }
         return c
     }
     /// Modifier that passes a drawable texture for a compute kernel
