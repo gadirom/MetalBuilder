@@ -79,7 +79,7 @@ public extension MetalBuilderRenderer{
             justStarted = false
         }
         renderData.context.time = Float(CFAbsoluteTimeGetCurrent()-startTime)
-        print(renderData.context.time)
+        //print(renderData.context.time)
         
         for pass in renderData.passes{
             if pass.restartEncode{
