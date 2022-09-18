@@ -11,6 +11,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     @Binding public var isDrawing: Bool
     @MetalResultBuilder public let metalContent: MetalRenderingContent
     let onResizeCode: ((CGSize)->())?
+    @State var background = false
     
     public init(librarySource: String,
                 helpers: String = "",
@@ -74,8 +75,16 @@ public struct MetalBuilderView: UIViewRepresentable {
         context.coordinator.onResizeCode = onResizeCode
         
         switch scenePhase{
-        case .background: context.coordinator.enterBackground()
-        case .active, .inactive: context.coordinator.exitBackground()
+        case .background:
+            if !background{
+                background = true
+                context.coordinator.enterBackground()
+            }
+        case .active, .inactive:
+            if background{
+                background = false
+                context.coordinator.exitBackground()
+            }
         @unknown default:
             break
         }
