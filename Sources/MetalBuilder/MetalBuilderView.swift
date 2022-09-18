@@ -4,6 +4,8 @@ import SwiftUI
 
 public struct MetalBuilderView: UIViewRepresentable {
     
+    @Environment(\.scenePhase) var scenePhase
+    
     public let librarySource: String
     public let helpers: String
     @Binding public var isDrawing: Bool
@@ -70,6 +72,13 @@ public struct MetalBuilderView: UIViewRepresentable {
     public func updateUIView(_ uiView: UIView, context: Context){
         context.coordinator.isDrawing = isDrawing
         context.coordinator.onResizeCode = onResizeCode
+        
+        switch scenePhase{
+        case .background: context.coordinator.enterBackground()
+        case .active, .inactive: context.coordinator.exitBackground()
+        @unknown default:
+            break
+        }
     }
     public class Coordinator: NSObject, MTKViewDelegate {
         
@@ -115,6 +124,13 @@ public struct MetalBuilderView: UIViewRepresentable {
             do {
                 try renderer?.draw(drawable: drawable)
             } catch { print(error) }
+        }
+        
+        public func enterBackground(){
+            renderer?.pauseTime()
+        }
+        public func exitBackground(){
+            renderer?.resumeTime()
         }
     }
 }

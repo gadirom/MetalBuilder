@@ -12,6 +12,10 @@ public final class MetalBuilderRenderer{
     var device: MTLDevice!
     var commandQueue: MTLCommandQueue!
     
+    var startTime: Double = 0
+    var pausedTime: Double = 0
+    var justStarted = true
+    
     //@MetalState var viewportSize: simd_uint2 = [0, 0]
 }
 
@@ -70,6 +74,13 @@ public extension MetalBuilderRenderer{
        
         var commandBuffer = try startEncode()
         
+        if justStarted {
+            startTime = CFAbsoluteTimeGetCurrent()
+            justStarted = false
+        }
+        renderData.context.time = Float(CFAbsoluteTimeGetCurrent()-startTime)
+        print(renderData.context.time)
+        
         for pass in renderData.passes{
             if pass.restartEncode{
                 commandBuffer = try restartEncode(commandBuffer: commandBuffer,
@@ -89,5 +100,18 @@ public extension MetalBuilderRenderer{
         do{
             try renderData.updateTextures(device: device)
         }catch{ print(error) }
+    }
+    
+    func pauseTime(){
+        guard !justStarted
+        else{return}
+        pausedTime = CFAbsoluteTimeGetCurrent()
+        print("time paused!")
+    }
+    func resumeTime(){
+        guard !justStarted
+        else{return}
+        startTime += CFAbsoluteTimeGetCurrent()-pausedTime
+        print("time resumed!")
     }
 }
