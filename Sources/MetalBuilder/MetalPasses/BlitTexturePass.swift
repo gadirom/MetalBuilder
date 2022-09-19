@@ -15,6 +15,10 @@ class BlitTexturePass: MetalPass{
     }
     func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
         if let inTexture = component.inTexture?.texture{
+            
+            var sourceSlice = component.sourceSlice?.wrappedValue
+            var destinationSlice = component.destinationSlice?.wrappedValue
+            
             var size: MTLSize
             if let s = component.size?.wrappedValue{
                 size = s
@@ -31,12 +35,19 @@ class BlitTexturePass: MetalPass{
                     return
                 }
                 outTexture = t
+                destinationSlice = 0
             }
             let blitTextureEncoder = commandBuffer.makeBlitCommandEncoder()
             blitTextureEncoder?.copy(from: inTexture,
-                              sourceSlice: 0, sourceLevel: 0, sourceOrigin: MTLOriginMake(0, 0, 0), sourceSize: size,
+                                     sourceSlice: sourceSlice!,
+                                     sourceLevel: 0,
+                                     sourceOrigin: MTLOriginMake(0, 0, 0),
+                                     sourceSize: size,
                               
-                              to: outTexture, destinationSlice: 0, destinationLevel: 0, destinationOrigin: MTLOriginMake(0, 0, 0))
+                                     to: outTexture,
+                                     destinationSlice: destinationSlice!,
+                                     destinationLevel: 0,
+                                     destinationOrigin: MTLOriginMake(0, 0, 0))
             blitTextureEncoder?.endEncoding()
         }
     }
