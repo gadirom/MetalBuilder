@@ -137,6 +137,10 @@ public extension TextureDescriptor{
         descriptor.textureType = type
         return self
     }
+    func arrayLength(_ n: Int) -> TextureDescriptor {
+        descriptor.arrayLength = n
+        return self
+    }
     func usage(_ usage: MTLTextureUsage) -> TextureDescriptor {
         descriptor.usage = usage
         return self
