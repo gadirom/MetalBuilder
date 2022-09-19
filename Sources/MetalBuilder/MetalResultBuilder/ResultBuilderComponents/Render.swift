@@ -207,15 +207,21 @@ public extension Render{
         var r = self
         r.uniforms.append(uniforms)
         var argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
+        //Add to vertex shader
         argument.index = checkVertexBufferIndex(r: &r, index: nil)
         r.vertexArguments.append(.bytes(argument))
-        argument.index = checkFragmentBufferIndex(r: &r, index: nil)
-        r.fragmentArguments.append(.bytes(argument))
-        let bytes = RawBytes(binding: uniforms.pointerBinding,
+        let vertexBytes = RawBytes(binding: uniforms.pointerBinding,
                              length: uniforms.length,
                              index: argument.index!)
-        r.fragBytes.append(bytes)
-        r.vertexBytes.append(bytes)
+        r.vertexBytes.append(vertexBytes)
+        //add to fragment shader
+        argument.index = checkFragmentBufferIndex(r: &r, index: nil)
+        r.fragmentArguments.append(.bytes(argument))
+        let fragBytes = RawBytes(binding: uniforms.pointerBinding,
+                             length: uniforms.length,
+                             index: argument.index!)
+        r.fragBytes.append(fragBytes)
+        
         return r
     }
     func vertexTexture(_ container: MTLTextureContainer, index: Int)->Render{
