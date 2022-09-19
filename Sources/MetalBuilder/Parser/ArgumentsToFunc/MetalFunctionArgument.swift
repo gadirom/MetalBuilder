@@ -1,5 +1,6 @@
 
 import Foundation
+import Metal
 
 enum MetalBuilderFunctionArgumentsError: Error {
 case bufferArgumentError(String), textureArgumentError(String)
@@ -10,9 +11,9 @@ public enum MetalFunctionArgument{
          buffer(MetalBufferArgument),
          bytes(MetalBytesArgument)
     
-    var string: String{
+    func string() throws -> String{
         switch self{
-        case .texture(let arg): return arg.string
+        case .texture(let arg): return try arg.string()
         case .buffer(let arg): return arg.string
         case .bytes(let arg): return arg.string
         }
@@ -28,11 +29,29 @@ public enum MetalFunctionArgument{
 
 public struct MetalTextureArgument{
     let type: String
+    var textureType: MTLTextureType?=nil
     let access: String
     let name: String
     var index: Int?
-    var string: String{
-        var h = "texture2d<_TYPE_, access::_ACCESS_> _NAME_ [[texture(_INDEX_)]]"
+    func string() throws -> String{
+        var prefix = ""
+        switch textureType!{
+        case .type2D: prefix = "texture2d"
+        case .type2DArray: prefix = "texture2d_array"
+        case .type1D: prefix = "texture1d"
+        case .type1DArray: prefix = "texture1d_array"
+        case .type2DMultisample: prefix = "texture2d_ms"
+        case .type2DMultisampleArray: prefix = "texture2d_ms_array"
+        case .typeCube: prefix = "texturecube"
+        case .typeCubeArray: prefix = "texturecube_array"
+        case .type3D: prefix = "texture3d"
+        //case .typeTextureBuffer: prefix = ""
+        //case .none: prefix = ""
+        //case .some(_): prefix =
+        default: throw MetalBuilderFunctionArgumentsError
+                .textureArgumentError("Unsupported texture type: "+String(describing: textureType))
+        }
+        var h = prefix+"<_TYPE_, access::_ACCESS_> _NAME_ [[texture(_INDEX_)]]"
         h = h.replacingOccurrences(of: "_TYPE_", with: type)
         h = h.replacingOccurrences(of: "_ACCESS_", with: access)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
