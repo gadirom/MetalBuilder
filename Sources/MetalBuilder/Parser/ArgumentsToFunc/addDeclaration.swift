@@ -21,6 +21,6 @@ func addDeclaration(of argument: MetalFunctionArgument,
     }else{
         comma = ", "
     }
-    let string = argument.string
-    source.replaceSubrange(bracketId, with: "("+string+comma)
+    let string = try argument.string()
+    source.replaceSubrange(bracketId, with: "(" + string + comma)
 }

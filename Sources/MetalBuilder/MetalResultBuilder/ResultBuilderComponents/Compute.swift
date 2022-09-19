@@ -143,6 +143,7 @@ public extension Compute{
         var c = self
         var argument = argument
         argument.index = checkTextureIndex(c: &c, index: argument.index)
+        argument.textureType = container.descriptor.mtlTextureDescriptor()!.textureType
         c.kernelArguments.append(.texture(argument))
         let tex = Texture(container: container, index: argument.index!)
         c.textures.append(tex)
@@ -174,6 +175,7 @@ public extension Compute{
         var c = self
         var argument = argument
         argument.index = checkTextureIndex(c: &c, index: argument.index)
+        argument.textureType = .type2D
         c.kernelArguments.append(.texture(argument))
         c.drawableTextureIndex = argument.index
         return c
