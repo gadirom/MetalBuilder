@@ -143,7 +143,7 @@ public extension Compute{
         var c = self
         var argument = argument
         argument.index = checkTextureIndex(c: &c, index: argument.index)
-        argument.textureType = container.descriptor.mtlTextureDescriptor()!.textureType
+        argument.textureType = container.descriptor.descriptor.textureType
         c.kernelArguments.append(.texture(argument))
         let tex = Texture(container: container, index: argument.index!)
         c.textures.append(tex)
