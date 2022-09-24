@@ -14,6 +14,8 @@ public struct BlitTexture: MetalBuilderComponent{
     var sourceSlice: Binding<Int>?
     var destinationSlice: Binding<Int>?
     
+    var sliceCount: Binding<Int> = Binding<Int>.constant(1)
+    
     var size: Binding<MTLSize>?
     public init(){
     }
@@ -33,9 +35,19 @@ public extension BlitTexture{
         b.outTexture = container
         return b
     }
-    func size(size: Binding<MTLSize>)->BlitTexture{
+    func sliceCount(_ binding: Binding<Int>)->BlitTexture{
+        var b = self
+        b.sliceCount = binding
+        return b
+    }
+    func sliceCount(_ n: Int)->BlitTexture{
+        var b = self
+        b.sliceCount = Binding<Int>.constant(n)
+        return b
+    }
+    /*func size(size: Binding<MTLSize>)->BlitTexture{
         var b = self
         b.size = size
         return b
-    }
+    }*/
 }

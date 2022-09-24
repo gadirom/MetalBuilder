@@ -19,12 +19,12 @@ class BlitTexturePass: MetalPass{
             var sourceSlice = component.sourceSlice?.wrappedValue
             var destinationSlice = component.destinationSlice?.wrappedValue
             
-            var size: MTLSize
+            /*var size: MTLSize
             if let s = component.size?.wrappedValue{
                 size = s
             }else{
                 size = MTLSize(width: inTexture.width, height: inTexture.height, depth: 1)
-            }
+            }*/
             var outTexture: MTLTexture
             if let t = component.outTexture?.texture{
                 outTexture = t
@@ -41,13 +41,12 @@ class BlitTexturePass: MetalPass{
             blitTextureEncoder?.copy(from: inTexture,
                                      sourceSlice: sourceSlice!,
                                      sourceLevel: 0,
-                                     sourceOrigin: MTLOriginMake(0, 0, 0),
-                                     sourceSize: size,
                               
                                      to: outTexture,
                                      destinationSlice: destinationSlice!,
                                      destinationLevel: 0,
-                                     destinationOrigin: MTLOriginMake(0, 0, 0))
+                                     sliceCount: component.sliceCount.wrappedValue,
+                                     levelCount: 1)
             blitTextureEncoder?.endEncoding()
         }
     }
