@@ -28,24 +28,26 @@ public struct UniformsView: View {
                 ForEach(values.indices, id:\.self){ id in
                     let value = values[id]
                     let (name, property) = uniforms.dict.elements[id]
-                    switch property.type{
-                    case .float: SingleSlider(label: name,
-                                              range: property.range ?? (0...1),
-                                              initialValue: value[0]){
-                        uniforms.setFloat($0, for: name)
-                        saveToDefaults(value: [$0], name: name)
-                    }
-                    default: MultiSlider(label: name,
-                                         range: property.range ?? (0...1),
-                                         initialValue: value) { value in
-                        saveToDefaults(value: value, name: name)
-                        switch value.count{
-                        case 2: uniforms.setFloat2(value, for: name)
-                        case 3: uniforms.setFloat3(value, for: name)
-                        case 4: uniforms.setFloat4(value, for: name)
-                        default: break
+                    if property.show{
+                        switch property.type{
+                        case .float: SingleSlider(label: name,
+                                                  range: property.range ?? (0...1),
+                                                  initialValue: value[0]){
+                            uniforms.setFloat($0, for: name)
+                            saveToDefaults(value: [$0], name: name)
                         }
-                    }
+                        default: MultiSlider(label: name,
+                                             range: property.range ?? (0...1),
+                                             initialValue: value) { value in
+                                saveToDefaults(value: value, name: name)
+                                switch value.count{
+                                case 2: uniforms.setFloat2(value, for: name)
+                                case 3: uniforms.setFloat3(value, for: name)
+                                case 4: uniforms.setFloat4(value, for: name)
+                                default: break
+                                }
+                            }
+                        }
                     }
                 }
             }
