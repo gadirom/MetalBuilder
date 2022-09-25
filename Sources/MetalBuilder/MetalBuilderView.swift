@@ -11,7 +11,6 @@ public struct MetalBuilderView: UIViewRepresentable {
     @Binding public var isDrawing: Bool
     @MetalResultBuilder public let metalContent: MetalRenderingContent
     let onResizeCode: ((CGSize)->())?
-    @State var background = false
     
     public init(librarySource: String,
                 helpers: String = "",
@@ -76,13 +75,13 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         switch scenePhase{
         case .background:
-            if !background{
-                background = true
+            if !context.coordinator.background{
+                context.coordinator.background = true
                 context.coordinator.enterBackground()
             }
         case .active, .inactive:
-            if background{
-                background = false
+            if  context.coordinator.background{
+                context.coordinator.background = false
                 context.coordinator.exitBackground()
             }
         @unknown default:
@@ -96,6 +95,8 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         var isDrawing = false
         var onResizeCode: ((CGSize)->())?
+        
+        var background = false
         
         override init(){
             super.init()
