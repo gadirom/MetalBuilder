@@ -1,8 +1,5 @@
 # MetalBuilder
 <p align="center">
-   <img src="assets/Metal.svg" alt="Metal Logo & Name"/>
-</p>
-<p align="center">
     <img src="https://img.shields.io/badge/platforms-iPadOS_15_-blue.svg" alt="iPadOS" />
     <a href="https://swift.org/about/#swiftorg-and-open-source"><img src="https://img.shields.io/badge/Swift-5.5-orange.svg" alt="Swift 5.5" /></a>
     <a href="https://developer.apple.com/metal/"><img src="https://img.shields.io/badge/Metal-2.4-green.svg" alt="Metal 2.4" /></a>
