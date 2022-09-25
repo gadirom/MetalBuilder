@@ -1,3 +1,4 @@
+//This app was made as an entry for the creative coding challenge (twitter: #WCCChallenge by @sableRaph)
 import SwiftUI
 import MetalBuilder
 import MetalKit
