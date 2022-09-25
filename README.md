@@ -8,7 +8,7 @@
     
 </p>
 
-##Overview
+## Overview
 
 MetalBuilder is an open source Swift Package for declarative dispatching of Metal shaders.
 
@@ -18,7 +18,7 @@ Also, if you're new to Metal or to GPU programming in general, MetalBuilder will
  
 Since MetalBuilder is purely Swift Package, you can import it in Swift Playgrounds on an iPad.
 
-##How to use
+## How to use
 
 MetalBuilder is a wrapper that alllows you to manage Metal objects in a functional manner mimicking SwiftUI. E.g., buffers and textures are created using property wrappers like this: 
 ```
