@@ -16,7 +16,7 @@ class BlitTexturePass: MetalPass{
     func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
         if let inTexture = component.inTexture?.texture{
             
-            var sourceSlice = component.sourceSlice?.wrappedValue
+            let sourceSlice = component.sourceSlice?.wrappedValue
             var destinationSlice = component.destinationSlice?.wrappedValue
             
             /*var size: MTLSize

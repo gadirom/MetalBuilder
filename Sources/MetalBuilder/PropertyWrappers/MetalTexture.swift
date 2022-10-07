@@ -24,8 +24,15 @@ public final class MTLTextureContainer{
     weak var device: MTLDevice?
     public var texture: MTLTexture?
     
-    init(_ descriptor: TextureDescriptor){
+    public init(_ descriptor: TextureDescriptor){
         self.descriptor = descriptor
+    }
+    
+    public func create(device: MTLDevice, drawable: CAMetalDrawable) throws{
+        try create(device: device,
+               viewportSize: simd_uint2(x: UInt32(drawable.texture.width),
+                                        y: UInt32(drawable.texture.height)),
+               pixelFormat: drawable.texture.pixelFormat)
     }
     
     func create(device: MTLDevice,
@@ -57,7 +64,7 @@ public extension MTLTextureContainer{
         if region == nil{
             region = MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
                                size: MTLSize(width: texture!.width,
-                                             height: texture!.height, depth: 1))
+                                             height: texture!.height, depth: texture!.depth))
         }
         let bytesPerRow = MemoryLayout<T>.size * region!.size.width
         let bytesPerImage = bytesPerRow*region!.size.height * region!.size.depth
@@ -76,7 +83,7 @@ public extension MTLTextureContainer{
         if region == nil{
             region = MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
                                size: MTLSize(width: texture!.width,
-                                             height: texture!.height, depth: 1))
+                                             height: texture!.height, depth: texture!.depth))
         }
         let bytesPerRow = MemoryLayout<T>.size * region!.size.width
         data.withUnsafeBytes{ bts in
