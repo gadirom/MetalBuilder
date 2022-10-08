@@ -174,7 +174,9 @@ struct RenderData{
                     level: level+1
                 )
                 data.textures.append(contentsOf: groupData.textures)
-                let groupPass = EncodeGroupPass(groupData.passes, repeating: encodeGroupComponent.repeating)
+                let groupPass = EncodeGroupPass(groupData.passes,
+                                                repeating: encodeGroupComponent.repeating,
+                                                active: encodeGroupComponent.active)
                 data.passes.append(groupPass)
                 data.functionsAndArgumentsToAddToMetal.append(contentsOf: groupData.functionsAndArgumentsToAddToMetal)
             }
