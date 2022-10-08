@@ -234,7 +234,7 @@ public extension Render{
         var r = self
         var argument = argument
         argument.index = checkVertexTextureIndex(r: &r, index: argument.index)
-        argument.textureType = container.descriptor.descriptor.textureType
+        argument.textureType = container.descriptor.type
         r.vertexArguments.append(.texture(argument))
         let tex = Texture(container: container, index: argument.index!)
         r.vertexTextures.append(tex)
@@ -250,7 +250,7 @@ public extension Render{
         var r = self
         var argument = argument
         argument.index = checkVertexTextureIndex(r: &r, index: argument.index)
-        argument.textureType = container.descriptor.descriptor.textureType
+        argument.textureType = container.descriptor.type
         r.fragmentArguments.append(.texture(argument))
         let tex = Texture(container: container, index: argument.index!)
         r.fragTextures.append(tex)

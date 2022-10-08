@@ -102,15 +102,24 @@ case fixed(MTLPixelFormat), fromDrawable
 }
 
 public struct TextureDescriptor{
-    var descriptor = MTLTextureDescriptor()
     var size: TextureSize? = nil
     var pixelFormat: TexturePixelFormat? = nil
+    
+    var type: MTLTextureType = .type2D
+    var arrayLength: Int = 1
+    var usage: MTLTextureUsage = [.shaderRead, .shaderWrite]
+    
     
     public init() {}
     
     mutating func mtlTextureDescriptor(viewportSize: simd_uint2 = [0,0],
                                        drawablePixelFormat: MTLPixelFormat? = nil)->MTLTextureDescriptor?{
-        let d = descriptor
+        
+        let d = MTLTextureDescriptor()
+        d.textureType = type
+        d.arrayLength = arrayLength
+        d.usage = usage
+        
         //Determine size
         var s: (Int, Int)?
         if size == nil{ size = .fromViewport(1) }
@@ -141,15 +150,18 @@ public struct TextureDescriptor{
 }
 public extension TextureDescriptor{
     func type(_ type: MTLTextureType) -> TextureDescriptor {
-        descriptor.textureType = type
+        var d = self
+        d.type = type
         return self
     }
     func arrayLength(_ n: Int) -> TextureDescriptor {
-        descriptor.arrayLength = n
+        var d = self
+        d.arrayLength = n
         return self
     }
     func usage(_ usage: MTLTextureUsage) -> TextureDescriptor {
-        descriptor.usage = usage
+        var d = self
+        d.usage = usage
         return self
     }
     func pixelFormat(_ pixelFormat: MTLPixelFormat) -> TextureDescriptor {
