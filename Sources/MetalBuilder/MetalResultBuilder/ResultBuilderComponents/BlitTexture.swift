@@ -21,7 +21,7 @@ public struct BlitTexture: MetalBuilderComponent{
     }
 }
 
-// chaining dunctions
+// chaining functions
 public extension BlitTexture{
     func source(_ container: MTLTextureContainer, slice: Binding<Int>=Binding<Int>.constant(0))->BlitTexture{
         var b = self
