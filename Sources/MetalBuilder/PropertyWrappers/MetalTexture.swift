@@ -107,7 +107,7 @@ public struct TextureDescriptor{
     
     var type: MTLTextureType = .type2D
     var arrayLength: Int = 1
-    var usage: MTLTextureUsage = [.shaderRead, .shaderWrite]
+    var usage: MTLTextureUsage = [.shaderRead, .shaderWrite, .renderTarget]
     
     
     public init() {}
