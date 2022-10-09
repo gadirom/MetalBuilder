@@ -160,6 +160,11 @@ struct RenderData{
                                        device: device)
                 data.passes.append(BlitBufferPass(blitBufferComponent))
             }
+            //Scale Texture
+            if let scaleTextureComponent = component as? ScaleTexture{
+                data.addTextures(newTexs: [scaleTextureComponent.inTexture, scaleTextureComponent.outTexture, scaleTextureComponent.inplaceTexture])
+                data.passes.append(ScaleTexturePass(scaleTextureComponent))
+            }
             //EncodeGroup
             if let encodeGroupComponent = component as? EncodeGroup{
                 let groupData = try compile(
