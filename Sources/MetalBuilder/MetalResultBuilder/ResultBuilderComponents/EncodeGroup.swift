@@ -4,49 +4,48 @@ import SwiftUI
 ///
 /// initializes a group of components
 /// 'repeating' indicates number of subsequent dispatches for the group
-/// the group can have it's own Metal library source code
 public struct EncodeGroup: MetalBuilderComponent{
     
     var repeating: Binding<Int>
     var active: Binding<Bool>
-    public let librarySource: String?
+    //public let librarySource: String?
     @MetalResultBuilder public let metalContent: MetalContent
     
     public init(repeating: MetalBinding<Int>,
                 active: MetalBinding<Bool>,
-                librarySource: String? = nil,
+                //librarySource: String? = nil,
                 @MetalResultBuilder metalContent: ()->MetalContent) {
         self.init(repeating: repeating.binding,
                   active: active.binding,
-                  librarySource: librarySource,
+                  //librarySource: librarySource,
                   metalContent: metalContent)
     }
     
     public init(repeating: Int = 1,
                 active: MetalBinding<Bool>,
-                librarySource: String? = nil,
+                //librarySource: String? = nil,
                 @MetalResultBuilder metalContent: ()->MetalContent) {
         self.init(repeating: Binding<Int>.constant(repeating),
                   active: active.binding,
-                  librarySource: librarySource,
+                  //librarySource: librarySource,
                   metalContent: metalContent)
     }
     
     public init(repeating: Int = 1,
                 active: Binding<Bool> = Binding<Bool>.constant(true),
-                librarySource: String? = nil,
+                //librarySource: String? = nil,
                 @MetalResultBuilder metalContent: ()->MetalContent) {
         self.init(repeating: Binding<Int>.constant(repeating),
                   active: active,
-                  librarySource: librarySource,
+                  //librarySource: librarySource,
                   metalContent: metalContent)
     }
     
     public init(repeating: Binding<Int>,
                 active: Binding<Bool> = Binding<Bool>.constant(true),
-                librarySource: String? = nil,
+                //librarySource: String? = nil,
                 @MetalResultBuilder metalContent: ()->MetalContent) {
-        self.librarySource = librarySource
+        //self.librarySource = librarySource
         self.metalContent = metalContent()
         self.repeating = repeating
         self.active = active

@@ -2,7 +2,9 @@ import SwiftUI
 
 /// Protocol for declaring autonomous building blocks
 ///
-/// if compileOptions are not nil the source will compile into separate library
+/// if compileOptions are not nil the source will compile into separate library (still has issues)
+/// otherwise the contents of `librarySource` will be concatinated to global LibrarySource.
+/// - Important: If two or more BuildingBlocks have identical `librarySource` this source will be added only once.
 public protocol MetalBuildingBlock: MetalBuilderComponent{
     var context: MetalBuilderRenderingContext { get set }
     var helpers: String { get }
