@@ -23,7 +23,7 @@ struct RenderData{
     var context: MetalBuilderRenderingContext!
     
     //hold hashes for librarySources of BuildingBlocks to eliminate dublicates
-    var librarySourceHashes: [Int] = []
+    static var librarySourceHashes: [Int] = []
     
     init(){}
     
@@ -50,6 +50,8 @@ struct RenderData{
                                     options: options,
                                     context: context)
         self.append(data)
+        
+        Self.librarySourceHashes = []
         
         try data.setupPasses(device: device)
         try data.createTextures(context: context, device: device)
@@ -89,8 +91,6 @@ struct RenderData{
                         level: Int) throws -> Self{
         
         var data = RenderData()
-        //data.device = device
-        //data.pixelFormat = pixelFormat
         
         //init passes
         for component in content{
@@ -206,8 +206,8 @@ struct RenderData{
                     //compile to shared library
                     let source = buildingBlockComponent.librarySource
                     let sourceHash = source.hashValue
-                    if !data.librarySourceHashes.contains(sourceHash){
-                        data.librarySourceHashes.append(sourceHash)
+                    if !Self.librarySourceHashes.contains(sourceHash){
+                        Self.librarySourceHashes.append(sourceHash)
                         librarySource = source + librarySource
                         helpers += buildingBlockComponent.helpers
                     }
@@ -332,7 +332,7 @@ struct RenderData{
         passes.append(contentsOf: data.passes)
         textures.append(contentsOf: data.textures)
         
-        librarySourceHashes.append(contentsOf: data.librarySourceHashes)
+        //librarySourceHashes.append(contentsOf: data.librarySourceHashes)
         
         functionsAndArgumentsToAddToMetal
             .append(contentsOf: data.functionsAndArgumentsToAddToMetal)
