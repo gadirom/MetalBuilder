@@ -161,6 +161,7 @@ public extension Compute{
     func drawableTexture(index: Int)->Compute{
         var c = self
         c.drawableTextureIndex = index
+        c.gridFit = .drawable
         return c
     }
     /// Modifier that passes a drawable texture for a compute kernel
@@ -178,6 +179,7 @@ public extension Compute{
         argument.textureType = .type2D
         c.kernelArguments.append(.texture(argument))
         c.drawableTextureIndex = argument.index
+        c.gridFit = .drawable
         return c
     }
     func grid(size: Binding<MTLSize>)->Compute{
