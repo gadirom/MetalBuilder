@@ -9,10 +9,13 @@ final class LibraryContainer{
 struct RenderData{
     var passes: [MetalPass] = []
     
-    //some of these textures needs to be recreated on resize
+    //All the individual textures that are used for encoding.
+    //When MTKView first calls mtkView() to set size initially, the textures are created
+    //(since you may need to know pixelFormat of the drawable for that).
+    //Some of these textures needs to be recreated on resize
     //that's why I keep track on them
     var textures: [MTLTextureContainer] = []
-    //var uniforms: [UniformsContainer] = []
+    var texturesCreated = false
     
     var functionsAndArgumentsToAddToMetal: [FunctionAndArguments] = []
     
@@ -54,7 +57,7 @@ struct RenderData{
         Self.librarySourceHashes = []
         
         try data.setupPasses(device: device)
-        try data.createTextures(context: context, device: device)
+        //try data.createTextures(context: context, device: device)
     }
     
     static func compile(device: MTLDevice,
@@ -266,16 +269,18 @@ struct RenderData{
             u.setup(device: device)
         }
     }
-//    //adds only unique textures
-//    mutating func addUniforms(newUnis: [UniformsContainer]){
-//        let newUniforms = newUnis
-//            .filter{ newUni in
-//                !textures.contains{ oldUni in
-//                    newUni === oldUni
-//                }
-//            }
-//        uniforms.append(contentsOf: newUniforms)
-//    }
+    
+    func setViewport(size: CGSize, device: MTLDevice){
+        context.viewportSize = simd_uint2([UInt32(size.width), UInt32(size.height)])
+        //update textures
+        do{
+            if !texturesCreated{
+                try createTextures(context: context, device: device)
+            }else{
+                try updateTextures(device: device)
+            }
+        }catch{ print(error) }
+    }
     
     func createTextures(context: MetalBuilderRenderingContext, device: MTLDevice) throws{
         //create textures
