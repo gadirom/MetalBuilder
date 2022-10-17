@@ -122,7 +122,7 @@ struct RenderData{
                 data.addTextures(newTexs: renderComponent.colorAttachments.values.map{ $0.texture })
                 try data.createBuffers(buffers: renderComponent.vertexBufs, device: device)
                 try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
-                //data.createUniforms(renderComponent.uniforms, device: device)
+                data.createUniforms(renderComponent.uniforms, device: device)
                 
                 if librarySource != ""{
                     
@@ -270,7 +270,7 @@ struct RenderData{
         }
     }
     
-    func setViewport(size: CGSize, device: MTLDevice){
+    mutating func setViewport(size: CGSize, device: MTLDevice){
         context.viewportSize = simd_uint2([UInt32(size.width), UInt32(size.height)])
         //update textures
         do{
