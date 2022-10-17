@@ -276,6 +276,7 @@ struct RenderData{
         do{
             if !texturesCreated{
                 try createTextures(context: context, device: device)
+                texturesCreated = true
             }else{
                 try updateTextures(device: device)
             }
