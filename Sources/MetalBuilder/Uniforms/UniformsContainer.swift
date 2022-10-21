@@ -94,19 +94,28 @@ public extension UniformsContainer{
         mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: 1).pointee = value
     }
     func setFloat2(_ array: [Float], for key: String){
+        setFloat2(simd_float2(array), for: key)
+    }
+    func setFloat2(_ value: simd_float2, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = simd_float2(array)
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = value
     }
     func setFloat3(_ array: [Float], for key: String){
+        setFloat3(simd_float3(array), for: key)
+    }
+    func setFloat3(_ value: simd_float3, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float3.self, capacity: 1).pointee = simd_float3(array)
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float3.self, capacity: 1).pointee = value
     }
     func setFloat4(_ array: [Float], for key: String){
+        setFloat4(simd_float4(array), for: key)
+    }
+    func setFloat4(_ value: simd_float4, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float4.self, capacity: 1).pointee = simd_float4(array)
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float4.self, capacity: 1).pointee = value
     }
     func setSize(_ size: CGSize, for key: String){
         guard let property = dict[key]
