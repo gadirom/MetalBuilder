@@ -1,4 +1,3 @@
-import MetalBuilder
 import AVFoundation
 
 class CameraConfiguration{
@@ -44,10 +43,10 @@ public struct Camera: MetalBuildingBlock{
         self._ready = ready
     }
     
-    var context: MetalBuilderRenderingContext
-    var helpers = ""
-    var librarySource = ""
-    var compileOptions: MetalBuilderCompileOptions? = nil
+    public var context: MetalBuilderRenderingContext
+    public var helpers = ""
+    public var librarySource = ""
+    public var compileOptions: MetalBuilderCompileOptions? = nil
     
     //Parameters
     let texture: MTLTextureContainer
@@ -65,7 +64,7 @@ public struct Camera: MetalBuildingBlock{
     
     let cameraConfiguration = CameraConfiguration()
     
-    var metalContent: MetalContent{
+    public var metalContent: MetalContent{
         EncodeGroup{//Setup Camera
                 ManualEncode{ device,_,_ in
                     if cameraConfiguration.changed(position: position,
