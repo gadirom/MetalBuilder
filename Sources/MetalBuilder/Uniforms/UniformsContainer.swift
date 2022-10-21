@@ -118,27 +118,19 @@ public extension UniformsContainer{
         mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float4.self, capacity: 1).pointee = value
     }
     func setSize(_ size: CGSize, for key: String){
-        guard let property = dict[key]
-        else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = [Float(size.width), Float(size.height)]
+        setFloat2([Float(size.width), Float(size.height)], for: key)
     }
     func setPoint(_ point: CGPoint, for key: String){
-        guard let property = dict[key]
-        else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = [Float(point.x), Float(point.y)]
+        setFloat2([Float(point.x), Float(point.y)], for: key)
     }
     func setRGBA(_ color: Color, for key: String){
-        guard let property = dict[key]
-        else{ return }
         if let c = UIColor(color).cgColor.components{
-            mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float4.self, capacity: 1).pointee = simd_float4(c.map{ Float($0) })
+            setFloat4(c.map{ Float($0) }, for: key)
         }
     }
     func setRGB(_ color: Color, for key: String){
-        guard let property = dict[key]
-        else{ return }
         if let c = UIColor(color).cgColor.components{
-            mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float3.self, capacity: 1).pointee = simd_float3(c.map{ Float($0) }.dropLast())
+            setFloat3(c.map{ Float($0)}, for: key)
         }
     }
     func setArray(_ value: [Float], for key: String){
