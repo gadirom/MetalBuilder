@@ -52,18 +52,26 @@ public struct UniformsView: View {
                 }
             }
         }
-        .onChange(of: uniforms.bufferAllocated){ _ in
-            loadInitial()
-            if uniforms.saveToDefaults && !defaultsLoaded{
-                print("loadDef")
-                loadFomDefaults()
-                defaultsLoaded = true
+        .onAppear{
+            if uniforms.bufferAllocated{
+               startup()
             }
+        }
+        .onChange(of: uniforms.bufferAllocated){ _ in
+            startup()
         }
     }
 }
 //private methods
 extension UniformsView{
+    func startup(){
+        loadInitial()
+        if uniforms.saveToDefaults && !defaultsLoaded{
+            print("loadDef")
+            loadFomDefaults()
+            defaultsLoaded = true
+        }
+    }
     func saveToDefaults(value: [Float], name: String){
         let key = keyForName(name)
         print("saved "+key, value)
