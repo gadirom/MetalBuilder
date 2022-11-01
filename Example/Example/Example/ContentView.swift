@@ -55,6 +55,8 @@ struct ContentView: View {
     @State var n = 1
     @State var laplacianPasses = 0
     
+    @State var showUniforms = false
+    
 //    @MetalState var mSize = MTLSize(width: particleCount, height: 1, depth: 1)
 //    @MetalState var viewport = MTLViewport(originX: 0.0, originY: 0.0, width: 100, height: 100, znear: 0.0, zfar: 1.0)
     
@@ -104,7 +106,15 @@ struct ContentView: View {
                                 viewportSize: size)
                 isDrawing = true
             }
-            UniformsView(uniforms)
+            if showUniforms{
+                UniformsView(uniforms)
+            }
+            Button {
+                showUniforms.toggle()
+            } label: {
+                Text("Show Uniforms")
+            }
+
             Slider(value: $blurRadius.binding, in: 0...5)
             Slider(value: $fDilate, in: 0...10)
                 .onChange(of: fDilate) { newValue in

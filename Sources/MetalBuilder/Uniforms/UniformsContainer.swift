@@ -1,6 +1,7 @@
 import MetalKit
 import SwiftUI
 import OrderedCollections
+import CoreMedia
 
 public final class UniformsContainer: ObservableObject{
     
@@ -77,21 +78,91 @@ public extension UniformsContainer{
     /// Setups Uniforms Container before rendering
     /// - Parameter device: MTLDevice
     func setup(device: MTLDevice){
+        print("Uniforms Container Setup")
         if pointer == nil{
             var bytes = dict.values.flatMap{ $0.initValue }
             mtlBuffer = device.makeBuffer(bytes: &bytes, length: length)
             pointer = UnsafeRawPointer(mtlBuffer.contents())
+            
+            if saveToDefaults{
+                print("load Defaults")
+                loadFomDefaults()
+                //defaultsLoaded = true
+            }
             bufferAllocated = true
         }
     }
+    /// Loads Initial Values for Uniforms
+    /// - Parameter device: MTLDevice
+    func loadInitialValues(){
+        print("Load Initial Values for Uniforms")
+        _ = dict.map{ self.setArray($0.value.initValue, for: $0.key) }
+    }
+}
+
+//Saving to and loading from User Defaults
+public extension UniformsContainer{
+    ///Loads uniforms values from User Defaults
+    func loadFomDefaults(){
+        print("Loading Uniforns values from User Defaults...")
+        for p in dict.enumerated(){
+            let key = userDefaultsKeyForUniformsKey(p.element.key)
+            if let value = UserDefaults.standard.array(forKey: key){
+                if let value = value as? [Float]{
+                    print("Loaded: ",key, value)
+                    setArray(value, for: p.element.key)
+                    //values[p.offset] = value
+                }
+            }
+        }
+    }
+    /// Save uniform value to User Defaults
+    /// - Parameters:
+    ///   - value: an array containing the value to store
+    ///   It should be of the exact length, e.g. 1 for `Float`, 2 for `simd_float2`, ect.
+    ///   - key: uniform name
+    func saveToDefaults(value: [Float], key: String){
+        guard saveToDefaults
+        else{ return }
+        let key = userDefaultsKeyForUniformsKey(key)
+        print("Saved to User Defaults: "+key, value)
+        UserDefaults.standard.set(value, forKey: key)
+    }
+    
+    /// Returns the key that is used to store and retrive the value from User Defaults.
+    /// - Parameter name: uniform name
+    /// - Returns: key in User Defaults storage
+    func userDefaultsKeyForUniformsKey(_ name: String)->String{
+        prefixForDefaults+name
+    }
+    /// Returns the name of a uniform value for the key that is used to store and retrive that value from User Defaults.
+    /// - Parameter key: key in User Defaults storage
+    /// - Returns: uniforms property name
+    func uniformsKeyForUserDefaultsKey(_ key: String)->String?{
+        if let range = key.range(of: prefixForDefaults){
+            return String(key[range.upperBound...])
+        }else{ return nil }
+    }
+    var prefixForDefaults: String{
+        "Uniforms-"
+    }
+    ///Clears the User Defaults storage
+    ///Attention! All other stored values will also be erased!
+    func clearDefaults(){
+        print("Clearing Defaults for Uniforms")
+        let domain = Bundle.main.bundleIdentifier!
+        UserDefaults.standard.removePersistentDomain(forName: domain)
+        UserDefaults.standard.synchronize()
+    }
 }
  
-//Modify and get state of properties with this functions
+//Setters
 public extension UniformsContainer{
     func setFloat(_ value: Float, for key: String){
         guard let property = dict[key]
         else{ return }
         mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: 1).pointee = value
+        saveToDefaults(value: [value], key: key)
     }
     func setFloat2(_ array: [Float], for key: String){
         setFloat2(simd_float2(array), for: key)
@@ -100,6 +171,7 @@ public extension UniformsContainer{
         guard let property = dict[key]
         else{ return }
         mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = value
+        saveToDefaults(value: value.floatArray, key: key)
     }
     func setFloat3(_ array: [Float], for key: String){
         setFloat3(simd_float3(array), for: key)
@@ -108,6 +180,7 @@ public extension UniformsContainer{
         guard let property = dict[key]
         else{ return }
         mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float3.self, capacity: 1).pointee = value
+        saveToDefaults(value: value.floatArray, key: key)
     }
     func setFloat4(_ array: [Float], for key: String){
         setFloat4(simd_float4(array), for: key)
@@ -116,6 +189,7 @@ public extension UniformsContainer{
         guard let property = dict[key]
         else{ return }
         mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float4.self, capacity: 1).pointee = value
+        saveToDefaults(value: value.floatArray, key: key)
     }
     func setSize(_ size: CGSize, for key: String){
         setFloat2([Float(size.width), Float(size.height)], for: key)
@@ -152,6 +226,16 @@ public extension UniformsContainer{
                 }
             }
         }
+    }
+}
+//Getters
+extension UniformsContainer{
+    func getArray(_ key: String)->[Float]?{
+        guard let property = dict[key]
+        else{ return nil }
+        let indices = property.initValue.indices
+        let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: indices.count)
+        return indices.map{ pointer[$0] }
     }
     func getFloat(_ key: String)->Float?{
         guard let property = dict[key]
@@ -229,6 +313,12 @@ extension UniformsContainer{
             }
         }
         self.dict = selfDict
+    }
+}
+
+extension SIMD{
+    var floatArray: [Float]{
+        self.indices.map{self[$0] as! Float}
     }
 }
 

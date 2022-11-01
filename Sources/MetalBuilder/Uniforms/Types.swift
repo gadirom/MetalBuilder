@@ -1,6 +1,6 @@
 import MetalKit
 
-enum UniformsPropertyType{
+enum UniformsPropertyType: Int{
     case float, float2, float3, float4
 }
 struct MetalType{

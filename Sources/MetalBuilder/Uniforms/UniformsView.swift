@@ -10,7 +10,6 @@ public struct UniformsView: View {
     @ObservedObject public var uniforms: UniformsContainer
     
     @State var values: [[Float]] = []
-    @State var defaultsLoaded = false
     
     public var body: some View {
         ScrollView{
@@ -34,12 +33,12 @@ public struct UniformsView: View {
                                                   range: property.range ?? (0...1),
                                                   initialValue: value[0]){
                             uniforms.setFloat($0, for: name)
-                            saveToDefaults(value: [$0], name: name)
+                            //saveToDefaults(value: [$0], name: name)
                         }
                         default: MultiSlider(label: name,
                                              range: property.range ?? (0...1),
                                              initialValue: value) { value in
-                                saveToDefaults(value: value, name: name)
+                                //saveToDefaults(value: value, name: name)
                                 switch value.count{
                                 case 2: uniforms.setFloat2(value, for: name)
                                 case 3: uniforms.setFloat3(value, for: name)
@@ -65,52 +64,17 @@ public struct UniformsView: View {
 //private methods
 extension UniformsView{
     func startup(){
-        loadInitial()
-        if uniforms.saveToDefaults && !defaultsLoaded{
-            print("load Defaults")
-            loadFomDefaults()
-            defaultsLoaded = true
-        }
+        loadValues()
     }
-    func saveToDefaults(value: [Float], name: String){
-        let key = keyForName(name)
-        print("saved "+key, value)
-        UserDefaults.standard.set(value, forKey: key)
-    }
-    func loadInitial(){
-        values = uniforms.dict.values.map{ $0.initValue }
-    }
-    func loadFomDefaults(){
-        for p in uniforms.dict.enumerated(){
-            let key = keyForName(p.element.key)
-            if let value = UserDefaults.standard.array(forKey: key){
-                if let value = value as? [Float]{
-                    print(key, value)
-                    uniforms.setArray(value, for: p.element.key)
-                    values[p.offset] = value
-                }
-            }
-        }
-    }
-    func keyForName(_ name: String)->String{
-        prefixForDefaults+name
-    }
-    func nameForKey(_ key: String)->String?{
-        if let range = key.range(of: prefixForDefaults){
-            return String(key[range.upperBound...])
-        }else{ return nil }
-    }
-    var prefixForDefaults: String{
-        "Uniforms-"
+    func loadValues(){
+        print("Reading Uniforms to Uniforms View")
+        values = uniforms.dict.keys.map{ self.uniforms.getArray($0)! }
     }
     func clearDefaults(){
-        print("clear")
+        uniforms.loadInitialValues()
         values = []
-        let domain = Bundle.main.bundleIdentifier!
-        UserDefaults.standard.removePersistentDomain(forName: domain)
-        UserDefaults.standard.synchronize()
-        DispatchQueue.main.asyncAfter(deadline: .now()+0.01) {
-            loadInitial()
+        DispatchQueue.main.asyncAfter(deadline: .now()+0.05){
+            loadValues()
         }
     }
 }
