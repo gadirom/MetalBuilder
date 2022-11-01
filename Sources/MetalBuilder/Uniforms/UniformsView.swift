@@ -67,7 +67,7 @@ extension UniformsView{
     func startup(){
         loadInitial()
         if uniforms.saveToDefaults && !defaultsLoaded{
-            print("loadDef")
+            print("load Defaults")
             loadFomDefaults()
             defaultsLoaded = true
         }
