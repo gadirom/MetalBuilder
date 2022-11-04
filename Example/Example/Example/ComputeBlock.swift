@@ -80,7 +80,7 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
 
     float2 viewport = float2(viewportSize);
 
-    position += particle.velocity;
+    position += particle.velocity*u.speed;
     particles[id].position = position;
 
     if (position.x < -viewport.x/2 || position.x > viewport.x/2) particles[id].velocity.x *= -1.0;

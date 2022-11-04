@@ -1,8 +1,11 @@
 import SwiftUI
 import OrderedCollections
 
+/// View that allows you to edit uniforms in real-time
 public struct UniformsView: View {
     
+    /// Creates a uniforms view
+    /// - Parameter uniforms: uniforms container
     public init(_ uniforms: UniformsContainer){
         self.uniforms = uniforms
     }
@@ -67,8 +70,10 @@ extension UniformsView{
         loadValues()
     }
     func loadValues(){
-        print("Reading Uniforms to Uniforms View")
-        values = uniforms.dict.keys.map{ self.uniforms.getArray($0)! }
+        print("Reading Uniforms by Uniforms View")
+        values = uniforms.dict.keys.map{
+            self.uniforms.getArray($0)!
+        }
     }
     func clearDefaults(){
         uniforms.loadInitialValues()
@@ -125,7 +130,7 @@ struct SingleSlider: View {
     
     var body: some View {
         HStack{
-            let _ = print("refresh slider")
+            //let _ = print("refresh slider")
             Text(label+": "+String(format:"%\(digits).\(precision)f", value))
                 .monospacedDigit()
                 .onAppear{
