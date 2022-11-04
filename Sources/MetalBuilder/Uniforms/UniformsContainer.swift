@@ -3,6 +3,7 @@ import SwiftUI
 import OrderedCollections
 import CoreMedia
 
+/// An object that contains uniforms
 public final class UniformsContainer: ObservableObject{
     
     @Published var bufferAllocated = false
@@ -15,6 +16,7 @@ public final class UniformsContainer: ObservableObject{
     var metalName: String?
     let length: Int
     let saveToDefaults: Bool
+    let packed: Bool
     
     var pointerBinding: Binding<UnsafeRawPointer?>{
         Binding<UnsafeRawPointer?>(
@@ -28,7 +30,8 @@ public final class UniformsContainer: ObservableObject{
                   metalType: String? = nil,
                   metalName: String? = nil,
                   length: Int,
-                  saveToDefaults: Bool) {
+                  saveToDefaults: Bool,
+                  packed: Bool) {
         self.dict = dict
         self.mtlBuffer = mtlBuffer
         self.pointer = pointer
@@ -36,43 +39,54 @@ public final class UniformsContainer: ObservableObject{
         self.metalName = metalName
         self.length = length
         self.saveToDefaults = saveToDefaults
+        self.packed = packed
     }
 }
 //init and setup
 public extension UniformsContainer{
-    convenience init(_ u: UniformsDescriptor,
+    /// Creates a uniforms container
+    /// - Parameters:
+    ///   - descriptor: The descriptor that contains the properties of the uniforms.
+    ///   - type: The type name for the Metal struct for uniforms.
+    ///   - name: The name of the parameter by which the uniforms struct will be passed to your shaders.
+    ///   - saveToDefaults: Indicates whether the uniforms should be saved in User Defaults system
+    ///   persistently across launches of your app.
+    convenience init(_ descriptor: UniformsDescriptor,
          type: String? = nil,
          name: String? = nil,
          saveToDefaults: Bool = true){
-        var dict = u.dict
+        print("UniformsContainer init:")
+        var dict = descriptor.dict
         var offset = 0
-        var metalType: String
+        var uniformsStructMetalType: String
         if let type = type{
-            metalType = type
+            uniformsStructMetalType = type
         }else{
-            metalType = "Uniforms"
+            uniformsStructMetalType = "Uniforms"
         }
-        var declaration = "struct " + metalType
+        var declaration = "struct " + uniformsStructMetalType
         declaration += "{\n"
-        for t in u.dict{
-            let metalType = uniformsTypesToMetalTypes[t.value.type]!
+        for t in descriptor.dict{
+            let propertyMetalType = t.value.type.metalType(packed: descriptor.packed)
             var property = t.value
             property.offset = offset
             dict[t.key] = property
-            offset += metalType.length
+            offset += propertyMetalType.length
             declaration += "   "
-            declaration += metalType.string + " " + t.key + ";\n"
+            declaration += propertyMetalType.string + " " + t.key + ";\n"
+            print(property)
         }
         declaration += "};\n"
         
-        let metalDeclaration = MetalTypeDeclaration(typeName: metalType,
+        let metalDeclaration = MetalTypeDeclaration(typeName: uniformsStructMetalType,
                                                     declaration: declaration)
 
         self.init(dict: dict,
                   metalDeclaration: metalDeclaration,
                   metalName: name,
                   length: offset,
-                  saveToDefaults: saveToDefaults)
+                  saveToDefaults: saveToDefaults,
+                  packed: descriptor.packed)
     }
     
     /// Setups Uniforms Container before rendering
@@ -88,6 +102,8 @@ public extension UniformsContainer{
                 print("load Defaults")
                 loadFomDefaults()
                 //defaultsLoaded = true
+            }else{
+                loadInitialValues()
             }
             bufferAllocated = true
         }
@@ -102,16 +118,19 @@ public extension UniformsContainer{
 
 //Saving to and loading from User Defaults
 public extension UniformsContainer{
-    ///Loads uniforms values from User Defaults
+    /// Loads uniforms values from User Defaults
+    /// If no value of an apropriate type is found for the key in User Defaults the initial value is used.
     func loadFomDefaults(){
-        print("Loading Uniforns values from User Defaults...")
+        print("Loading Uniforms values from User Defaults...")
         for p in dict.enumerated(){
             let key = userDefaultsKeyForUniformsKey(p.element.key)
             if let value = UserDefaults.standard.array(forKey: key){
                 if let value = value as? [Float]{
-                    print("Loaded: ",key, value)
+                    print("Loaded: ",key , value)
                     setArray(value, for: p.element.key)
                     //values[p.offset] = value
+                }else{
+                    setArray(p.element.value.initValue, for: p.element.key)
                 }
             }
         }
@@ -125,7 +144,7 @@ public extension UniformsContainer{
         guard saveToDefaults
         else{ return }
         let key = userDefaultsKeyForUniformsKey(key)
-        print("Saved to User Defaults: "+key, value)
+        print("Saving to User Defaults: "+key, value)
         UserDefaults.standard.set(value, forKey: key)
     }
     
@@ -170,7 +189,7 @@ public extension UniformsContainer{
     func setFloat2(_ value: simd_float2, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float2.self, capacity: 1).pointee = value
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float2.self, capacity: 1).pointee = value
         saveToDefaults(value: value.floatArray, key: key)
     }
     func setFloat3(_ array: [Float], for key: String){
@@ -179,16 +198,17 @@ public extension UniformsContainer{
     func setFloat3(_ value: simd_float3, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float3.self, capacity: 1).pointee = value
+        //!!! used custom simd_packed_float3 for the lack of inbuilt one!!!
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float3.self, capacity: 1).pointee = simd_packed_float3(value)
         saveToDefaults(value: value.floatArray, key: key)
     }
     func setFloat4(_ array: [Float], for key: String){
-        setFloat4(simd_float4(array), for: key)
+        setFloat4(simd_packed_float4(array), for: key)
     }
     func setFloat4(_ value: simd_float4, for key: String){
         guard let property = dict[key]
         else{ return }
-        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float4.self, capacity: 1).pointee = value
+        mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float4.self, capacity: 1).pointee = value
         saveToDefaults(value: value.floatArray, key: key)
     }
     func setSize(_ size: CGSize, for key: String){
@@ -234,6 +254,24 @@ extension UniformsContainer{
         guard let property = dict[key]
         else{ return nil }
         let indices = property.initValue.indices
+        
+//        let type = property.type
+
+//        switch type {
+//        case .float:
+//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float1.self, capacity: 1)
+//            return [pointer.pointee]
+//        case .float2:
+//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float2.self, capacity: 1)
+//            return pointer.pointee.floatArray
+//        case .float3:
+//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float3.self, capacity: 1)
+//            return pointer.pointee.floatArray
+//        case .float4:
+//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float2.self, capacity: 1)
+//            return pointer.pointee.floatArray
+//        }
+
         let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: indices.count)
         return indices.map{ pointer[$0] }
     }
@@ -244,7 +282,7 @@ extension UniformsContainer{
     }
 }
 //import and export Uniforms
-extension UniformsContainer{
+public extension UniformsContainer{
     ///Returns uniforms encoded into json
     var json: Data?{
         var dictToEncode: [String: Encodable] = [:]
@@ -254,12 +292,12 @@ extension UniformsContainer{
             let value: Encodable
             switch type{
             case .float: value = pointer.bindMemory(to: Float.self, capacity: 1).pointee
-            case .float2: let v = pointer.bindMemory(to: simd_float2.self, capacity: 1).pointee
-                value = v.indices.map({v[$0]})
-            case .float3: let v = pointer.bindMemory(to: simd_float3.self, capacity: 1).pointee
-                value = v.indices.map({v[$0]})
-            case .float4: let v = pointer.bindMemory(to: simd_float4.self, capacity: 1).pointee
-                value = v.indices.map({v[$0]})
+            case .float2: let v = pointer.bindMemory(to: simd_packed_float2.self, capacity: 1).pointee
+                value = v.floatArray
+            case .float3: let v = pointer.bindMemory(to: simd_packed_float3.self, capacity: 1).pointee
+                value = v.floatArray
+            case .float4: let v = pointer.bindMemory(to: simd_packed_float4.self, capacity: 1).pointee
+                value = v.floatArray
             }
             dictToEncode[p.key] = value
         }

@@ -20,12 +20,13 @@ public let bkgColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
 
 struct ContentView: View {
     
-    let uniforms = UniformsContainer(
-        UniformsDescriptor()
-            .float3("color", range: 0...1),
-        type: "Unif",
+    @MetalUniforms(
+        UniformsDescriptor(packed: true)
+            .float("speed", range: 0...10, value: 1)
+            .float3("color"),
+        type: "Uniform",
         name: "u"
-    )
+    ) var uniforms
     
     @MetalTexture(
         TextureDescriptor()
@@ -57,6 +58,7 @@ struct ContentView: View {
     
     @State var showUniforms = false
     
+    @State var json: Data?
 //    @MetalState var mSize = MTLSize(width: particleCount, height: 1, depth: 1)
 //    @MetalState var viewport = MTLViewport(originX: 0.0, originY: 0.0, width: 100, height: 100, znear: 0.0, zfar: 1.0)
     
@@ -109,12 +111,38 @@ struct ContentView: View {
             if showUniforms{
                 UniformsView(uniforms)
             }
-            Button {
-                showUniforms.toggle()
-            } label: {
-                Text("Show Uniforms")
-            }
+            HStack{
+                Button {
+                    showUniforms.toggle()
+                } label: {
+                    Text("Show Uniforms")
+                        .foregroundColor(Color.white)
+                        .padding()
+                        .background(Color.blue)
+                }
+                Spacer()
+                Button {
+                    self.json = uniforms.json
+                } label: {
+                    Text("Save Uniforms")
+                        .foregroundColor(Color.white)
+                        .padding()
+                        .background(Color.blue)
+                }
+                
+                Button {
+                    if let json = json {
+                        uniforms.import(json: json)
+                        //showUniforms.toggle()
+                    }
+                } label: {
+                    Text("Load Uniforms")
+                        .foregroundColor(Color.white)
+                        .padding()
+                        .background(Color.blue)
+                }
 
+            }
             Slider(value: $blurRadius.binding, in: 0...5)
             Slider(value: $fDilate, in: 0...10)
                 .onChange(of: fDilate) { newValue in
