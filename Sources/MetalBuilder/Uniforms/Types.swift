@@ -68,4 +68,12 @@ struct Float_3{
     }
 }
 
+extension Float_3: ExpressibleByArrayLiteral
+{
+   init(arrayLiteral: Float...)
+   {
+       self.init(arrayLiteral)
+   }
+}
+
 typealias simd_packed_float3 = Float_3
