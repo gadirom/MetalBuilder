@@ -46,34 +46,59 @@ struct MetalType{
     let length: Int
 }
 
-struct Float_3{
-    var x: Float
-    var y: Float
-    var z: Float
+//struct Float_3{
+//    var x: Float
+//    var y: Float
+//    var z: Float
+//
+//    var floatArray: [Float]{
+//        [x,y,z]
+//    }
+//
+//    init(_ xyz: [Float]){
+//        self.x = xyz[0]
+//        self.y = xyz[1]
+//        self.z = xyz[2]
+//    }
+//
+//    init(_ xyz: simd_float3){
+//        self.x = xyz[0]
+//        self.y = xyz[1]
+//        self.z = xyz[2]
+//    }
+//}
+//
+//extension Float_3: ExpressibleByArrayLiteral
+//{
+//   init(arrayLiteral: Float...)
+//   {
+//       self.init(arrayLiteral)
+//   }
+//}
+//
+//typealias simd_packed_float3 = Float_3
+
+typealias simd_packed_float3 = MTLPackedFloat3
+
+
+extension MTLPackedFloat3{
+    init(_ xyz: [Float]){
+        self = MTLPackedFloat3Make(xyz[0], xyz[1], xyz[2])
+    }
+
+    init(_ value: simd_float3){
+        self = MTLPackedFloat3Make(value.x, value.y, value.z)
+    }
     
     var floatArray: [Float]{
         [x,y,z]
     }
-    
-    init(_ xyz: [Float]){
-        self.x = xyz[0]
-        self.y = xyz[1]
-        self.z = xyz[2]
-    }
-    
-    init(_ xyz: simd_float3){
-        self.x = xyz[0]
-        self.y = xyz[1]
-        self.z = xyz[2]
-    }
 }
 
-extension Float_3: ExpressibleByArrayLiteral
+extension MTLPackedFloat3: ExpressibleByArrayLiteral
 {
-   init(arrayLiteral: Float...)
+    public init(arrayLiteral: Float...)
    {
        self.init(arrayLiteral)
    }
 }
-
-typealias simd_packed_float3 = Float_3
