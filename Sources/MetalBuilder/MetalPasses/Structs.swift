@@ -9,11 +9,16 @@ public protocol BufferProtocol{
     var elementSize: Int { get }
     var count: Int { get }
     
+    var elementType: Any.Type { get }
     var swiftTypeToMetal: SwiftTypeToMetal? { get }
     func create(device: MTLDevice) throws
 }
 
 struct Buffer<T>: BufferProtocol{
+    
+    var elementType: Any.Type{
+        T.self
+    }
     
     func create(device: MTLDevice) throws {
         try container.create(device: device)

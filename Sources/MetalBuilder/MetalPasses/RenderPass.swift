@@ -4,7 +4,8 @@ import SwiftUI
 
 public enum MetalBuilderRenderError: Error{
     case noRenderEncoder(String),
-         textureIsNil(String)
+         textureIsNil(String),
+         badIndexBuffer(String)
 }
 
 //Render Pass
@@ -15,6 +16,8 @@ final class RenderPass: MetalPass{
     var component: Render
     
     var renderPiplineState: MTLRenderPipelineState!
+    
+    var indexType: MTLIndexType = .uint16
     
     init(_ component: Render, libraryContainer: LibraryContainer){
         self.component = component
@@ -32,6 +35,15 @@ final class RenderPass: MetalPass{
         descriptor.fragmentFunction = fragmentFunction
         renderPiplineState =
             try device.makeRenderPipelineState(descriptor: descriptor)
+        
+        if component.indexedPrimitives{
+            if let buf = component.indexBuf{
+                indexType = try getIndexType(buf.elementType)
+                try buf.create(device: device)
+            }else{
+                throw MetalBuilderRenderError.badIndexBuffer("No index buffer was provided for '" + self.component.vertexFunc + "'!")
+            }
+        }
     }
     
     func encode(_ commandBuffer: MTLCommandBuffer, _ drawable: CAMetalDrawable?) throws{
@@ -47,7 +59,7 @@ final class RenderPass: MetalPass{
         guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else{
             throw MetalBuilderRenderError
-                .noRenderEncoder("Wasn't able to create renderEncoder for the vertex shader: "+component.vertexFunc)
+                .noRenderEncoder("Wasn't able to create renderEncoder for the vertex shader: '"+component.vertexFunc+"'!")
         }
         
         //Viewport
@@ -95,7 +107,32 @@ final class RenderPass: MetalPass{
             }
             renderPassEncoder.setFragmentTexture(texture, index: tex.index)
         }
-        renderPassEncoder.drawPrimitives(type: component.type, vertexStart: component.vertexStart, vertexCount: component.vertexCount)
+        
+        if component.indexedPrimitives{
+            renderPassEncoder.drawIndexedPrimitives(type: component.type,
+                                                    indexCount: component.indexCount.wrappedValue,
+                                                    indexType: indexType,
+                                                    indexBuffer: component.indexBuf!.mtlBuffer!,
+                                                    indexBufferOffset: component.indexBufferOffset)
+        }else{
+            renderPassEncoder.drawPrimitives(type: component.type, vertexStart: component.vertexOffset, vertexCount: component.vertexCount)
+        }
+        
+        
         renderPassEncoder.endEncoding()
     }
+    func getIndexType(_ indexType: Any.Type) throws ->MTLIndexType{
+        
+        if indexType == UInt32.self{
+            return .uint32
+        }
+        if indexType == UInt16.self{
+            return .uint16
+        }
+        
+        throw MetalBuilderRenderError.badIndexBuffer("Elements of the index buffer for '" + self.component.vertexFunc + "' is of wrong type. Should be UInt32 or UInt16!")
+
+    }
 }
+
+

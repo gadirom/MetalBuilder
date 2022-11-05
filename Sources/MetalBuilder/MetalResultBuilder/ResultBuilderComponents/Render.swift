@@ -39,6 +39,7 @@ var defaultColorAttachments =
                         get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
                         set: { _ in } )
                        )]
+
 /// Render Component
 public struct Render: MetalBuilderComponent{
     
@@ -46,10 +47,16 @@ public struct Render: MetalBuilderComponent{
     let fragmentFunc: String
     
     var type: MTLPrimitiveType!
-    var vertexStart: Int
-    var vertexCount: Int
+    var vertexOffset: Int = 0
+    var vertexCount: Int = 0
+    
+    var indexCount: MetalBinding<Int> = MetalBinding<Int>.constant(0)
+    var indexBufferOffset: Int = 0
+    var indexedPrimitives = false
     
     var viewport: Binding<MTLViewport>?
+    
+    var indexBuf: BufferProtocol?
     
     var vertexBufs: [BufferProtocol] = []
     var vertexBytes: [BytesProtocol] = []
@@ -71,13 +78,29 @@ public struct Render: MetalBuilderComponent{
     
     var uniforms: [UniformsContainer] = []
     
-    public init(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle, start: Int = 0, count: Int = 3){
+    public init(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle,
+                offset: Int = 0, count: Int = 3){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
         
         self.type = type
-        self.vertexStart = start
+        self.vertexOffset = offset
         self.vertexCount = count
+    }
+    
+    public init<T>(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle,
+                indexBuffer: MTLBufferContainer<T>,
+                indexOffset: Int = 0, indexCount: MetalBinding<Int>){
+        self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)
+        
+        self.vertexFunc = vertex
+        self.fragmentFunc = fragment
+        
+        self.type = type
+        
+        self.indexCount = indexCount
+        self.indexBufferOffset = indexOffset
+        self.indexedPrimitives = true
     }
     
     mutating func setup() throws{
@@ -85,13 +108,13 @@ public struct Render: MetalBuilderComponent{
 }
 // chaining functions for result builder
 public extension Render{
-    func primitives(_ type: MTLPrimitiveType = .triangle, start: Int = 0, count: Int = 3)->Render{
-        var r = self
-        r.type = type
-        r.vertexStart = start
-        r.vertexCount = count
-        return r
-    }
+//    func primitives(_ type: MTLPrimitiveType = .triangle, offset: Int = 0, count: Int = 3)->Render{
+//        var r = self
+//        r.type = type
+//        r.vertexOffset = offset
+//        r.vertexCount = count
+//        return r
+//    }
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Render{
         var r = self
         let buf = Buffer(container: container, offset: offset, index: index)
@@ -273,6 +296,11 @@ public extension Render{
         r.colorAttachments[index] = a
         return r
     }
+//    func indexBuffer<T>(_ container: MTLBufferContainer<T>, offset: Int)->Render{
+//        var r = self
+//        r.indexBuf = Buffer(container: container, offset: offset, index: 0)
+//        return r
+//    }
 }
 
 extension Render{

@@ -6,6 +6,8 @@ import MetalPerformanceShaders
 
 let particleCount = 10000
 
+let vertexIndexCount = particleCount*3
+
 public let resolution : Int = 100 //Resolution of speed randomization, i.e number of possible different speeds for particles
 
 public let sizeOfTrianglesMin : Float = 10
@@ -49,6 +51,8 @@ struct ContentView: View {
     @MetalBuffer<Vertex>(count: particleCount*3,
                          metalName: "vertices") var vertexBuffer
     
+    @MetalBuffer<UInt32>(count: particleCount*3) var indexBuffer
+    
     @MetalState var vertexCount = 3 * particleCount
     @MetalState var particleScale: Float = 1
     
@@ -70,12 +74,18 @@ struct ContentView: View {
                              vertexBuffer: $vertexBuffer,
                              particleScale: $particleScale,
                              u: uniforms)
-                Render(vertex: "vertexShader", fragment: "fragmentShader")
+                Render(vertex: "vertexShader", fragment: "fragmentShader",
+                       indexBuffer: indexBuffer,
+                       indexCount: MetalBinding<Int>.constant(vertexIndexCount))
                     .uniforms(uniforms)//, name: "uni")
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
                     .vertexBytes(context.$viewportSize, space: "constant")
-                    .primitives(count: vertexCount)
+//                Render(vertex: "vertexShader", fragment: "fragmentShader", count: vertexCount)
+//                    .uniforms(uniforms)//, name: "uni")
+//                    .toTexture(targetTexture)
+//                    .vertexBuf(vertexBuffer, offset: 0)
+//                    .vertexBytes(context.$viewportSize, space: "constant")
                 EncodeGroup{
                     EncodeGroup{
                         CPUCompute{ _ in
@@ -106,6 +116,7 @@ struct ContentView: View {
                 if isDrawing {return}
                 createParticles(particlesBuf: particlesBuffer,
                                 viewportSize: size)
+                createIndices(indexBuffer, count: vertexCount)
                 isDrawing = true
             }
             if showUniforms{
@@ -168,6 +179,12 @@ struct ContentView: View {
             }
 
         }
+    }
+}
+
+func createIndices(_ buf: MTLBufferContainer<UInt32>, count: Int){
+    for id in 0..<count{
+        buf.pointer![id] = UInt32(id)
     }
 }
 

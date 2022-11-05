@@ -46,6 +46,12 @@ public struct MetalBinding<T>{
         self.metalType = metalType
         self.metalName = metalName
     }
+    public static func constant(_ value: T, metalType: String? = nil, metalName: String? = nil) -> MetalBinding<T>{
+        return MetalBinding<T>(get: { value },
+                               set: {_ in },
+                               metalType: metalType,
+                               metalName: metalName)
+    }
 }
 
 public struct BytesDescriptor{
