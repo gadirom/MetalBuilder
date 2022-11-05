@@ -249,31 +249,30 @@ public extension UniformsContainer{
     }
 }
 //Getters
-extension UniformsContainer{
+public extension UniformsContainer{
     func getArray(_ key: String)->[Float]?{
         guard let property = dict[key]
         else{ return nil }
-        let indices = property.initValue.indices
         
-//        let type = property.type
+        let type = property.type
 
-//        switch type {
-//        case .float:
-//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float1.self, capacity: 1)
-//            return [pointer.pointee]
-//        case .float2:
-//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float2.self, capacity: 1)
-//            return pointer.pointee.floatArray
-//        case .float3:
-//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float3.self, capacity: 1)
-//            return pointer.pointee.floatArray
-//        case .float4:
-//            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float2.self, capacity: 1)
-//            return pointer.pointee.floatArray
-//        }
-
-        let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: indices.count)
-        return indices.map{ pointer[$0] }
+        switch type {
+        case .float:
+            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_float1.self, capacity: 1)
+            return [pointer.pointee]
+        case .float2:
+            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float2.self, capacity: 1)
+            return pointer.pointee.floatArray
+        case .float3:
+            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float3.self, capacity: 1)
+            return pointer.pointee.floatArray
+        case .float4:
+            let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: simd_packed_float2.self, capacity: 1)
+            return pointer.pointee.floatArray
+        }
+//        let indices = property.initValue.indices
+//        let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: indices.count)
+//        return indices.map{ pointer[$0] }
     }
     func getFloat(_ key: String)->Float?{
         guard let property = dict[key]
