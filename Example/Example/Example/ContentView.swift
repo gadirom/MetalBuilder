@@ -22,8 +22,8 @@ struct ContentView: View {
     
     @MetalUniforms(
         UniformsDescriptor(packed: true)
-            .float("speed", range: 0...10, value: 1)
-            .float3("color"),
+            .float3("color")
+            .float("speed", range: 0...10, value: 1),
         type: "Uniform",
         name: "u"
     ) var uniforms
