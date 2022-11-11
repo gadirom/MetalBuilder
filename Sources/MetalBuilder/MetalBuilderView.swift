@@ -12,7 +12,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     @MetalResultBuilder public let metalContent: MetalRenderingContent
     let onResizeCode: ((CGSize)->())?
     
-    public init(librarySource: String,
+    public init(librarySource: String = "",
                 helpers: String = "",
                 isDrawing: Binding<Bool>,
                 @MetalResultBuilder metalContent: @escaping MetalRenderingContent){

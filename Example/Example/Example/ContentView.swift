@@ -68,19 +68,48 @@ struct ContentView: View {
     
     var body: some View {
         VStack{
-            MetalBuilderView(librarySource: renderFunctions, isDrawing: $isDrawing){ context in
+            MetalBuilderView(isDrawing: $isDrawing){ context in
                 ComputeBlock(context: context,
                              particlesBuffer: $particlesBuffer,
                              vertexBuffer: $vertexBuffer,
                              particleScale: $particleScale,
                              u: uniforms)
-                Render(vertex: "vertexShader", fragment: "fragmentShader",
+                Render(vertex: "vertexShader",
                        indexBuffer: indexBuffer,
                        indexCount: MetalBinding<Int>.constant(vertexIndexCount))
                     .uniforms(uniforms)//, name: "uni")
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
                     .vertexBytes(context.$viewportSize, space: "constant")
+                    .source(
+                    """
+                    struct RasterizerData{
+                        float4 position [[position]];
+                        float4 color; //[[flat]];   // - use this flag to disable color interpolation
+                    };
+                        
+                    vertex RasterizerData
+                    vertexShader(uint vertexID [[vertex_id]]){
+                        RasterizerData out;
+
+                        float2 pixelSpacePosition = vertices[vertexID].position.xy;
+
+                        float2 viewport = float2(viewportSize);
+                        
+                        out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
+                        out.position.xy = pixelSpacePosition / (viewport / 2.0);
+
+                        out.color = vertices[vertexID].color;
+
+                        return out;
+                    }
+                    """)
+                    .fragmentShader(FragmentShader("fragmentShader", source:
+                    """
+                    fragment float4 fragmentShader(RasterizerData in [[stage_in]]){
+                        return in.color;
+                    }
+                    """))
 //                Render(vertex: "vertexShader", fragment: "fragmentShader", count: vertexCount)
 //                    .uniforms(uniforms)//, name: "uni")
 //                    .toTexture(targetTexture)
