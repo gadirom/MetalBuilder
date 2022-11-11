@@ -40,11 +40,61 @@ var defaultColorAttachments =
                         set: { _ in } )
                        )]
 
+public struct FragmentShader{
+    public init(_ name: String, source: String=""){
+        self.fragmentFunc = name
+        self.librarySource = source
+    }
+    
+    let fragmentFunc: String
+    
+    var librarySource: String
+    
+    var bufsAndArgs: [(BufferProtocol, MetalBufferArgument)] = []
+    var bytesAndArgs: [(BytesProtocol, MetalBytesArgument)] = []
+    var texsAndArgs: [(Texture, MetalTextureArgument)] = []
+    
+    var uniformsAndNames: [(UniformsContainer, String?)] = []
+}
+
+extension FragmentShader{
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> FragmentShader{
+        var f = self
+        let buf = Buffer(container: container, offset: offset, index: 0)
+        f.bufsAndArgs.append((buf, argument))
+        return f
+    }
+    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument) -> FragmentShader{
+        var f = self
+        let bytes = Bytes(binding: binding, index: 0)
+        f.bytesAndArgs.append((bytes, argument))
+        return f
+    }
+    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument) -> FragmentShader{
+        var f = self
+        let tex = Texture(container: container, index: 0)
+        f.texsAndArgs.append((tex, argument))
+        return f
+    }
+    func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> FragmentShader{
+        var f = self
+        f.uniformsAndNames.append((uniforms, name))
+        return f
+    }
+    func source(_ source: String)->FragmentShader{
+        var f = self
+        f.librarySource = source
+        return f
+    }
+}
+
 /// Render Component
 public struct Render: MetalBuilderComponent{
     
     let vertexFunc: String
-    let fragmentFunc: String
+    var fragmentFunc: String
+    
+    var librarySource: String
     
     var type: MTLPrimitiveType!
     var vertexOffset: Int = 0
@@ -78,23 +128,27 @@ public struct Render: MetalBuilderComponent{
     
     var uniforms: [UniformsContainer] = []
     
-    public init(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle,
-                offset: Int = 0, count: Int = 3){
+    public init(vertex: String, fragment: String="", type: MTLPrimitiveType = .triangle,
+                offset: Int = 0, count: Int = 3, source: String=""){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
+        
+        self.librarySource = source
         
         self.type = type
         self.vertexOffset = offset
         self.vertexCount = count
     }
     
-    public init<T>(vertex: String, fragment: String, type: MTLPrimitiveType = .triangle,
+    public init<T>(vertex: String, fragment: String="", type: MTLPrimitiveType = .triangle,
                 indexBuffer: MTLBufferContainer<T>,
-                indexOffset: Int = 0, indexCount: MetalBinding<Int>){
+                   indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String=""){
         self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)
         
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
+        
+        self.librarySource = source
         
         self.type = type
         
@@ -106,15 +160,74 @@ public struct Render: MetalBuilderComponent{
     mutating func setup() throws{
     }
 }
+
+//private non-generic chain modifiers
+extension Render{
+    func vertexBuf(_ buf: BufferProtocol, argument: MetalBufferArgument)->Render{
+        var r = self
+        var argument = argument
+        argument.index = checkVertexBufferIndex(r: &r, index: argument.index)
+        r.vertexArguments.append(MetalFunctionArgument.buffer(argument))
+        var buf = buf
+        buf.index = argument.index!
+        r.vertexBufs.append(buf)
+        return r
+    }
+    func vertexBytes(_ bytes: BytesProtocol, argument: MetalBytesArgument)->Render{
+        var r = self
+        var argument = argument
+        argument.index = checkVertexBufferIndex(r: &r, index: argument.index)
+        r.vertexArguments.append(.bytes(argument))
+        var bytes = bytes
+        bytes.index = argument.index!
+        r.vertexBytes.append(bytes)
+        return r
+    }
+    func vertexTexture(_ tex: Texture, argument: MetalTextureArgument)->Render{
+        var r = self
+        var argument = argument
+        argument.index = checkVertexTextureIndex(r: &r, index: argument.index)
+        argument.textureType = tex.container.descriptor.type
+        r.vertexArguments.append(.texture(argument))
+        var tex = tex
+        tex.index = argument.index!
+        r.vertexTextures.append(tex)
+        return r
+    }
+    func fragBuf(_ buf: BufferProtocol, argument: MetalBufferArgument)->Render{
+        var r = self
+        var argument = argument
+        argument.index = checkFragmentBufferIndex(r: &r, index: argument.index)
+        r.fragmentArguments.append(.buffer(argument))
+        var buf = buf
+        buf.index = argument.index!
+        r.fragBufs.append(buf)
+        return r
+    }
+    func fragBytes(_ bytes: BytesProtocol, argument: MetalBytesArgument)->Render{
+        var r = self
+        var argument = argument
+        argument.index = checkFragmentBufferIndex(r: &r, index: argument.index)
+        r.fragmentArguments.append(.bytes(argument))
+        var bytes = bytes
+        bytes.index = argument.index!
+        r.fragBytes.append(bytes)
+        return r
+    }
+    func fragTexture(_ tex: Texture, argument: MetalTextureArgument)->Render{
+        var r = self
+        var argument = argument
+        argument.index = checkVertexTextureIndex(r: &r, index: argument.index)
+        argument.textureType = tex.container.descriptor.type
+        r.fragmentArguments.append(.texture(argument))
+        var tex = tex
+        tex.index = argument.index!
+        r.fragTextures.append(tex)
+        return r
+    }
+}
 // chaining functions for result builder
 public extension Render{
-//    func primitives(_ type: MTLPrimitiveType = .triangle, offset: Int = 0, count: Int = 3)->Render{
-//        var r = self
-//        r.type = type
-//        r.vertexOffset = offset
-//        r.vertexCount = count
-//        return r
-//    }
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Render{
         var r = self
         let buf = Buffer(container: container, offset: offset, index: index)
@@ -122,13 +235,8 @@ public extension Render{
         return r
     }
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument)->Render{
-        var r = self
-        var argument = argument
-        argument.index = checkVertexBufferIndex(r: &r, index: argument.index)
-        r.vertexArguments.append(MetalFunctionArgument.buffer(argument))
-        let buf = Buffer(container: container, offset: offset, index: argument.index!)
-        r.vertexBufs.append(buf)
-        return r
+        let buf = Buffer(container: container, offset: offset, index: 0)
+        return self.vertexBuf(buf, argument: argument)
     }
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
                    space: String = "constant", type: String?=nil, name: String?=nil) -> Render{
@@ -144,13 +252,8 @@ public extension Render{
         return r
     }
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument)->Render{
-        var r = self
-        var argument = argument
-        argument.index = checkFragmentBufferIndex(r: &r, index: argument.index)
-        r.fragmentArguments.append(.buffer(argument))
-        let buf = Buffer(container: container, offset: offset, index: argument.index!)
-        r.fragBufs.append(buf)
-        return r
+        let buf = Buffer(container: container, offset: offset, index: 0)
+        return self.fragBuf(buf, argument: argument)
     }
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
                    space: String="constant", type: String?=nil, name: String?=nil) -> Render{
@@ -167,22 +270,11 @@ public extension Render{
         return r
     }
     func vertexBytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument)->Render{
-        var r = self
-        var argument = argument
-        argument.index = checkVertexBufferIndex(r: &r, index: argument.index)
-        r.vertexArguments.append(.bytes(argument))
-        let bytes = Bytes(binding: binding, index: argument.index!)
-        r.vertexBytes.append(bytes)
-        return r
+        let bytes = Bytes(binding: binding, index: 0)
+        return self.vertexBytes(bytes, argument: argument)
     }
     func vertexBytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Render{
-        var r = self
-        var argument = argument
-        argument.index = checkVertexBufferIndex(r: &r, index: argument.index)
-        r.vertexArguments.append(.bytes(argument))
-        let bytes = Bytes(binding: binding.binding, index: argument.index!)
-        r.vertexBytes.append(bytes)
-        return r
+        self.vertexBytes(binding.binding, argument: argument)
     }
     func vertexBytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Render{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
@@ -200,13 +292,8 @@ public extension Render{
         return r
     }
     func fragBytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Render{
-        var r = self
-        var argument = argument
-        argument.index = checkFragmentBufferIndex(r: &r, index: argument.index)
-        r.fragmentArguments.append(.bytes(argument))
-        let bytes = Bytes(binding: binding.binding, index: argument.index!)
-        r.fragBytes.append(bytes)
-        return r
+        let bytes = Bytes(binding: binding.binding, index: 0)
+        return self.fragBytes(bytes, argument: argument)
     }
     func fragBytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument)->Render{
         var r = self
@@ -254,14 +341,8 @@ public extension Render{
         return r
     }
     func vertexTexture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Render{
-        var r = self
-        var argument = argument
-        argument.index = checkVertexTextureIndex(r: &r, index: argument.index)
-        argument.textureType = container.descriptor.type
-        r.vertexArguments.append(.texture(argument))
-        let tex = Texture(container: container, index: argument.index!)
-        r.vertexTextures.append(tex)
-        return r
+        let tex = Texture(container: container, index: 0)
+        return self.vertexTexture(tex, argument: argument)
     }
     func fragTexture(_ container: MTLTextureContainer, index: Int)->Render{
         var r = self
@@ -270,14 +351,8 @@ public extension Render{
         return r
     }
     func fragTexture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Render{
-        var r = self
-        var argument = argument
-        argument.index = checkVertexTextureIndex(r: &r, index: argument.index)
-        argument.textureType = container.descriptor.type
-        r.fragmentArguments.append(.texture(argument))
-        let tex = Texture(container: container, index: argument.index!)
-        r.fragTextures.append(tex)
-        return r
+        let tex = Texture(container: container, index: 0)
+        return self.fragTexture(tex, argument: argument)
     }
     func viewport(_ viewport: Binding<MTLViewport>)->Render{
         var r = self
@@ -296,11 +371,35 @@ public extension Render{
         r.colorAttachments[index] = a
         return r
     }
-//    func indexBuffer<T>(_ container: MTLBufferContainer<T>, offset: Int)->Render{
-//        var r = self
-//        r.indexBuf = Buffer(container: container, offset: offset, index: 0)
-//        return r
-//    }
+    func source(_ source: String)->Render{
+        var r = self
+        r.librarySource = source + r.librarySource
+        return r
+    }
+    func fragmentShader(_ shader: FragmentShader)->Render{
+        var r = self
+        //func
+        r.fragmentFunc = shader.fragmentFunc
+        //source
+        r.librarySource += shader.librarySource
+        //add buffer
+        for bufAndArg in shader.bufsAndArgs{
+            r = r.fragBuf(bufAndArg.0, argument: bufAndArg.1)
+        }
+        //add bytes
+        for byteAndArg in shader.bytesAndArgs{
+            r = r.fragBytes(byteAndArg.0, argument: byteAndArg.1)
+        }
+        //add textures
+        for texAndArg in shader.texsAndArgs{
+            r = r.fragTexture(texAndArg.0, argument: texAndArg.1)
+        }
+        //uniforms
+        for uAndName in shader.uniformsAndNames{
+            r = r.uniforms(uAndName.0, name: uAndName.1)
+        }
+        return r
+    }
 }
 
 extension Render{

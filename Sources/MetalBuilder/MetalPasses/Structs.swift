@@ -4,7 +4,7 @@ import SwiftUI
 public protocol BufferProtocol{
     var mtlBuffer: MTLBuffer? { get }
     var offset: Int { get }
-    var index: Int { get }
+    var index: Int { get set }
     
     var elementSize: Int { get }
     var count: Int { get }
@@ -26,7 +26,7 @@ struct Buffer<T>: BufferProtocol{
     
     let container: MTLBufferContainer<T>
     let offset: Int
-    let index: Int
+    var index: Int
     
     var mtlBuffer: MTLBuffer?{
         container.buffer
@@ -48,17 +48,18 @@ struct Buffer<T>: BufferProtocol{
 }
 struct Texture{
     let container: MTLTextureContainer
-    let index: Int
+    var index: Int
 }
 
 protocol BytesProtocol{
+    var index: Int {get set}
     func encode(encoder: (UnsafeRawPointer, Int, Int)->())
 }
 
 struct RawBytes: BytesProtocol{
     let binding: Binding<UnsafeRawPointer?>
     let length: Int
-    let index:Int
+    var index: Int
     
     func encode(encoder: (UnsafeRawPointer, Int, Int)->()){
         encoder(binding.wrappedValue!, length, index)
@@ -67,7 +68,7 @@ struct RawBytes: BytesProtocol{
 
 struct Bytes<T>: BytesProtocol{
     let binding: Binding<T>
-    let index: Int
+    var index: Int
     
     func encode(encoder: (UnsafeRawPointer, Int, Int)->()){
         withUnsafeBytes(of: binding.wrappedValue){ pointer in
