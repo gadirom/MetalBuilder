@@ -104,6 +104,8 @@ struct RenderData{
                 try data.createBuffers(buffers: computeComponent.buffers, device: device)
                 data.createUniforms(computeComponent.uniforms, device: device)
                 
+                librarySource += computeComponent.librarySource
+                
                 if librarySource != ""{
                 
                     //arguments for functions

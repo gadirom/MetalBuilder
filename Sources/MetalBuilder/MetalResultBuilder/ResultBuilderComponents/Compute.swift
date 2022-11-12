@@ -26,7 +26,9 @@ public struct Compute: MetalBuilderComponent{
     
     var uniforms: [UniformsContainer] = []
     
-    public init(_ kernel: String){
+    var librarySource: String = ""
+    
+    public init(_ kernel: String, source: String = ""){
         self.kernel = kernel
     }
     
@@ -192,10 +194,14 @@ public extension Compute{
         c.gridFit = .fitTexture(fitTexture)
         return c
     }
-    
     func threadsFromBuffer(_ index: Int)->Compute{
         var c = self
         c.gridFit = .buffer(index)
+        return c
+    }
+    func source(_ source: String)->Compute{
+        var c = self
+        c.librarySource = source
         return c
     }
 }
