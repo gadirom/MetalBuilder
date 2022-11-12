@@ -82,10 +82,7 @@ public class BufferContainer{
     
     public var buffer: MTLBuffer?
     
-    public var count: Int?{
-        _count
-    }
-    private var _count: Int?
+    public var count: Int? { 0 }
     
     public var elementSize: Int?
     
@@ -93,8 +90,6 @@ public class BufferContainer{
     public var metalName: String?
     
     init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil) {
-        self._count = count
-        
         self.metalType = metalType
         self.metalName = metalName
     }
@@ -108,6 +103,19 @@ public final class MTLBufferContainer<T>: BufferContainer{
     public var pointer: UnsafeMutablePointer<T>?
     
     weak var device: MTLDevice?
+    
+    public override var count: Int?{
+        _count
+    }
+    
+    private var _count: Int?
+    
+    override init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil){
+        super.init()
+        self.metalType = metalType
+        self.metalName = metalName
+        self._count = count
+    }
     
     /// Creates a new buffer for the container
     /// - Parameter device: The GPU device that creates the buffer
