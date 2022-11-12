@@ -82,14 +82,18 @@ public class BufferContainer{
     
     public var buffer: MTLBuffer?
     
-    public let count: Int?
+    public var count: Int?{
+        _count
+    }
+    private var _count: Int?
+    
     public var elementSize: Int?
     
     public var metalType: String?
     public var metalName: String?
     
     init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil) {
-        self.count = count
+        self._count = count
         
         self.metalType = metalType
         self.metalName = metalName
@@ -107,11 +111,18 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     /// Creates a new buffer for the container
     /// - Parameter device: The GPU device that creates the buffer
+    /// - Parameter count: Number of elements in the new buffer. Pass `nil` if you don't want it to be changed.
     ///
     /// Use this method in ManualEncode block if you need to recreate the buffer in the container
-    public func create(device: MTLDevice) throws{
+    public func create(device: MTLDevice, count: Int? = nil) throws{
         self.device = device
         elementSize = MemoryLayout<T>.stride
+        var count = count
+        if count == nil {
+            count = self.count
+        }else{
+            self._count = count
+        }
         let length = elementSize!*count!
         buffer = device.makeBuffer(length: length)
         if let buffer = buffer{
