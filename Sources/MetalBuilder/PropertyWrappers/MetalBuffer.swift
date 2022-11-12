@@ -105,7 +105,11 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     weak var device: MTLDevice?
     
-    func create(device: MTLDevice) throws{
+    /// Creates a new buffer for the container
+    /// - Parameter device: The GPU device that creates the buffer
+    ///
+    /// Use this method in ManualEncode block if you need to recreate the buffer in the container
+    public func create(device: MTLDevice) throws{
         self.device = device
         elementSize = MemoryLayout<T>.stride
         let length = elementSize!*count!
