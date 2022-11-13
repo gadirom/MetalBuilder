@@ -5,8 +5,6 @@ import SwiftUI
 // CPU compute pass
 final class CPUComputePass: MetalPass{
     
-    let restartEncode = true
-    
     let component: CPUCompute
     
     var libraryContainer: LibraryContainer?
@@ -18,7 +16,10 @@ final class CPUComputePass: MetalPass{
     func setup(device: MTLDevice) {
         self.device = device
     }
-    func encode(_ commandBuffer: MTLCommandBuffer, _ drawable: CAMetalDrawable?) {
+    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) throws {
+        try restartEncode()
         component.code(device)
     }
 }

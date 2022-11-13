@@ -5,7 +5,6 @@ import MetalPerformanceShaders
 
 // MPSUnaryPass
 class MPSUnaryPass: MetalPass{
-    let restartEncode = false
     
     var libraryContainer: LibraryContainer?
     
@@ -19,7 +18,10 @@ class MPSUnaryPass: MetalPass{
     func setup(device: MTLDevice) {
         self.device = device
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
+    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) throws {
+        let commandBuffer = getCommandBuffer()
         let kernel = component.initCode(device)
         for key in component.dict.keys{
             let value = component.dict[key]!.wrappedValue

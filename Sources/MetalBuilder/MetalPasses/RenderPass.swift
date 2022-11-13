@@ -10,7 +10,7 @@ public enum MetalBuilderRenderError: Error{
 
 //Render Pass
 final class RenderPass: MetalPass{
-    let restartEncode = false
+    
     var libraryContainer: LibraryContainer?
     
     var component: Render
@@ -46,7 +46,10 @@ final class RenderPass: MetalPass{
         }
     }
     
-    func encode(_ commandBuffer: MTLCommandBuffer, _ drawable: CAMetalDrawable?) throws{
+    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) throws {
+        let commandBuffer = getCommandBuffer()
         let descriptor = MTLRenderPassDescriptor()
         for key in component.colorAttachments.keys{
             if let a = component.colorAttachments[key]?.descriptor{
