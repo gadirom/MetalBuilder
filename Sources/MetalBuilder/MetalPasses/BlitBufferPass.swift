@@ -3,7 +3,7 @@ import SwiftUI
 
 // BlitBuffer pass
 class BlitBufferPass: MetalPass{
-    let restartEncode = false
+    
     var libraryContainer: LibraryContainer?
     
     let component: BlitBuffer
@@ -13,7 +13,9 @@ class BlitBufferPass: MetalPass{
     }
     func setup(device: MTLDevice){
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
+    func encode(_ commandBuffer: MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) {
         
         guard let inBuffer = component.inBuffer
         else{

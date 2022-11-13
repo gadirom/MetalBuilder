@@ -3,7 +3,6 @@ import SwiftUI
 
 // BlitTexture pass
 class BlitTexturePass: MetalPass{
-    let restartEncode = false
     var libraryContainer: LibraryContainer?
     
     let component: BlitTexture
@@ -13,7 +12,9 @@ class BlitTexturePass: MetalPass{
     }
     func setup(device: MTLDevice){
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
+    func encode(_ commandBuffer: MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) {
         if let inTexture = component.inTexture?.texture{
             
             let sourceSlice = component.sourceSlice?.wrappedValue

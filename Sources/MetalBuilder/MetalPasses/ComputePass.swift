@@ -13,7 +13,7 @@ public enum MetalBuilderComputeError: Error{
 
 //Compute Pass
 final class ComputePass: MetalPass{
-    let restartEncode = false
+    
     var libraryContainer: LibraryContainer?
     
     var component: Compute
@@ -66,7 +66,9 @@ final class ComputePass: MetalPass{
             width: Int(ceil(Double(size.width)/Double(w))),
             height: Int(ceil(Double(size.height)/Double(h))), depth: 1)
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable? = nil) throws{
+    func encode(_ commandBuffer: MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) throws{
         guard let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()
         else{
             throw MetalBuilderComputeError

@@ -82,11 +82,12 @@ public extension MetalBuilderRenderer{
         //print(renderData.context.time)
         
         for pass in renderData.passes{
-            if pass.restartEncode{
-                commandBuffer = try restartEncode(commandBuffer: commandBuffer,
-                                              drawable: drawable)
+            
+            try pass.encode(commandBuffer, drawable){
+                try commandBuffer = restartEncode(commandBuffer: commandBuffer,
+                                                  drawable: drawable)
             }
-            try pass.encode(commandBuffer, drawable)
+                
         }
 
         endEncode(commandBuffer: commandBuffer, drawable: drawable)

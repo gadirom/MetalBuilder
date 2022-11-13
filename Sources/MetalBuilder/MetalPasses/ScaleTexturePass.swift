@@ -4,7 +4,7 @@ import MetalPerformanceShaders
 
 // ScaleTexture pass
 class ScaleTexturePass: MetalPass{
-    let restartEncode = false
+    
     var libraryContainer: LibraryContainer?
     
     let component: ScaleTexture
@@ -17,7 +17,9 @@ class ScaleTexturePass: MetalPass{
     func setup(device: MTLDevice){
         self.device = device
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,_ drawable: CAMetalDrawable?) {
+    func encode(_ commandBuffer: MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) {
         
         if let inTexture = component.inTexture?.texture{
             

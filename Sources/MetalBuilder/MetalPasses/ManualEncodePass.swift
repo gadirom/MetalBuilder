@@ -4,7 +4,7 @@ import SwiftUI
 
 // manual encoding pass
 final class ManualEncodePass: MetalPass{
-    let restartEncode = false
+    
     var libraryContainer: LibraryContainer?
     
     let component: ManualEncode
@@ -17,7 +17,9 @@ final class ManualEncodePass: MetalPass{
     func setup(device: MTLDevice) {
         self.device = device
     }
-    func encode(_ commandBuffer: MTLCommandBuffer, _ drawable: CAMetalDrawable?) {
+    func encode(_ commandBuffer: MTLCommandBuffer,
+                _ drawable: CAMetalDrawable?,
+                _ restartEncode: () throws ->()) {
         component.code(device, commandBuffer, drawable)
     }
 }
