@@ -54,8 +54,9 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
     let librarySource = """
 
-    kernel void particleFunction(uint id [[ thread_position_in_grid ]]){
-
+    kernel void particleFunction(uint id [[ thread_position_in_grid ]],
+                                 uint count [[ threads_per_grid ]]){
+    if(id>=count) return;
     Particle particle = particles[id];
     float size = particle.size*scale;
     float angle = particle.angle;
