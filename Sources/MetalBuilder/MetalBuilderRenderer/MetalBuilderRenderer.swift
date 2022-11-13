@@ -16,10 +16,15 @@ public final class MetalBuilderRenderer{
     var pausedTime: Double = 0
     var justStarted = true
     
+    var commandBuffer: MTLCommandBuffer!
+    
     //@MetalState var viewportSize: simd_uint2 = [0, 0]
 }
 
 extension MetalBuilderRenderer{
+    func getCommandBuffer()->MTLCommandBuffer{
+        self.commandBuffer
+    }
     func startEncode() throws -> MTLCommandBuffer{
         guard let commandBuffer = commandQueue.makeCommandBuffer()
         else{
@@ -28,15 +33,17 @@ extension MetalBuilderRenderer{
         }
         return commandBuffer
     }
-    func endEncode(commandBuffer: MTLCommandBuffer, drawable: CAMetalDrawable){
-        commandBuffer.present(drawable)
+    func endEncode(commandBuffer: MTLCommandBuffer, drawable: CAMetalDrawable?){
+        if let drawable = drawable{
+            commandBuffer.present(drawable)
+        }
         commandBuffer.commit()
 
         commandBuffer.waitUntilCompleted()
     }
-    func restartEncode(commandBuffer: MTLCommandBuffer, drawable: CAMetalDrawable) throws -> MTLCommandBuffer{
+    func restartEncode(commandBuffer: MTLCommandBuffer, drawable: CAMetalDrawable?) throws{
         endEncode(commandBuffer: commandBuffer, drawable: drawable)
-        return try startEncode()
+        self.commandBuffer = try startEncode()
     }
 }
 
@@ -72,7 +79,7 @@ public extension MetalBuilderRenderer{
     }
     func draw(drawable: CAMetalDrawable) throws{
        
-        var commandBuffer = try startEncode()
+        commandBuffer = try startEncode()
         
         if justStarted {
             startTime = CFAbsoluteTimeGetCurrent()
@@ -83,9 +90,9 @@ public extension MetalBuilderRenderer{
         
         for pass in renderData.passes{
             
-            try pass.encode(commandBuffer, drawable){
-                try commandBuffer = restartEncode(commandBuffer: commandBuffer,
-                                                  drawable: drawable)
+            try pass.encode(getCommandBuffer, drawable){
+                try restartEncode(commandBuffer: commandBuffer,
+                                  drawable: nil)
             }
                 
         }

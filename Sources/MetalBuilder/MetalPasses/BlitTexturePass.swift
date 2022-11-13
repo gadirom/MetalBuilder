@@ -12,10 +12,13 @@ class BlitTexturePass: MetalPass{
     }
     func setup(device: MTLDevice){
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,
+    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
                 _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) {
+                _ restartEncode: () throws ->()) throws {
+        
         if let inTexture = component.inTexture?.texture{
+            
+            let commandBuffer = getCommandBuffer()
             
             let sourceSlice = component.sourceSlice?.wrappedValue
             var destinationSlice = component.destinationSlice?.wrappedValue

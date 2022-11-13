@@ -46,9 +46,10 @@ final class RenderPass: MetalPass{
         }
     }
     
-    func encode(_ commandBuffer: MTLCommandBuffer,
+    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
                 _ drawable: CAMetalDrawable?,
                 _ restartEncode: () throws ->()) throws {
+        let commandBuffer = getCommandBuffer()
         let descriptor = MTLRenderPassDescriptor()
         for key in component.colorAttachments.keys{
             if let a = component.colorAttachments[key]?.descriptor{

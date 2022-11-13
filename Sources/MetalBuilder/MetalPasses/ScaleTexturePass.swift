@@ -17,11 +17,14 @@ class ScaleTexturePass: MetalPass{
     func setup(device: MTLDevice){
         self.device = device
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,
+    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
                 _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) {
+                _ restartEncode: () throws ->()) throws {
+  
         
         if let inTexture = component.inTexture?.texture{
+            
+            let commandBuffer = getCommandBuffer()
             
             var outTexture: MTLTexture
             if let t = component.outTexture?.texture{

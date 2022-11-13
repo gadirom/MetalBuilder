@@ -66,9 +66,10 @@ final class ComputePass: MetalPass{
             width: Int(ceil(Double(size.width)/Double(w))),
             height: Int(ceil(Double(size.height)/Double(h))), depth: 1)
     }
-    func encode(_ commandBuffer: MTLCommandBuffer,
+    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
                 _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws{
+                _ restartEncode: () throws ->()) throws {
+        let commandBuffer = getCommandBuffer()
         guard let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()
         else{
             throw MetalBuilderComputeError
