@@ -190,6 +190,11 @@ public extension Compute{
         c.gridFit = .size1D(size)
         return c
     }
+    func grid(size: Int)->Compute{
+        var c = self
+        c.gridFit = .size1D(MetalBinding<Int>.constant(size))
+        return c
+    }
     func grid(size: Binding<MTLSize>)->Compute{
         var c = self
         c.gridFit = .size(size)
