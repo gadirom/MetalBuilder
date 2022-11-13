@@ -57,7 +57,7 @@ public struct FragmentShader{
     var uniformsAndNames: [(UniformsContainer, String?)] = []
 }
 
-extension FragmentShader{
+public extension FragmentShader{
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> FragmentShader{
         var f = self
         let buf = Buffer(container: container, offset: offset, index: 0)
