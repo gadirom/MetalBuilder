@@ -95,13 +95,17 @@ public struct MetalBufferArgument{
                     space: String, type: String?=nil, name: String?=nil, index: Int?=nil) throws{
         
         var t: String?
+        if let type = metalType(for: T.self){
+            t = type
+        }
         if let type = container.metalType{
             t = type
         }
         if let type = type{
             t = type
         }
-//        guard let type = t
+        
+//        guard t != nil
 //        else {
 //            throw MetalBuilderFunctionArgumentsError
 //                .bufferArgumentError("No Metal type for buffer!")
