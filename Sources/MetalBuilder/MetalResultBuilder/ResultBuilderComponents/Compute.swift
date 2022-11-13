@@ -5,6 +5,7 @@ import SwiftUI
 enum GridFit{
     case fitTexture(MTLTextureContainer),
          size(Binding<MTLSize>),
+         size1D(MetalBinding<Int>),
          drawable,
          buffer(Int)
 }
@@ -182,6 +183,11 @@ public extension Compute{
         c.kernelArguments.append(.texture(argument))
         c.drawableTextureIndex = argument.index
         c.gridFit = .drawable
+        return c
+    }
+    func grid(size: MetalBinding<Int>)->Compute{
+        var c = self
+        c.gridFit = .size1D(size)
         return c
     }
     func grid(size: Binding<MTLSize>)->Compute{

@@ -45,7 +45,8 @@ final class ComputePass: MetalPass{
                     .gridFitTextureIsNil("fitTextrure for threads dispatching for the kernel: "+component.kernel+" is nil!")
             }
             size = MTLSize(width: texture.width, height: texture.height, depth: 1)
-        case .size(let s): size = s.wrappedValue
+        case .size(let s):
+            size = s.wrappedValue
         case .drawable: size = MTLSize(width: drawable!.texture.width, height: drawable!.texture.height, depth: 1)
         case .buffer(let index):
             guard let buf = component.buffers.first(where: { $0.index == index })
@@ -54,6 +55,8 @@ final class ComputePass: MetalPass{
                     .gridFitNoBuffer("buffer \(index) for threads dispatching for the kernel: '"+component.kernel+"' is not found!")
             }
             size = MTLSize(width: buf.count, height: 1, depth: 1)
+        case .size1D(let s):
+            size = MTLSize(width: s.wrappedValue, height: 1, depth: 1)
         }
         let w = computePiplineState.threadExecutionWidth
         let h = min(size.height, computePiplineState.maxTotalThreadsPerThreadgroup / w)
