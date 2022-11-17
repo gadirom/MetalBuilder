@@ -13,10 +13,8 @@ class BlitBufferPass: MetalPass{
     }
     func setup(device: MTLDevice){
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-        let commandBuffer = getCommandBuffer()
+    func encode(passInfo: MetalPassInfo) throws {
+        let commandBuffer = passInfo.getCommandBuffer()
         
         guard let inBuffer = component.inBuffer
         else{

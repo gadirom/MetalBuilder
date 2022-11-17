@@ -66,10 +66,8 @@ final class ComputePass: MetalPass{
             width: Int(ceil(Double(size.width)/Double(w))),
             height: Int(ceil(Double(size.height)/Double(h))), depth: 1)
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-        let commandBuffer = getCommandBuffer()
+    func encode(passInfo: MetalPassInfo) throws {
+        let commandBuffer = passInfo.getCommandBuffer()
         guard let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()
         else{
             throw MetalBuilderComputeError
@@ -96,10 +94,10 @@ final class ComputePass: MetalPass{
             computeCommandEncoder.setTexture(texture, index: tex.index)
         }
         if let index = component.drawableTextureIndex{
-            computeCommandEncoder.setTexture(drawable?.texture, index: index)
+            computeCommandEncoder.setTexture(passInfo.drawable?.texture, index: index)
         }
         //Set threads configuration
-        try setGrid(drawable)
+        try setGrid(passInfo.drawable)
         //Dispatch
         computeCommandEncoder.dispatchThreadgroups(threadGroupsPerGrid, threadsPerThreadgroup: threadsPerThreadGroup)
         computeCommandEncoder.endEncoding()

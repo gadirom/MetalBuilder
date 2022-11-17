@@ -17,10 +17,8 @@ final class ManualEncodePass: MetalPass{
     func setup(device: MTLDevice) {
         self.device = device
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-        let commandBuffer = getCommandBuffer()
-        component.code(device, commandBuffer, drawable)
+    func encode(passInfo: MetalPassInfo) throws {
+        let commandBuffer = passInfo.getCommandBuffer()
+        component.code(device, commandBuffer, passInfo.drawable)
     }
 }

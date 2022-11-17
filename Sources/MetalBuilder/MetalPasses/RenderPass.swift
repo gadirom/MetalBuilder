@@ -59,16 +59,14 @@ final class RenderPass: MetalPass{
         }
     }
     
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-        let commandBuffer = getCommandBuffer()
-        let descriptor = MTLRenderPassDescriptor()
+    func encode(passInfo: MetalPassInfo) throws {
+        let commandBuffer = passInfo.getCommandBuffer()
+        let descriptor = passInfo.renderPassDescriptor
         
         for key in component.colorAttachments.keys{
             if let a = component.colorAttachments[key]?.descriptor{
                 if a.texture == nil{
-                    a.texture = drawable?.texture
+                    a.texture = passInfo.drawable?.texture
                 }
                 descriptor.colorAttachments[0] = a
             }

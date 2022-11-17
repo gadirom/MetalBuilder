@@ -137,8 +137,13 @@ public struct MetalBuilderView: UIViewRepresentable {
             
             guard let drawable = view.currentDrawable
             else { return }
+            
+            guard let renderPassDescriptor = view.currentRenderPassDescriptor
+            else { return }
+            
             do {
-                try renderer?.draw(drawable: drawable)
+                try renderer?.draw(drawable: drawable,
+                                   renderPassDescriptor: renderPassDescriptor)
             } catch { print(error) }
         }
         

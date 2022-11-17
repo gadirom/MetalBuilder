@@ -77,7 +77,8 @@ public extension MetalBuilderRenderer{
             print(error)
         }
     }
-    func draw(drawable: CAMetalDrawable) throws{
+    func draw(drawable: CAMetalDrawable,
+              renderPassDescriptor: MTLRenderPassDescriptor) throws{
        
         commandBuffer = try startEncode()
         
@@ -90,10 +91,14 @@ public extension MetalBuilderRenderer{
         
         for pass in renderData.passes{
             
-            try pass.encode(getCommandBuffer, drawable){
-                try restartEncode(commandBuffer: commandBuffer,
+            let passInfo = MetalPassInfo(getCommandBuffer: getCommandBuffer,
+                                         drawable: drawable,
+                                         renderPassDescriptor: renderPassDescriptor){
+                try self.restartEncode(commandBuffer: self.commandBuffer,
                                   drawable: nil)
             }
+            
+            try pass.encode(passInfo: passInfo)
                 
         }
 
