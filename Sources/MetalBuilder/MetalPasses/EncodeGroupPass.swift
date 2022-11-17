@@ -14,9 +14,9 @@ class EncodeGroupPass: MetalPass{
         self.repeating = repeating
         self.active = active
     }
-    func setup(device: MTLDevice) throws{
+    func setup(renderInfo: GlobalRenderInfo) throws{
         for pass in passes {
-            try pass.setup(device: device)
+            try pass.setup(renderInfo: renderInfo)
         }
     }
     func encode(passInfo: MetalPassInfo) throws {

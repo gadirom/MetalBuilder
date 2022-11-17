@@ -9,13 +9,13 @@ class ScaleTexturePass: MetalPass{
     
     let component: ScaleTexture
     
-    var device: MTLDevice!
+    unowned var device: MTLDevice!
     
     init(_ component: ScaleTexture){
         self.component = component
     }
-    func setup(device: MTLDevice){
-        self.device = device
+    func setup(renderInfo: GlobalRenderInfo){
+        self.device = renderInfo.device
     }
     func encode(passInfo: MetalPassInfo) throws {
         

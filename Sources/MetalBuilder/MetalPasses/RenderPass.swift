@@ -25,7 +25,7 @@ final class RenderPass: MetalPass{
         self.component = component
         self.libraryContainer = libraryContainer
     }
-    func setup(device: MTLDevice) throws{
+    func setup(renderInfo: GlobalRenderInfo) throws{
         try component.setup()
         let vertexFunction = libraryContainer!.library!.makeFunction(name: component.vertexFunc)
         let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
@@ -35,21 +35,23 @@ final class RenderPass: MetalPass{
         
         //depth routine
         if let depthDescriptor = self.component.depthDescriptor{
-            depthState = device.makeDepthStencilState(descriptor: depthDescriptor)
-            descriptor.depthAttachmentPixelFormat = .depth32Float
+            depthState = renderInfo.device.makeDepthStencilState(descriptor: depthDescriptor)
+        }
+        if let depthStencilPixelFormat = renderInfo.depthStencilPixelFormat{
+            descriptor.depthAttachmentPixelFormat = depthStencilPixelFormat
         }
         
-        descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        descriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
         
         descriptor.vertexFunction = vertexFunction
         descriptor.fragmentFunction = fragmentFunction
         renderPiplineState =
-            try device.makeRenderPipelineState(descriptor: descriptor)
+            try renderInfo.device.makeRenderPipelineState(descriptor: descriptor)
         
         if component.indexedPrimitives{
             if let buf = component.indexBuf{
                 indexType = try getIndexType(buf.elementType)
-                try buf.create(device: device)
+                try buf.create(device: renderInfo.device)
             }else{
                 throw MetalBuilderRenderError.badIndexBuffer("No index buffer was provided for '" + self.component.vertexFunc + "'!")
             }
@@ -86,7 +88,9 @@ final class RenderPass: MetalPass{
         renderPassEncoder.setRenderPipelineState(renderPiplineState)
         
         //set depth state
-        renderPassEncoder.setDepthStencilState(depthState)
+        if let depthState = depthState {
+            renderPassEncoder.setDepthStencilState(depthState)
+        }
         
         //Set Buffers
         for buffer in component.vertexBufs{

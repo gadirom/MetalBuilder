@@ -12,8 +12,3 @@ struct MetalPassInfo {
     let renderPassDescriptor: MTLRenderPassDescriptor
     let restartEncode: () throws ->()
 }
-
-struct GlobalRenderInfo{
-    var device: MTLDevice
-    var depthStencilPixelFormat: MTLPixelFormat?
-}

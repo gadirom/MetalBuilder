@@ -9,14 +9,14 @@ class MPSUnaryPass: MetalPass{
     var libraryContainer: LibraryContainer?
     
     let component: MPSUnary
-    var device: MTLDevice!
+    unowned var device: MTLDevice!
     
     //var kernel: MPSUnaryImageKernel!
     init(_ component: MPSUnary){
         self.component = component
     }
-    func setup(device: MTLDevice) {
-        self.device = device
+    func setup(renderInfo: GlobalRenderInfo){
+        self.device = renderInfo.device
     }
     func encode(passInfo: MetalPassInfo) throws {
         

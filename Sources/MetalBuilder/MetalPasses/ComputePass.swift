@@ -26,13 +26,13 @@ final class ComputePass: MetalPass{
         self.component = component
         self.libraryContainer = libraryContainer
     }
-    func setup(device: MTLDevice) throws{
+    func setup(renderInfo: GlobalRenderInfo) throws{
         try component.setup()
         let function = libraryContainer!.library!.makeFunction(name: component.kernel)
         libraryContainer = nil
         
         computePiplineState =
-            try device.makeComputePipelineState(function: function!)
+        try renderInfo.device.makeComputePipelineState(function: function!)
     }
     // depth is ignored!!
     func setGrid(_ drawable: CAMetalDrawable?) throws{

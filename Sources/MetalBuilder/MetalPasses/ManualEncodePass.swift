@@ -9,13 +9,13 @@ final class ManualEncodePass: MetalPass{
     
     let component: ManualEncode
     
-    var device: MTLDevice!
+    unowned var device: MTLDevice!
     
     init(_ component: ManualEncode){
         self.component = component
     }
-    func setup(device: MTLDevice) {
-        self.device = device
+    func setup(renderInfo: GlobalRenderInfo) throws{
+        self.device = renderInfo.device
     }
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()

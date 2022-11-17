@@ -10,9 +10,9 @@ class BlitTexturePass: MetalPass{
     init(_ component: BlitTexture){
         self.component = component
     }
-    func setup(device: MTLDevice){
+    func setup(renderInfo: GlobalRenderInfo){
     }
-    func encode(passInfo: MetalPassInfo) throws {
+    func encode(passInfo: MetalPassInfo) throws{
         
         if let inTexture = component.inTexture?.texture{
             

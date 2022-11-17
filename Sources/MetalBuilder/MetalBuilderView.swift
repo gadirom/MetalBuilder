@@ -13,15 +13,20 @@ public struct MetalBuilderView: UIViewRepresentable {
     
     var viewSettings = MetalBuilderViewSettings()
     
+    var onResizeCode: ((CGSize)->())?
+    
     public init(librarySource: String = "",
                 helpers: String = "",
                 isDrawing: Binding<Bool>,
-                viewSettings: MetalBuilderViewSettings?,
+                viewSettings: MetalBuilderViewSettings?=nil,
                 @MetalResultBuilder metalContent: @escaping MetalRenderingContent){
         self.librarySource = librarySource
         self.helpers = helpers
         self._isDrawing = isDrawing
         self.metalContent = metalContent
+        if let viewSettings = viewSettings{
+            self.viewSettings = viewSettings
+        }
     }
     
     public func makeCoordinator() -> Coordinator {
@@ -33,7 +38,6 @@ public struct MetalBuilderView: UIViewRepresentable {
         let mtkView = MTKView()
         
         mtkView.delegate = context.coordinator
-        mtkView.preferredFramesPerSecond = 60
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             mtkView.device = metalDevice
         }
@@ -42,9 +46,13 @@ public struct MetalBuilderView: UIViewRepresentable {
         mtkView.enableSetNeedsDisplay = false
         mtkView.isPaused = false
         
+        let renderInfo = GlobalRenderInfo(device: mtkView.device!,
+                                          depthStencilPixelFormat: viewSettings.depthStencilPixelFormat,
+                                          pixelFormat: mtkView.colorPixelFormat)
+        
         context.coordinator.setupRenderer(librarySource: librarySource,
                                           helpers: helpers,
-                                          pixelFormat: mtkView.colorPixelFormat,
+                                          renderInfo: renderInfo,
                                           metalContent: metalContent,
                                           scaleFactor: Float(mtkView.contentScaleFactor))
         
@@ -52,7 +60,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     }
     public func updateUIView(_ uiView: UIView, context: Context){
         context.coordinator.isDrawing = isDrawing
-        
+        context.coordinator.onResizeCode = onResizeCode
         context.coordinator.viewSettings = viewSettings
         
         switch scenePhase{
@@ -72,29 +80,27 @@ public struct MetalBuilderView: UIViewRepresentable {
     }
     public class Coordinator: NSObject, MTKViewDelegate {
         
-        var device: MTLDevice!
+        //var device: MTLDevice!
         var renderer: MetalBuilderRenderer?
         
         var isDrawing = false
+        var onResizeCode: ((CGSize)->())?
         var viewSettings = MetalBuilderViewSettings()
         
         var background = false
         
         override init(){
             super.init()
-            if let metalDevice = MTLCreateSystemDefaultDevice() {
-                self.device = metalDevice
-            }
+            
         }
         
         func setupRenderer(librarySource: String, helpers: String,
-                           pixelFormat: MTLPixelFormat,
+                           renderInfo: GlobalRenderInfo,
                            metalContent: MetalRenderingContent,
                            scaleFactor: Float){
             do{
                 renderer =
-                try MetalBuilderRenderer(device: device,
-                                         pixelFormat: pixelFormat,
+                try MetalBuilderRenderer(renderInfo: renderInfo,
                                          librarySource: librarySource,
                                          helpers: helpers,
                                          renderingContent: metalContent)
@@ -105,7 +111,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
             applyViewSettings(view)
             renderer?.setSize(size: size)
-            viewSettings.onResizeCode?(size)
+            onResizeCode?(size)
         }
         
         func applyViewSettings(_ view: MTKView){

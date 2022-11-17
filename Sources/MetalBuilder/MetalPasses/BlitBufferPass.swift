@@ -11,7 +11,7 @@ class BlitBufferPass: MetalPass{
     init(_ component: BlitBuffer){
         self.component = component
     }
-    func setup(device: MTLDevice){
+    func setup(renderInfo: GlobalRenderInfo){
     }
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()
