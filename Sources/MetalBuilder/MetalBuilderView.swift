@@ -60,7 +60,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         //Depth routine
         mtkView.depthStencilPixelFormat = .depth32Float
-        mtkView.clearDepth = 1
+        mtkView.clearDepth = 0
         
         
         //mtkView.drawableSize = mtkView.frame.size
