@@ -36,7 +36,7 @@ final class RenderPass: MetalPass{
         //depth routine
         let dephDescriptor = MTLDepthStencilDescriptor()
         dephDescriptor.depthCompareFunction = .lessEqual
-        dephDescriptor.isDepthWriteEnabled = false
+        dephDescriptor.isDepthWriteEnabled = true
         depthState = device.makeDepthStencilState(descriptor: dephDescriptor)
         
         descriptor.depthAttachmentPixelFormat = .depth32Float
