@@ -57,6 +57,12 @@ public struct MetalBuilderView: UIViewRepresentable {
         }
         mtkView.framebufferOnly = false
         //mtkView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
+        
+        //Depth routine
+        mtkView.depthStencilPixelFormat = .depth32Float
+        mtkView.clearDepth = 1
+        
+        
         //mtkView.drawableSize = mtkView.frame.size
         mtkView.enableSetNeedsDisplay = false
         mtkView.isPaused = false

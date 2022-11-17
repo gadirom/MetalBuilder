@@ -19,6 +19,8 @@ final class RenderPass: MetalPass{
     
     var indexType: MTLIndexType = .uint16
     
+    var depthState: MTLDepthStencilState?
+    
     init(_ component: Render, libraryContainer: LibraryContainer){
         self.component = component
         self.libraryContainer = libraryContainer
@@ -30,7 +32,18 @@ final class RenderPass: MetalPass{
         libraryContainer = nil
         
         let descriptor = MTLRenderPipelineDescriptor()
+        
+        //depth routine
+        let dephDescriptor = MTLDepthStencilDescriptor()
+        dephDescriptor.depthCompareFunction = .lessEqual
+        dephDescriptor.isDepthWriteEnabled = false
+        depthState = device.makeDepthStencilState(descriptor: dephDescriptor)
+        
+        descriptor.depthAttachmentPixelFormat = .depth32Float
+        //
+        
         descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        
         descriptor.vertexFunction = vertexFunction
         descriptor.fragmentFunction = fragmentFunction
         renderPiplineState =
@@ -51,6 +64,7 @@ final class RenderPass: MetalPass{
                 _ restartEncode: () throws ->()) throws {
         let commandBuffer = getCommandBuffer()
         let descriptor = MTLRenderPassDescriptor()
+        
         for key in component.colorAttachments.keys{
             if let a = component.colorAttachments[key]?.descriptor{
                 if a.texture == nil{
@@ -75,6 +89,10 @@ final class RenderPass: MetalPass{
         renderPassEncoder.setViewport(viewport)
         
         renderPassEncoder.setRenderPipelineState(renderPiplineState)
+        
+        //set depth state
+        renderPassEncoder.setDepthStencilState(depthState)
+        
         //Set Buffers
         for buffer in component.vertexBufs{
             renderPassEncoder.setVertexBuffer(buffer.mtlBuffer, offset: buffer.offset, index: buffer.index)
