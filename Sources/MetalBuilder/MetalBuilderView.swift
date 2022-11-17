@@ -10,36 +10,18 @@ public struct MetalBuilderView: UIViewRepresentable {
     public let helpers: String
     @Binding public var isDrawing: Bool
     @MetalResultBuilder public let metalContent: MetalRenderingContent
-    let onResizeCode: ((CGSize)->())?
+    
+    var viewSettings = MetalBuilderViewSettings()
     
     public init(librarySource: String = "",
                 helpers: String = "",
                 isDrawing: Binding<Bool>,
+                viewSettings: MetalBuilderViewSettings?,
                 @MetalResultBuilder metalContent: @escaping MetalRenderingContent){
-        self.init(librarySource: librarySource,
-                  helpers: helpers,
-                  isDrawing: isDrawing,
-                  metalContent: metalContent,
-                  onResizeCode: nil)
-    }
-    init(librarySource: String,
-         helpers: String,
-         isDrawing: Binding<Bool>,
-         metalContent: @escaping MetalRenderingContent,
-         onResizeCode: ((CGSize)->())?) {
         self.librarySource = librarySource
         self.helpers = helpers
         self._isDrawing = isDrawing
         self.metalContent = metalContent
-        self.onResizeCode = onResizeCode
-    }
-    
-    public func onResize(perform: @escaping (CGSize)->())->MetalBuilderView{
-        MetalBuilderView(librarySource: librarySource,
-                         helpers: helpers,
-                         isDrawing: $isDrawing,
-                         metalContent: metalContent,
-                         onResizeCode: perform)
     }
     
     public func makeCoordinator() -> Coordinator {
@@ -55,13 +37,6 @@ public struct MetalBuilderView: UIViewRepresentable {
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             mtkView.device = metalDevice
         }
-        mtkView.framebufferOnly = false
-        //mtkView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
-        
-        //Depth routine
-        mtkView.depthStencilPixelFormat = .depth32Float
-        mtkView.clearDepth = 0
-        
         
         //mtkView.drawableSize = mtkView.frame.size
         mtkView.enableSetNeedsDisplay = false
@@ -77,7 +52,8 @@ public struct MetalBuilderView: UIViewRepresentable {
     }
     public func updateUIView(_ uiView: UIView, context: Context){
         context.coordinator.isDrawing = isDrawing
-        context.coordinator.onResizeCode = onResizeCode
+        
+        context.coordinator.viewSettings = viewSettings
         
         switch scenePhase{
         case .background:
@@ -100,7 +76,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         var renderer: MetalBuilderRenderer?
         
         var isDrawing = false
-        var onResizeCode: ((CGSize)->())?
+        var viewSettings = MetalBuilderViewSettings()
         
         var background = false
         
@@ -127,8 +103,32 @@ public struct MetalBuilderView: UIViewRepresentable {
         }
         
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+            applyViewSettings(view)
             renderer?.setSize(size: size)
-            onResizeCode?(size)
+            viewSettings.onResizeCode?(size)
+        }
+        
+        func applyViewSettings(_ view: MTKView){
+            
+            if let preferredFramesPerSecond = viewSettings.preferredFramesPerSecond{
+                view.preferredFramesPerSecond = preferredFramesPerSecond
+            }
+            
+            if let framebufferOnly = viewSettings.framebufferOnly{
+                view.framebufferOnly = framebufferOnly
+            }
+           
+            if let clearColor = viewSettings.clearColor{
+                view.clearColor = clearColor
+            }
+            
+            //Depth routine
+            if let clearDepth = viewSettings.clearDepth{
+                view.clearDepth = clearDepth
+            }
+            if let depthStencilPixelFormat = viewSettings.depthStencilPixelFormat{
+                view.depthStencilPixelFormat = depthStencilPixelFormat
+            }
         }
     
         public func draw(in view: MTKView) {

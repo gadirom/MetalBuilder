@@ -126,6 +126,8 @@ public struct Render: MetalBuilderComponent{
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
     
+    var depthDescriptor: MTLDepthStencilDescriptor?
+    
     var uniforms: [UniformsContainer] = []
     
     public init(vertex: String, fragment: String="", type: MTLPrimitiveType = .triangle,
@@ -398,6 +400,11 @@ public extension Render{
         for uAndName in shader.uniformsAndNames{
             r = r.uniforms(uAndName.0, name: uAndName.1)
         }
+        return r
+    }
+    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor) -> Render{
+        var r = self
+        r.depthDescriptor = descriptor
         return r
     }
 }
