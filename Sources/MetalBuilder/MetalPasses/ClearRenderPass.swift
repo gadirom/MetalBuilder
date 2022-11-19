@@ -11,8 +11,8 @@ class ClearRenderPass: MetalPass{
         passInfo.renderPassDescriptor
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
         renderEncoder.endEncoding()
-        commandBuffer.present(passInfo.drawable!)
-        commandBuffer.commit()
-        commandBuffer.waitUntilScheduled()
+//        commandBuffer.present(passInfo.drawable!)
+//        commandBuffer.commit()
+//        commandBuffer.waitUntilScheduled()
     }
 }
