@@ -361,16 +361,24 @@ public extension Render{
         r.viewport = viewport
         return r
     }
-    func toTexture(_ container: MTLTextureContainer, index: Int = 0)->Render{
+    /// Adds destination texture for the render pass. if `nill` is passed and there no other modifier with no-nil container,
+    /// the drawable texture will be set as output.
+    /// - Parameters:
+    ///   - container: the destination texture
+    ///   - index: index of the texture if you write metal declarations manually
+    /// - Returns: <#description#>
+    func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Render{
         var r = self
-        var a: ColorAttachment
-        if let aExistent = colorAttachments[index]{
-            a = aExistent
-        }else{
-            a = ColorAttachment()
+        if let container = container {
+            var a: ColorAttachment
+            if let aExistent = colorAttachments[index]{
+                a = aExistent
+            }else{
+                a = ColorAttachment()
+            }
+            a.texture = container
+            r.colorAttachments[index] = a
         }
-        a.texture = container
-        r.colorAttachments[index] = a
         return r
     }
     func source(_ source: String)->Render{
