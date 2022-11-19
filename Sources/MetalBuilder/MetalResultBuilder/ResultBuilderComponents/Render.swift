@@ -365,7 +365,7 @@ public extension Render{
     /// the drawable texture will be set as output.
     /// - Parameters:
     ///   - container: the destination texture
-    ///   - index: index of the texture if you write metal declarations manually
+    ///   - index: attachement index for the texture
     /// - Returns: <#description#>
     func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Render{
         var r = self

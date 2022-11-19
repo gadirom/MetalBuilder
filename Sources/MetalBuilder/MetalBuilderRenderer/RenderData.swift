@@ -115,6 +115,10 @@ struct RenderData{
                         .append(funcAndArg)
                 }
             }
+            //Clear Render
+            if let _ = component as? ClearRender{
+                data.passes.append(ClearRenderPass())
+            }
             //Render
             if let renderComponent = component as? Render{
                 data.passes.append(RenderPass(renderComponent, libraryContainer: libraryContainer))
