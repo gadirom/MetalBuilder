@@ -36,7 +36,7 @@ var defaultColorAttachments =
                         get: { .store },
                         set: { _ in }),
                        clearColor: Binding<MTLClearColor>(
-                        get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
+                        get: { MTLClearColorMake(1.0, 1.0, 1.0, 1.0)},
                         set: { _ in } )
                        )]
 
