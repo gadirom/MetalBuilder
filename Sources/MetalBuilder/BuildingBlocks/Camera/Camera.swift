@@ -22,9 +22,6 @@ class CameraConfiguration{
 
 public struct Camera: MetalBuildingBlock{
     public init(context: MetalBuilderRenderingContext,
-                helpers: String = "",
-                librarySource: String = "",
-                compileOptions: MetalBuilderCompileOptions? = nil,
                 texture: MTLTextureContainer,
                 position: MetalBinding<AVCaptureDevice.Position>,
                 videoOrientation: MetalBinding<AVCaptureVideoOrientation>,
@@ -32,9 +29,6 @@ public struct Camera: MetalBuildingBlock{
                 ready: MetalBinding<Bool>,
                 analysis: @escaping (CVPixelBuffer) -> ()) {
         self.context = context
-        self.helpers = helpers
-        self.librarySource = librarySource
-        self.compileOptions = compileOptions
         self.texture = texture
         self._position = position
         self._videoOrientation = videoOrientation
