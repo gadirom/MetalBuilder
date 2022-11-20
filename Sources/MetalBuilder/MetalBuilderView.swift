@@ -10,36 +10,23 @@ public struct MetalBuilderView: UIViewRepresentable {
     public let helpers: String
     @Binding public var isDrawing: Bool
     @MetalResultBuilder public let metalContent: MetalRenderingContent
-    let onResizeCode: ((CGSize)->())?
+    
+    var viewSettings = MetalBuilderViewSettings()
+    
+    var onResizeCode: ((CGSize)->())?
     
     public init(librarySource: String = "",
                 helpers: String = "",
                 isDrawing: Binding<Bool>,
+                viewSettings: MetalBuilderViewSettings?=nil,
                 @MetalResultBuilder metalContent: @escaping MetalRenderingContent){
-        self.init(librarySource: librarySource,
-                  helpers: helpers,
-                  isDrawing: isDrawing,
-                  metalContent: metalContent,
-                  onResizeCode: nil)
-    }
-    init(librarySource: String,
-         helpers: String,
-         isDrawing: Binding<Bool>,
-         metalContent: @escaping MetalRenderingContent,
-         onResizeCode: ((CGSize)->())?) {
         self.librarySource = librarySource
         self.helpers = helpers
         self._isDrawing = isDrawing
         self.metalContent = metalContent
-        self.onResizeCode = onResizeCode
-    }
-    
-    public func onResize(perform: @escaping (CGSize)->())->MetalBuilderView{
-        MetalBuilderView(librarySource: librarySource,
-                         helpers: helpers,
-                         isDrawing: $isDrawing,
-                         metalContent: metalContent,
-                         onResizeCode: perform)
+        if let viewSettings = viewSettings{
+            self.viewSettings = viewSettings
+        }
     }
     
     public func makeCoordinator() -> Coordinator {
@@ -51,19 +38,21 @@ public struct MetalBuilderView: UIViewRepresentable {
         let mtkView = MTKView()
         
         mtkView.delegate = context.coordinator
-        mtkView.preferredFramesPerSecond = 60
         if let metalDevice = MTLCreateSystemDefaultDevice() {
             mtkView.device = metalDevice
         }
-        mtkView.framebufferOnly = false
-        //mtkView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
+        
         //mtkView.drawableSize = mtkView.frame.size
         mtkView.enableSetNeedsDisplay = false
         mtkView.isPaused = false
         
+        let renderInfo = GlobalRenderInfo(device: mtkView.device!,
+                                          depthStencilPixelFormat: viewSettings.depthStencilPixelFormat,
+                                          pixelFormat: mtkView.colorPixelFormat)
+        
         context.coordinator.setupRenderer(librarySource: librarySource,
                                           helpers: helpers,
-                                          pixelFormat: mtkView.colorPixelFormat,
+                                          renderInfo: renderInfo,
                                           metalContent: metalContent,
                                           scaleFactor: Float(mtkView.contentScaleFactor))
         
@@ -72,6 +61,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     public func updateUIView(_ uiView: UIView, context: Context){
         context.coordinator.isDrawing = isDrawing
         context.coordinator.onResizeCode = onResizeCode
+        context.coordinator.viewSettings = viewSettings
         
         switch scenePhase{
         case .background:
@@ -90,29 +80,27 @@ public struct MetalBuilderView: UIViewRepresentable {
     }
     public class Coordinator: NSObject, MTKViewDelegate {
         
-        var device: MTLDevice!
+        //var device: MTLDevice!
         var renderer: MetalBuilderRenderer?
         
         var isDrawing = false
         var onResizeCode: ((CGSize)->())?
+        var viewSettings = MetalBuilderViewSettings()
         
         var background = false
         
         override init(){
             super.init()
-            if let metalDevice = MTLCreateSystemDefaultDevice() {
-                self.device = metalDevice
-            }
+            
         }
         
         func setupRenderer(librarySource: String, helpers: String,
-                           pixelFormat: MTLPixelFormat,
+                           renderInfo: GlobalRenderInfo,
                            metalContent: MetalRenderingContent,
                            scaleFactor: Float){
             do{
                 renderer =
-                try MetalBuilderRenderer(device: device,
-                                         pixelFormat: pixelFormat,
+                try MetalBuilderRenderer(renderInfo: renderInfo,
                                          librarySource: librarySource,
                                          helpers: helpers,
                                          renderingContent: metalContent)
@@ -121,8 +109,32 @@ public struct MetalBuilderView: UIViewRepresentable {
         }
         
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+            applyViewSettings(view)
             renderer?.setSize(size: size)
             onResizeCode?(size)
+        }
+        
+        func applyViewSettings(_ view: MTKView){
+            
+            if let preferredFramesPerSecond = viewSettings.preferredFramesPerSecond{
+                view.preferredFramesPerSecond = preferredFramesPerSecond
+            }
+            
+            if let framebufferOnly = viewSettings.framebufferOnly{
+                view.framebufferOnly = framebufferOnly
+            }
+           
+            if let clearColor = viewSettings.clearColor{
+                view.clearColor = clearColor
+            }
+            
+            //Depth routine
+            if let clearDepth = viewSettings.clearDepth{
+                view.clearDepth = clearDepth
+            }
+            if let depthStencilPixelFormat = viewSettings.depthStencilPixelFormat{
+                view.depthStencilPixelFormat = depthStencilPixelFormat
+            }
         }
     
         public func draw(in view: MTKView) {
@@ -131,8 +143,13 @@ public struct MetalBuilderView: UIViewRepresentable {
             
             guard let drawable = view.currentDrawable
             else { return }
+            
+            guard let renderPassDescriptor = view.currentRenderPassDescriptor
+            else { return }
+            
             do {
-                try renderer?.draw(drawable: drawable)
+                try renderer?.draw(drawable: drawable,
+                                   renderPassDescriptor: renderPassDescriptor)
             } catch { print(error) }
         }
         

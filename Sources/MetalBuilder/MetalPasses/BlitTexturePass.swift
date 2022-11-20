@@ -10,15 +10,13 @@ class BlitTexturePass: MetalPass{
     init(_ component: BlitTexture){
         self.component = component
     }
-    func setup(device: MTLDevice){
+    func setup(renderInfo: GlobalRenderInfo){
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
+    func encode(passInfo: MetalPassInfo) throws{
         
         if let inTexture = component.inTexture?.texture{
             
-            let commandBuffer = getCommandBuffer()
+            let commandBuffer = passInfo.getCommandBuffer()
             
             let sourceSlice = component.sourceSlice?.wrappedValue
             var destinationSlice = component.destinationSlice?.wrappedValue
@@ -33,7 +31,7 @@ class BlitTexturePass: MetalPass{
             if let t = component.outTexture?.texture{
                 outTexture = t
             }else{
-                guard let t = drawable?.texture
+                guard let t = passInfo.drawable?.texture
                 else{
                     print("blit: no out was set and no drawable!")
                     return

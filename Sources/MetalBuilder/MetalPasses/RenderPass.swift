@@ -19,47 +19,62 @@ final class RenderPass: MetalPass{
     
     var indexType: MTLIndexType = .uint16
     
+    var depthState: MTLDepthStencilState?
+    
     init(_ component: Render, libraryContainer: LibraryContainer){
         self.component = component
         self.libraryContainer = libraryContainer
     }
-    func setup(device: MTLDevice) throws{
+    func setup(renderInfo: GlobalRenderInfo) throws{
         try component.setup()
         let vertexFunction = libraryContainer!.library!.makeFunction(name: component.vertexFunc)
         let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
         libraryContainer = nil
         
-        let descriptor = MTLRenderPipelineDescriptor()
-        descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-        descriptor.vertexFunction = vertexFunction
-        descriptor.fragmentFunction = fragmentFunction
+        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        
+        //depth routine
+        if let depthDescriptor = self.component.depthDescriptor{
+            depthState = renderInfo.device.makeDepthStencilState(descriptor: depthDescriptor)
+        }
+        if let depthStencilPixelFormat = renderInfo.depthStencilPixelFormat{
+            renderPipelineDescriptor.depthAttachmentPixelFormat = depthStencilPixelFormat
+        }
+        
+        if let pipelineColorAttachment = component.pipelineColorAttachment{
+            renderPipelineDescriptor.colorAttachments[0] = pipelineColorAttachment
+        }
+        
+        renderPipelineDescriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
+        
+        renderPipelineDescriptor.vertexFunction = vertexFunction
+        renderPipelineDescriptor.fragmentFunction = fragmentFunction
         renderPiplineState =
-            try device.makeRenderPipelineState(descriptor: descriptor)
+            try renderInfo.device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
         
         if component.indexedPrimitives{
             if let buf = component.indexBuf{
                 indexType = try getIndexType(buf.elementType)
-                try buf.create(device: device)
+                try buf.create(device: renderInfo.device)
             }else{
                 throw MetalBuilderRenderError.badIndexBuffer("No index buffer was provided for '" + self.component.vertexFunc + "'!")
             }
         }
     }
     
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-        let commandBuffer = getCommandBuffer()
-        let descriptor = MTLRenderPassDescriptor()
-        for key in component.colorAttachments.keys{
-            if let a = component.colorAttachments[key]?.descriptor{
+    func encode(passInfo: MetalPassInfo) throws {
+        let commandBuffer = passInfo.getCommandBuffer()
+        let renderPassDescriptor = passInfo.renderPassDescriptor
+        
+        for key in component.passColorAttachments.keys{
+            if let a = component.passColorAttachments[key]?.descriptor{
                 if a.texture == nil{
-                    a.texture = drawable?.texture
+                    a.texture = passInfo.drawable?.texture
                 }
-                descriptor.colorAttachments[0] = a
+                renderPassDescriptor.colorAttachments[key] = a
             }
         }
-        guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
+        guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         else{
             throw MetalBuilderRenderError
                 .noRenderEncoder("Wasn't able to create renderEncoder for the vertex shader: '"+component.vertexFunc+"'!")
@@ -70,11 +85,17 @@ final class RenderPass: MetalPass{
         if let v = component.viewport?.wrappedValue{
             viewport = v
         }else{
-            viewport = MTLViewport(originX: 0.0, originY: 0.0, width: Double(descriptor.colorAttachments[0].texture!.width), height: Double(descriptor.colorAttachments[0].texture!.height), znear: 0.0, zfar: 1.0)
+            viewport = MTLViewport(originX: 0.0, originY: 0.0, width: Double(renderPassDescriptor.colorAttachments[0].texture!.width), height: Double(renderPassDescriptor.colorAttachments[0].texture!.height), znear: 0.0, zfar: 1.0)
         }
         renderPassEncoder.setViewport(viewport)
         
         renderPassEncoder.setRenderPipelineState(renderPiplineState)
+        
+        //set depth state
+        if let depthState = depthState {
+            renderPassEncoder.setDepthStencilState(depthState)
+        }
+        
         //Set Buffers
         for buffer in component.vertexBufs{
             renderPassEncoder.setVertexBuffer(buffer.mtlBuffer, offset: buffer.offset, index: buffer.index)

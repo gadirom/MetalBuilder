@@ -21,7 +21,7 @@ struct RenderData{
     
 //    var helpers = ""
 
-    var pixelFormat: MTLPixelFormat?
+    var renderInfo: GlobalRenderInfo!
     
     var context: MetalBuilderRenderingContext!
     
@@ -35,18 +35,17 @@ struct RenderData{
          helpers: String,
          options: MetalBuilderCompileOptions,
          context: MetalBuilderRenderingContext,
-         device: MTLDevice,
-         pixelFormat: MTLPixelFormat) throws{
+         renderInfo: GlobalRenderInfo) throws{
         
         self.context = context
         //self.device = device
-        self.pixelFormat = pixelFormat
+        self.renderInfo = renderInfo
         
         let content = renderingContent(context)
         //var libraryContainer = LibraryContainer()
         
-        let data = try Self.compile(device:device,
-                                    pixelFormat: pixelFormat,
+        let data = try Self.compile(device: renderInfo.device,
+                                    pixelFormat: renderInfo.pixelFormat,
                                     content: content,
                                     librarySource: librarySource,
                                     helpers: helpers,
@@ -56,7 +55,7 @@ struct RenderData{
         
         Self.librarySourceHashes = []
         
-        try data.setupPasses(device: device)
+        try data.setupPasses(renderInfo: renderInfo)
         //try data.createTextures(context: context, device: device)
     }
     
@@ -116,12 +115,16 @@ struct RenderData{
                         .append(funcAndArg)
                 }
             }
+            //Clear Render
+            if let clearRenderComponent = component as? ClearRender{
+                data.passes.append(ClearRenderPass(clearRenderComponent))
+            }
             //Render
             if let renderComponent = component as? Render{
                 data.passes.append(RenderPass(renderComponent, libraryContainer: libraryContainer))
                 data.addTextures(newTexs: renderComponent.vertexTextures.map{ $0.container })
                 data.addTextures(newTexs: renderComponent.fragTextures.map{ $0.container })
-                data.addTextures(newTexs: renderComponent.colorAttachments.values.map{ $0.texture })
+                data.addTextures(newTexs: renderComponent.passColorAttachments.values.map{ $0.texture })
                 try data.createBuffers(buffers: renderComponent.vertexBufs, device: device)
                 try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
                 data.createUniforms(renderComponent.uniforms, device: device)
@@ -293,7 +296,7 @@ struct RenderData{
             do{
                 try tex.create(device: device,
                                viewportSize: context.viewportSize,
-                               pixelFormat: pixelFormat)
+                               pixelFormat: renderInfo.pixelFormat)
             }catch{
                 print(error)
             }
@@ -306,7 +309,7 @@ struct RenderData{
                 do{
                     try tex.create(device: device,
                                    viewportSize: context.viewportSize,
-                                   pixelFormat: pixelFormat)
+                                   pixelFormat: renderInfo.pixelFormat)
                 }catch{
                     print(error)
                 }
@@ -314,10 +317,10 @@ struct RenderData{
         }
     }
     
-    func setupPasses(device: MTLDevice) throws{
+    func setupPasses(renderInfo: GlobalRenderInfo) throws{
         //setup passes
         for pass in passes{
-            try pass.setup(device: device)
+            try pass.setup(renderInfo: renderInfo)
         }
     }
     

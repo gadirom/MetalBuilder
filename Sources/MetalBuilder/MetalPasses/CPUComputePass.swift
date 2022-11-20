@@ -8,18 +8,16 @@ final class CPUComputePass: MetalPass{
     let component: CPUCompute
     
     var libraryContainer: LibraryContainer?
-    var device: MTLDevice!
+    unowned var device: MTLDevice!
     
     init(_ component: CPUCompute){
         self.component = component
     }
-    func setup(device: MTLDevice) {
-        self.device = device
+    func setup(renderInfo: GlobalRenderInfo){
+        self.device = renderInfo.device
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-        try restartEncode()
+    func encode(passInfo: MetalPassInfo) throws {
+        try passInfo.restartEncode()
         component.code(device)
     }
 }

@@ -9,28 +9,25 @@ class ScaleTexturePass: MetalPass{
     
     let component: ScaleTexture
     
-    var device: MTLDevice!
+    unowned var device: MTLDevice!
     
     init(_ component: ScaleTexture){
         self.component = component
     }
-    func setup(device: MTLDevice){
-        self.device = device
+    func setup(renderInfo: GlobalRenderInfo){
+        self.device = renderInfo.device
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-  
+    func encode(passInfo: MetalPassInfo) throws {
         
         if let inTexture = component.inTexture?.texture{
             
-            let commandBuffer = getCommandBuffer()
+            let commandBuffer = passInfo.getCommandBuffer()
             
             var outTexture: MTLTexture
             if let t = component.outTexture?.texture{
                 outTexture = t
             }else{
-                guard let t = drawable?.texture
+                guard let t = passInfo.drawable?.texture
                 else{
                     print("blit: no out was set and no drawable!")
                     return

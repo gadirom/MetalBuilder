@@ -9,19 +9,18 @@ class MPSUnaryPass: MetalPass{
     var libraryContainer: LibraryContainer?
     
     let component: MPSUnary
-    var device: MTLDevice!
+    unowned var device: MTLDevice!
     
     //var kernel: MPSUnaryImageKernel!
     init(_ component: MPSUnary){
         self.component = component
     }
-    func setup(device: MTLDevice) {
-        self.device = device
+    func setup(renderInfo: GlobalRenderInfo){
+        self.device = renderInfo.device
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
-        let commandBuffer = getCommandBuffer()
+    func encode(passInfo: MetalPassInfo) throws {
+        
+        let commandBuffer = passInfo.getCommandBuffer()
         let kernel = component.initCode(device)
         for key in component.dict.keys{
             let value = component.dict[key]!.wrappedValue
@@ -30,7 +29,7 @@ class MPSUnaryPass: MetalPass{
         if var inTexture = component.inTexture?.texture{
             var outTexture: MTLTexture?
             if component.outToDrawable{
-                outTexture = drawable?.texture
+                outTexture = passInfo.drawable?.texture
             }else{
                 outTexture = component.outTexture?.texture
             }

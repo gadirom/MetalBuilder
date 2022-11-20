@@ -28,7 +28,7 @@ struct ColorAttachment{
 }
 /// default color attachments
 var defaultColorAttachments =
-    [0:ColorAttachment(texture: nil,
+    [0: ColorAttachment(texture: nil,
                        loadAction: Binding<MTLLoadAction>(
                         get: { .clear },
                         set: { _ in }),
@@ -116,7 +116,9 @@ public struct Render: MetalBuilderComponent{
     var fragBytes: [BytesProtocol] = []
     var fragTextures: [Texture] = []
     
-    var colorAttachments: [Int: ColorAttachment] = defaultColorAttachments
+    var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
+    
+    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
     
     var vertexArguments: [MetalFunctionArgument] = []
     var fragmentArguments: [MetalFunctionArgument] = []
@@ -125,6 +127,8 @@ public struct Render: MetalBuilderComponent{
     var fragmentBufferIndexCounter = 0
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
+    
+    var depthDescriptor: MTLDepthStencilDescriptor?
     
     var uniforms: [UniformsContainer] = []
     
@@ -359,16 +363,24 @@ public extension Render{
         r.viewport = viewport
         return r
     }
-    func toTexture(_ container: MTLTextureContainer, index: Int = 0)->Render{
+    /// Adds destination texture for the render pass. if `nill` is passed and there no other modifier with no-nil container,
+    /// the drawable texture will be set as output.
+    /// - Parameters:
+    ///   - container: the destination texture
+    ///   - index: attachement index for the texture
+    /// - Returns: <#description#>
+    func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Render{
         var r = self
-        var a: ColorAttachment
-        if let aExistent = colorAttachments[index]{
-            a = aExistent
-        }else{
-            a = ColorAttachment()
+        if let container = container {
+            var a: ColorAttachment
+            if let aExistent = passColorAttachments[index]{
+                a = aExistent
+            }else{
+                a = ColorAttachment()
+            }
+            a.texture = container
+            r.passColorAttachments[index] = a
         }
-        a.texture = container
-        r.colorAttachments[index] = a
         return r
     }
     func source(_ source: String)->Render{
@@ -398,6 +410,74 @@ public extension Render{
         for uAndName in shader.uniformsAndNames{
             r = r.uniforms(uAndName.0, name: uAndName.1)
         }
+        return r
+    }
+    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor) -> Render{
+        var r = self
+        r.depthDescriptor = descriptor
+        return r
+    }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: Binding<MTLLoadAction>? = nil,
+                          storeAction: Binding<MTLStoreAction>? = nil,
+                          clearColor: Binding<MTLClearColor>? = nil) -> Render{
+        var r = self
+        let colorAttachement = ColorAttachment(texture: texture,
+                                               loadAction: loadAction,
+                                               storeAction: storeAction,
+                                               clearColor: clearColor)
+        r.passColorAttachments[index] = colorAttachement
+        return r
+    }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          clearColor: MTLClearColor? = nil) -> Render{
+        var _loadAction: Binding<MTLLoadAction>? = nil
+        var _storeAction: Binding<MTLStoreAction>? = nil
+        var _clearColor: Binding<MTLClearColor>? = nil
+        if let loadAction = loadAction {
+            _loadAction = Binding<MTLLoadAction>.constant(loadAction)
+        }
+        if let storeAction = storeAction {
+            _storeAction = Binding<MTLStoreAction>.constant(storeAction)
+        }
+        if let clearColor = clearColor {
+            _clearColor = Binding<MTLClearColor>.constant(clearColor)
+        }
+        return colorAttachement(index,
+                                texture: texture,
+                                loadAction: _loadAction,
+                                storeAction: _storeAction,
+                                clearColor: _clearColor)
+    }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          clearColor: Color? = nil) -> Render{
+        var _clearColor: MTLClearColor? = nil
+        if let color = clearColor{
+            if let cgC = UIColor(color).cgColor.components{
+                _clearColor = MTLClearColor(red:   cgC[0],
+                                            green: cgC[1],
+                                            blue:  cgC[2],
+                                            alpha: cgC[3])
+            }else{
+                print("Could not get color components for color: ", color)
+            }
+        }
+        return colorAttachement(index,
+                                texture: texture,
+                                loadAction: loadAction,
+                                storeAction: storeAction,
+                                clearColor: _clearColor)
+    }
+    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Render{
+        var r = self
+        r.pipelineColorAttachment = descriptor
         return r
     }
 }

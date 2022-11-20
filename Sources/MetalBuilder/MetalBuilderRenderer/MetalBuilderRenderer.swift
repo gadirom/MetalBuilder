@@ -9,7 +9,7 @@ public final class MetalBuilderRenderer{
     
     var renderData: RenderData!
     
-    var device: MTLDevice!
+    unowned var device: MTLDevice!
     var commandQueue: MTLCommandQueue!
     
     var startTime: Double = 0
@@ -49,8 +49,7 @@ extension MetalBuilderRenderer{
 
 public extension MetalBuilderRenderer{
     
-    convenience init(device: MTLDevice,
-                pixelFormat: MTLPixelFormat,
+    convenience init(renderInfo: GlobalRenderInfo,
                 librarySource: String,
                 helpers: String,
                 options: MetalBuilderCompileOptions = .default,
@@ -58,7 +57,7 @@ public extension MetalBuilderRenderer{
         
         self.init()
         
-        self.device = device
+        self.device = renderInfo.device
         self.commandQueue = device.makeCommandQueue()
         
         let context = MetalBuilderRenderingContext()
@@ -70,14 +69,14 @@ public extension MetalBuilderRenderer{
                                         helpers: helpers,
                                         options: options,
                                         context: context,
-                                        device: device,
-                                        pixelFormat: pixelFormat)
+                                        renderInfo: renderInfo)
             
         }catch{
             print(error)
         }
     }
-    func draw(drawable: CAMetalDrawable) throws{
+    func draw(drawable: CAMetalDrawable,
+              renderPassDescriptor: MTLRenderPassDescriptor) throws{
        
         commandBuffer = try startEncode()
         
@@ -90,10 +89,14 @@ public extension MetalBuilderRenderer{
         
         for pass in renderData.passes{
             
-            try pass.encode(getCommandBuffer, drawable){
-                try restartEncode(commandBuffer: commandBuffer,
+            let passInfo = MetalPassInfo(getCommandBuffer: getCommandBuffer,
+                                         drawable: drawable,
+                                         renderPassDescriptor: renderPassDescriptor){
+                try self.restartEncode(commandBuffer: self.commandBuffer,
                                   drawable: nil)
             }
+            
+            try pass.encode(passInfo: passInfo)
                 
         }
 

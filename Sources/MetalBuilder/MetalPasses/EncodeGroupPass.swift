@@ -14,19 +14,17 @@ class EncodeGroupPass: MetalPass{
         self.repeating = repeating
         self.active = active
     }
-    func setup(device: MTLDevice) throws{
+    func setup(renderInfo: GlobalRenderInfo) throws{
         for pass in passes {
-            try pass.setup(device: device)
+            try pass.setup(renderInfo: renderInfo)
         }
     }
-    func encode(_ getCommandBuffer: ()->MTLCommandBuffer,
-                _ drawable: CAMetalDrawable?,
-                _ restartEncode: () throws ->()) throws {
+    func encode(passInfo: MetalPassInfo) throws {
   
         let repeating = repeating.wrappedValue * (active.wrappedValue ? 1:0)
         for _ in 0..<repeating{
             for pass in passes {
-                try pass.encode(getCommandBuffer, drawable, restartEncode)
+                try pass.encode(passInfo: passInfo)
             }
         }
     }

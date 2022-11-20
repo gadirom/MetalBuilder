@@ -223,7 +223,7 @@ public extension UniformsContainer{
         }
     }
     func setRGB(_ color: Color, for key: String){
-        if let c = UIColor(color).cgColor.components{
+        if let c = UIColor(color).cgColor.components?.dropLast(){
             setFloat3(c.map{ Float($0)}, for: key)
         }
     }

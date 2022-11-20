@@ -18,8 +18,6 @@ public let angSpeed : Float = 0.1
 
 public let isLaplacian = true
 
-public let bkgColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
-
 struct ContentView: View {
     
     @MetalUniforms(
@@ -63,12 +61,19 @@ struct ContentView: View {
     @State var showUniforms = false
     
     @State var json: Data?
-//    @MetalState var mSize = MTLSize(width: particleCount, height: 1, depth: 1)
-//    @MetalState var viewport = MTLViewport(originX: 0.0, originY: 0.0, width: 100, height: 100, znear: 0.0, zfar: 1.0)
+    
+    var viewSettings: MetalBuilderViewSettings{
+        MetalBuilderViewSettings(depthStencilPixelFormat: nil,
+                                 clearDepth: nil,
+                                 clearColor: nil,
+                                 framebufferOnly: false,
+                                 preferredFramesPerSecond: 60)
+    }
     
     var body: some View {
         VStack{
-            MetalBuilderView(isDrawing: $isDrawing){ context in
+            MetalBuilderView(isDrawing: $isDrawing,
+                             viewSettings: viewSettings){ context in
                 ComputeBlock(context: context,
                              particlesBuffer: $particlesBuffer,
                              vertexBuffer: $vertexBuffer,

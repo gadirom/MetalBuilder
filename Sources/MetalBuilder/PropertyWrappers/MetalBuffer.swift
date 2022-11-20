@@ -110,7 +110,7 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     private var _count: Int?
     
-    override init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil){
+    public override init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil){
         super.init()
         self.metalType = metalType
         self.metalName = metalName
