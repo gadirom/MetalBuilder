@@ -116,7 +116,9 @@ public struct Render: MetalBuilderComponent{
     var fragBytes: [BytesProtocol] = []
     var fragTextures: [Texture] = []
     
-    var colorAttachments: [Int: ColorAttachment] = defaultColorAttachments
+    var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
+    
+    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
     
     var vertexArguments: [MetalFunctionArgument] = []
     var fragmentArguments: [MetalFunctionArgument] = []
@@ -371,13 +373,13 @@ public extension Render{
         var r = self
         if let container = container {
             var a: ColorAttachment
-            if let aExistent = colorAttachments[index]{
+            if let aExistent = passColorAttachments[index]{
                 a = aExistent
             }else{
                 a = ColorAttachment()
             }
             a.texture = container
-            r.colorAttachments[index] = a
+            r.passColorAttachments[index] = a
         }
         return r
     }
@@ -425,7 +427,7 @@ public extension Render{
                                                loadAction: loadAction,
                                                storeAction: storeAction,
                                                clearColor: clearColor)
-        r.colorAttachments[index] = colorAttachement
+        r.passColorAttachments[index] = colorAttachement
         return r
     }
     func colorAttachement(_ index: Int = 0,
@@ -450,6 +452,11 @@ public extension Render{
                                 loadAction: _loadAction,
                                 storeAction: _storeAction,
                                 clearColor: _clearColor)
+    }
+    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Render{
+        var r = self
+        r.pipelineColorAttachment = descriptor
+        return r
     }
 }
 

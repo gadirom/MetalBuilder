@@ -41,6 +41,10 @@ final class RenderPass: MetalPass{
             renderPipelineDescriptor.depthAttachmentPixelFormat = depthStencilPixelFormat
         }
         
+        if let pipelineColorAttachment = component.pipelineColorAttachment{
+            renderPipelineDescriptor.colorAttachments[0] = pipelineColorAttachment
+        }
+        
         renderPipelineDescriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
         
         renderPipelineDescriptor.vertexFunction = vertexFunction
@@ -62,8 +66,8 @@ final class RenderPass: MetalPass{
         let commandBuffer = passInfo.getCommandBuffer()
         let renderPassDescriptor = passInfo.renderPassDescriptor
         
-        for key in component.colorAttachments.keys{
-            if let a = component.colorAttachments[key]?.descriptor{
+        for key in component.passColorAttachments.keys{
+            if let a = component.passColorAttachments[key]?.descriptor{
                 if a.texture == nil{
                     a.texture = passInfo.drawable?.texture
                 }

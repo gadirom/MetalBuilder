@@ -124,7 +124,7 @@ struct RenderData{
                 data.passes.append(RenderPass(renderComponent, libraryContainer: libraryContainer))
                 data.addTextures(newTexs: renderComponent.vertexTextures.map{ $0.container })
                 data.addTextures(newTexs: renderComponent.fragTextures.map{ $0.container })
-                data.addTextures(newTexs: renderComponent.colorAttachments.values.map{ $0.texture })
+                data.addTextures(newTexs: renderComponent.passColorAttachments.values.map{ $0.texture })
                 try data.createBuffers(buffers: renderComponent.vertexBufs, device: device)
                 try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
                 data.createUniforms(renderComponent.uniforms, device: device)
