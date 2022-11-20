@@ -416,7 +416,7 @@ public extension Render{
         return r
     }
     func colorAttachement(_ index: Int = 0,
-                          texture: MTLTextureContainer?=nil,
+                          texture: MTLTextureContainer? = nil,
                           loadAction: Binding<MTLLoadAction>? = nil,
                           storeAction: Binding<MTLStoreAction>? = nil,
                           clearColor: Binding<MTLClearColor>? = nil) -> Render{
@@ -429,15 +429,27 @@ public extension Render{
         return r
     }
     func colorAttachement(_ index: Int = 0,
-                          texture: MTLTextureContainer?=nil,
-                          loadAction: MTLLoadAction,
-                          storeAction: MTLStoreAction,
-                          clearColor: MTLClearColor) -> Render{
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          clearColor: MTLClearColor? = nil) -> Render{
+        var _loadAction: Binding<MTLLoadAction>? = nil
+        var _storeAction: Binding<MTLStoreAction>? = nil
+        var _clearColor: Binding<MTLClearColor>? = nil
+        if let loadAction = loadAction {
+            _loadAction = Binding<MTLLoadAction>.constant(loadAction)
+        }
+        if let storeAction = storeAction {
+            _storeAction = Binding<MTLStoreAction>.constant(storeAction)
+        }
+        if let clearColor = clearColor {
+            _clearColor = Binding<MTLClearColor>.constant(clearColor)
+        }
         return colorAttachement(index,
                                 texture: texture,
-                                loadAction: Binding<MTLLoadAction>.constant(loadAction),
-                                storeAction: Binding<MTLStoreAction>.constant(storeAction),
-                                clearColor: Binding<MTLClearColor>.constant(clearColor))
+                                loadAction: _loadAction,
+                                storeAction: _storeAction,
+                                clearColor: _clearColor)
     }
 }
 
