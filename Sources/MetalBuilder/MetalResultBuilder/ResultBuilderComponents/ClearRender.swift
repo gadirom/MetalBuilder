@@ -23,7 +23,7 @@ public extension ClearRender{
         return c
     }
     func color(_ color: Color) -> ClearRender{
-        guard let cgC = color.cgColor?.components
+        guard let cgC = UIColor(color).cgColor.components
         else{
             print("Could not get color components for color: ", color)
             return self
