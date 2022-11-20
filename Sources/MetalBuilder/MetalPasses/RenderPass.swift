@@ -31,22 +31,22 @@ final class RenderPass: MetalPass{
         let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
         libraryContainer = nil
         
-        let descriptor = MTLRenderPipelineDescriptor()
+        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         
         //depth routine
         if let depthDescriptor = self.component.depthDescriptor{
             depthState = renderInfo.device.makeDepthStencilState(descriptor: depthDescriptor)
         }
         if let depthStencilPixelFormat = renderInfo.depthStencilPixelFormat{
-            descriptor.depthAttachmentPixelFormat = depthStencilPixelFormat
+            renderPipelineDescriptor.depthAttachmentPixelFormat = depthStencilPixelFormat
         }
         
-        descriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
+        renderPipelineDescriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
         
-        descriptor.vertexFunction = vertexFunction
-        descriptor.fragmentFunction = fragmentFunction
+        renderPipelineDescriptor.vertexFunction = vertexFunction
+        renderPipelineDescriptor.fragmentFunction = fragmentFunction
         renderPiplineState =
-            try renderInfo.device.makeRenderPipelineState(descriptor: descriptor)
+            try renderInfo.device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
         
         if component.indexedPrimitives{
             if let buf = component.indexBuf{
@@ -60,17 +60,17 @@ final class RenderPass: MetalPass{
     
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()
-        let descriptor = passInfo.renderPassDescriptor
+        let renderPassDescriptor = passInfo.renderPassDescriptor
         
         for key in component.colorAttachments.keys{
             if let a = component.colorAttachments[key]?.descriptor{
                 if a.texture == nil{
                     a.texture = passInfo.drawable?.texture
                 }
-                descriptor.colorAttachments[0] = a
+                renderPassDescriptor.colorAttachments[key] = a
             }
         }
-        guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
+        guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         else{
             throw MetalBuilderRenderError
                 .noRenderEncoder("Wasn't able to create renderEncoder for the vertex shader: '"+component.vertexFunc+"'!")
@@ -81,7 +81,7 @@ final class RenderPass: MetalPass{
         if let v = component.viewport?.wrappedValue{
             viewport = v
         }else{
-            viewport = MTLViewport(originX: 0.0, originY: 0.0, width: Double(descriptor.colorAttachments[0].texture!.width), height: Double(descriptor.colorAttachments[0].texture!.height), znear: 0.0, zfar: 1.0)
+            viewport = MTLViewport(originX: 0.0, originY: 0.0, width: Double(renderPassDescriptor.colorAttachments[0].texture!.width), height: Double(renderPassDescriptor.colorAttachments[0].texture!.height), znear: 0.0, zfar: 1.0)
         }
         renderPassEncoder.setViewport(viewport)
         

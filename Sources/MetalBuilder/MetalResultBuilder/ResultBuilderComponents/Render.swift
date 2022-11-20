@@ -28,7 +28,7 @@ struct ColorAttachment{
 }
 /// default color attachments
 var defaultColorAttachments =
-    [0:ColorAttachment(texture: nil,
+    [0: ColorAttachment(texture: nil,
                        loadAction: Binding<MTLLoadAction>(
                         get: { .clear },
                         set: { _ in }),
@@ -36,7 +36,7 @@ var defaultColorAttachments =
                         get: { .store },
                         set: { _ in }),
                        clearColor: Binding<MTLClearColor>(
-                        get: { MTLClearColorMake(1.0, 1.0, 1.0, 1.0)},
+                        get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
                         set: { _ in } )
                        )]
 
@@ -414,6 +414,30 @@ public extension Render{
         var r = self
         r.depthDescriptor = descriptor
         return r
+    }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer?=nil,
+                          loadAction: Binding<MTLLoadAction>? = nil,
+                          storeAction: Binding<MTLStoreAction>? = nil,
+                          clearColor: Binding<MTLClearColor>? = nil) -> Render{
+        var r = self
+        let colorAttachement = ColorAttachment(texture: texture,
+                                               loadAction: loadAction,
+                                               storeAction: storeAction,
+                                               clearColor: clearColor)
+        r.colorAttachments[index] = colorAttachement
+        return r
+    }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer?=nil,
+                          loadAction: MTLLoadAction,
+                          storeAction: MTLStoreAction,
+                          clearColor: MTLClearColor) -> Render{
+        return colorAttachement(index,
+                                texture: texture,
+                                loadAction: Binding<MTLLoadAction>.constant(loadAction),
+                                storeAction: Binding<MTLStoreAction>.constant(storeAction),
+                                clearColor: Binding<MTLClearColor>.constant(clearColor))
     }
 }
 
