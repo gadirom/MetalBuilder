@@ -453,6 +453,28 @@ public extension Render{
                                 storeAction: _storeAction,
                                 clearColor: _clearColor)
     }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          clearColor: Color? = nil) -> Render{
+        var _clearColor: MTLClearColor? = nil
+        if let color = clearColor{
+            if let cgC = UIColor(color).cgColor.components{
+                _clearColor = MTLClearColor(red:   cgC[0],
+                                            green: cgC[1],
+                                            blue:  cgC[2],
+                                            alpha: cgC[3])
+            }else{
+                print("Could not get color components for color: ", color)
+            }
+        }
+        return colorAttachement(index,
+                                texture: texture,
+                                loadAction: loadAction,
+                                storeAction: storeAction,
+                                clearColor: _clearColor)
+    }
     func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Render{
         var r = self
         r.pipelineColorAttachment = descriptor
