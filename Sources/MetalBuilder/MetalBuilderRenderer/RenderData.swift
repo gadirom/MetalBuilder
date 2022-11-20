@@ -116,8 +116,8 @@ struct RenderData{
                 }
             }
             //Clear Render
-            if let _ = component as? ClearRender{
-                data.passes.append(ClearRenderPass())
+            if let clearRenderComponent = component as? ClearRender{
+                data.passes.append(ClearRenderPass(clearRenderComponent))
             }
             //Render
             if let renderComponent = component as? Render{

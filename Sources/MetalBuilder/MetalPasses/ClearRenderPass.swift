@@ -1,6 +1,13 @@
 
 class ClearRenderPass: MetalPass{
+    
+    let component: ClearRender
+    
     var libraryContainer: LibraryContainer?
+    
+    init(_ component: ClearRender){
+        self.component = component
+    }
     
     func setup(renderInfo: GlobalRenderInfo) throws {
     }
@@ -9,7 +16,12 @@ class ClearRenderPass: MetalPass{
         let commandBuffer = passInfo.getCommandBuffer()
         let renderPassDescriptor =
         passInfo.renderPassDescriptor
-        renderPassDescriptor.colorAttachments[0].clearColor = .init(red: 0, green: 0, blue: 0, alpha: 0)
+        if let clearColor = component.clearColor{
+            renderPassDescriptor.colorAttachments[0].clearColor = clearColor
+        }
+        if let texture = component.texture?.texture{
+            renderPassDescriptor.colorAttachments[0].texture = texture
+        }
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
         renderEncoder.endEncoding()
     }
