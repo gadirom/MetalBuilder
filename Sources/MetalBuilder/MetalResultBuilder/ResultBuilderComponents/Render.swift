@@ -70,6 +70,10 @@ public extension FragmentShader{
         f.bytesAndArgs.append((bytes, argument))
         return f
     }
+    func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->FragmentShader{
+        let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
+        return bytes(binding.binding, argument: argument)
+    }
     func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument) -> FragmentShader{
         var f = self
         let tex = Texture(container: container, index: 0)
