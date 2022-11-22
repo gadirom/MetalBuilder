@@ -105,7 +105,9 @@ public extension UniformsContainer{
             }else{
                 loadInitialValues()
             }
-            bufferAllocated = true
+            DispatchQueue.main.async { [unowned self] in
+                self.bufferAllocated = true
+            }
         }
     }
     /// Loads Initial Values for Uniforms

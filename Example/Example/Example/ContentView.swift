@@ -177,8 +177,11 @@ struct ContentView: View {
                 
                 Button {
                     if let json = json {
+                        showUniforms = false
                         uniforms.import(json: json)
-                        //showUniforms.toggle()
+                        DispatchQueue.main.asyncAfter(deadline: .now()+0.01) {
+                            showUniforms = true
+                        }
                     }
                 } label: {
                     Text("Load Uniforms")
