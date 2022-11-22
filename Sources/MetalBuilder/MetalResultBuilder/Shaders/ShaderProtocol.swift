@@ -3,6 +3,29 @@ import SwiftUI
 public protocol ShaderProtocol {
     var body: String? { get set}
     var source: String? { get set }
+
+//Declaration of public modifiers
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> ShaderProtocol
+    
+    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument) -> ShaderProtocol
+    
+    func bytes<T>(_ binding: MetalBinding<T>, space: String, type: String, name: String, index: Int)->ShaderProtocol
+    
+    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument) -> ShaderProtocol
+    
+    func uniforms(_ uniforms: UniformsContainer, name: String) -> ShaderProtocol
+    func source(_ source: String)->ShaderProtocol
+    func body(_ body: String)->ShaderProtocol
+}
+
+//contains wrapper for the functions with default parameters
+extension ShaderProtocol{
+    public func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->ShaderProtocol{
+        return bytes(binding, space: space, type: type, name: name, index: index)
+    }
+    public func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> ShaderProtocol{
+        return self.uniforms(uniforms, name: name)
+    }
 }
 
 //Internal implementation for ShaderProtocol's logic
@@ -29,7 +52,7 @@ extension InternalShaderProtocol{
         sh.bytesAndArgs.append((bytes, argument))
         return sh
     }
-    public func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->ShaderProtocol{
+    public func bytes<T>(_ binding: MetalBinding<T>, space: String, type: String, name: String, index: Int)->ShaderProtocol{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
         return bytes(binding.binding, argument: argument)
     }
@@ -39,7 +62,7 @@ extension InternalShaderProtocol{
         sh.texsAndArgs.append((tex, argument))
         return sh
     }
-    public func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> ShaderProtocol{
+    public func uniforms(_ uniforms: UniformsContainer, name: String) -> ShaderProtocol{
         var sh = self
         sh.uniformsAndNames.append((uniforms, name))
         return sh

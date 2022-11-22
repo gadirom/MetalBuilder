@@ -1,7 +1,14 @@
 
 import SwiftUI
 
-public struct FragmentShader: ShaderProtocol{
+public struct FragmentShader: InternalShaderProtocol{
+    
+    var bufsAndArgs: [(BufferProtocol, MetalBufferArgument)] = []
+    var bytesAndArgs: [(BytesProtocol, MetalBytesArgument)] = []
+    var texsAndArgs: [(Texture, MetalTextureArgument)] = []
+    
+    var uniformsAndNames: [(UniformsContainer, String?)] = []
+    
     public init(_ name: String, source: String=""){
         self.fragmentFunc = name
         self.source = source
