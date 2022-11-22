@@ -40,58 +40,6 @@ var defaultColorAttachments =
                         set: { _ in } )
                        )]
 
-public struct FragmentShader{
-    public init(_ name: String, source: String=""){
-        self.fragmentFunc = name
-        self.librarySource = source
-    }
-    
-    let fragmentFunc: String
-    
-    var librarySource: String
-    
-    var bufsAndArgs: [(BufferProtocol, MetalBufferArgument)] = []
-    var bytesAndArgs: [(BytesProtocol, MetalBytesArgument)] = []
-    var texsAndArgs: [(Texture, MetalTextureArgument)] = []
-    
-    var uniformsAndNames: [(UniformsContainer, String?)] = []
-}
-
-public extension FragmentShader{
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> FragmentShader{
-        var f = self
-        let buf = Buffer(container: container, offset: offset, index: 0)
-        f.bufsAndArgs.append((buf, argument))
-        return f
-    }
-    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument) -> FragmentShader{
-        var f = self
-        let bytes = Bytes(binding: binding, index: 0)
-        f.bytesAndArgs.append((bytes, argument))
-        return f
-    }
-    func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->FragmentShader{
-        let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
-        return bytes(binding.binding, argument: argument)
-    }
-    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument) -> FragmentShader{
-        var f = self
-        let tex = Texture(container: container, index: 0)
-        f.texsAndArgs.append((tex, argument))
-        return f
-    }
-    func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> FragmentShader{
-        var f = self
-        f.uniformsAndNames.append((uniforms, name))
-        return f
-    }
-    func source(_ source: String)->FragmentShader{
-        var f = self
-        f.librarySource = source
-        return f
-    }
-}
-
 /// Render Component
 public struct Render: MetalBuilderComponent{
     
@@ -99,6 +47,7 @@ public struct Render: MetalBuilderComponent{
     var fragmentFunc: String
     
     var librarySource: String
+    var vertexOut: String?
     
     var type: MTLPrimitiveType!
     var vertexOffset: Int = 0
@@ -397,21 +346,23 @@ public extension Render{
         //func
         r.fragmentFunc = shader.fragmentFunc
         //source
-        r.librarySource += shader.librarySource
+        r.librarySource += shader.librarySource(vertexOut: vertexOut)
+        //cast to the internal protocol to access the hidden logic
+        let sh = shader as! InternalShaderProtocol
         //add buffer
-        for bufAndArg in shader.bufsAndArgs{
+        for bufAndArg in sh.bufsAndArgs{
             r = r.fragBuf(bufAndArg.0, argument: bufAndArg.1)
         }
         //add bytes
-        for byteAndArg in shader.bytesAndArgs{
+        for byteAndArg in sh.bytesAndArgs{
             r = r.fragBytes(byteAndArg.0, argument: byteAndArg.1)
         }
         //add textures
-        for texAndArg in shader.texsAndArgs{
+        for texAndArg in sh.texsAndArgs{
             r = r.fragTexture(texAndArg.0, argument: texAndArg.1)
         }
         //uniforms
-        for uAndName in shader.uniformsAndNames{
+        for uAndName in sh.uniformsAndNames{
             r = r.uniforms(uAndName.0, name: uAndName.1)
         }
         return r
