@@ -9,6 +9,30 @@ public struct VertexShader: InternalShaderProtocol{
     
     var uniformsAndNames: [(UniformsContainer, String?)] = []
     
+    /// Creates the VertexShader with the name and the raw Metal source code
+    /// - Parameters:
+    ///   - name: Name of the vertex shader function in your Metal code
+    ///   - source: The source code of the vertex shader
+    ///
+    /// The code for the vertex shader should countain the shader function declaration
+    /// along with the declaration of the Metal type that the shader outputs:
+    /// ```
+    /// let vertex = VertexShader("myVertexFunction", source:"""
+    ///     struct VertexOut{
+    ///         float4 pos [[position]];
+    ///         float4 color;
+    ///     };
+    ///     vertex VertexOut myVertexFunction(uint vertex_id [[vertex_id]]){
+    ///         Vertex v = vertexBuffer[vertex_id];
+    ///         float3 pos3 = float3(v.pos, 1);
+    ///         pos3 *= viewportToDeviceTransform;
+    ///         VertexOut out;
+    ///         out.pos = float4(pos3.xy, v.depth, 1);
+    ///         out.color = v.color;
+    ///         return out;
+    ///     }
+    ///""")
+    ///```
     public init(_ name: String, source: String=""){
         self.vertexFunc = name
         self.source = source
@@ -18,7 +42,8 @@ public struct VertexShader: InternalShaderProtocol{
     public init(_ name: String, vertexOut: String,
                 body: String=""){
         self.vertexFunc = name
-        self.vertexOut = vertexOut
+        self.vertexOutDeclaration = vertexOut
+        self.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(vertexOut)
         self.body = body
     }
     

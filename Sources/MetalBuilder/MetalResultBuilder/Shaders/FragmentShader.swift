@@ -27,19 +27,19 @@ public struct FragmentShader: InternalShaderProtocol{
     
     var uniformsAndNames: [(UniformsContainer, String?)] = []
     
-    /// Creates the Fragment Shader with the name and the raw Metal source code
+    /// Creates the FragmentShader with the name and the raw Metal source code
     /// - Parameters:
     ///   - name: Name of the fragment shader function in your Metal code
-    ///   - source: The source code of the Fragment shader that should countain a shader function declaration
+    ///   - source: The source code
     ///
-    /// Example:
+    /// The source of the fragment shader should countain the shader function declaration:
     /// ```
     /// let fragment = FragmentShader("myFragmetFunction", source:"""
     ///     fragment float4 myFragmetFunction(VertexOut in [[stage_in]],
     ///                                       float2 p [[point_coord]]){
-    ///     return in.color;
-    /// }
-    /// """
+    ///         return in.color;
+    ///     }
+    /// """)
     /// ```
     public init(_ name: String, source: String=""){
         self.fragmentFunc = name
