@@ -1,6 +1,24 @@
 
 import SwiftUI
 
+/// Fragment Shader that you pass to a Render component
+///
+/// All the uniforms that are passed to the Render component will be also available
+/// in the Metal code of the shader function:
+/// ```
+/// Render()
+///     .uniforms(uniforms)
+///     .fragmentShader(fragment)
+/// ```
+/// You also may pass any uniforms, buffers or textures directly to the shaders using modifiers:
+///```
+/// Render()
+///     .fragmentShader(
+///         fragment
+///             .texture(imageTexture)
+///             .buffer(colorsBuffer)
+///     )
+/// ```
 public struct FragmentShader: InternalShaderProtocol{
     
     var bufsAndArgs: [(BufferProtocol, MetalBufferArgument)] = []
@@ -9,11 +27,37 @@ public struct FragmentShader: InternalShaderProtocol{
     
     var uniformsAndNames: [(UniformsContainer, String?)] = []
     
+    /// Creates the Fragment Shader with the name and the raw Metal source code
+    /// - Parameters:
+    ///   - name: Name of the fragment shader function in your Metal code
+    ///   - source: The source code of the Fragment shader that should countain a shader function declaration
+    ///
+    /// Example:
+    /// ```
+    /// let fragment = FragmentShader("myFragmetFunction", source:"""
+    ///     fragment float4 myFragmetFunction(VertexOut in [[stage_in]],
+    ///                                       float2 p [[point_coord]]){
+    ///     return in.color;
+    /// }
+    /// """
+    /// ```
     public init(_ name: String, source: String=""){
         self.fragmentFunc = name
         self.source = source
     }
-    
+    /// Creates the Fragment Shader with the name, return type and and the body of the fragment function
+    /// - Parameters:
+    ///   - name: Name of the fragment shader function in your Metal code
+    ///   - returns: The Metal type the the fragment returns. Default type is `float4`.
+    ///   - source: The body of the Fragment shader without the function declaration
+    ///
+    /// You pass only the body of the fragment function.
+    /// MetalBuilder will generate the declaration automatically, passing the output of the vertex function as `in`:
+    /// ```
+    /// let fragment = FragmentShader("myFragmetFunction", body:"""
+    ///     return in.color;
+    /// """
+    /// ```
     public init(_ name: String, returns: String="float4",
                 body: String=""){
         self.fragmentFunc = name

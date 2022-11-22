@@ -15,7 +15,7 @@ public struct VertexShader: InternalShaderProtocol{
         self.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
     }
     
-    public init(_ name: String, vertexOut: String="float4",
+    public init(_ name: String, vertexOut: String,
                 body: String=""){
         self.vertexFunc = name
         self.vertexOut = vertexOut

@@ -43,7 +43,7 @@ var defaultColorAttachments =
 /// Render Component
 public struct Render: MetalBuilderComponent{
     
-    let vertexFunc: String
+    var vertexFunc: String
     var fragmentFunc: String
     
     var librarySource: String
@@ -352,31 +352,23 @@ public extension Render{
         r.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
         return r
     }
+    func vertexShader(_ shader: VertexShader)->Render{
+        var r = self
+        //func
+        r.vertexFunc = shader.vertexFunc
+        //source
+        r.librarySource = shader.librarySource(vertexOut: vertexOut) + librarySource
+        //arguments
+        return r.addShaderArguments(shader)
+    }
     func fragmentShader(_ shader: FragmentShader)->Render{
         var r = self
         //func
         r.fragmentFunc = shader.fragmentFunc
         //source
         r.librarySource += shader.librarySource(vertexOut: vertexOut)
-        //cast to the internal protocol to access the hidden logic
-        let sh = shader as InternalShaderProtocol
-        //add buffer
-        for bufAndArg in sh.bufsAndArgs{
-            r = r.fragBuf(bufAndArg.0, argument: bufAndArg.1)
-        }
-        //add bytes
-        for byteAndArg in sh.bytesAndArgs{
-            r = r.fragBytes(byteAndArg.0, argument: byteAndArg.1)
-        }
-        //add textures
-        for texAndArg in sh.texsAndArgs{
-            r = r.fragTexture(texAndArg.0, argument: texAndArg.1)
-        }
-        //uniforms
-        for uAndName in sh.uniformsAndNames{
-            r = r.uniforms(uAndName.0, name: uAndName.1)
-        }
-        return r
+        //arguments
+        return r.addShaderArguments(shader)
     }
     func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor) -> Render{
         var r = self
@@ -449,6 +441,26 @@ public extension Render{
 }
 
 extension Render{
+    func addShaderArguments(_ sh: InternalShaderProtocol)->Render{
+        var r = self
+        //add buffer
+        for bufAndArg in sh.bufsAndArgs{
+            r = r.fragBuf(bufAndArg.0, argument: bufAndArg.1)
+        }
+        //add bytes
+        for byteAndArg in sh.bytesAndArgs{
+            r = r.fragBytes(byteAndArg.0, argument: byteAndArg.1)
+        }
+        //add textures
+        for texAndArg in sh.texsAndArgs{
+            r = r.fragTexture(texAndArg.0, argument: texAndArg.1)
+        }
+        //uniforms
+        for uAndName in sh.uniformsAndNames{
+            r = r.uniforms(uAndName.0, name: uAndName.1)
+        }
+        return r
+    }
     func checkVertexBufferIndex(r: inout Render, index: Int?) -> Int{
         if index == nil {
             let index = vertexBufferIndexCounter
