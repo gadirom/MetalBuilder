@@ -9,20 +9,33 @@ public struct MetalBuilderView: UIViewRepresentable {
     public let librarySource: String
     public let helpers: String
     @Binding public var isDrawing: Bool
-    @MetalResultBuilder public let metalContent: MetalRenderingContent
+    @MetalResultBuilder public let metalContent: MetalBuilderContent
     
     var viewSettings = MetalBuilderViewSettings()
     
     var onResizeCode: ((CGSize)->())?
     
+    /// The wrapper for MTKView that takes `MetalBuilderContent` to dispatch
+    /// - Parameters:
+    ///   - librarySource: your Metal code (can be empty if you pass the code via components of `MetalBuilderContent`)
+    ///   - helpers: the Metal helper functions that you call from your shaders
+    ///   - isDrawing: the boolean binding to control rendering: you may run and stop the rendering by setting the binded value to `true` or `false`.
+    ///   - viewSettings: the common setting of MTKView gathered in MetalBuilderViewSettings struct
+    ///   - metalContent: the ResultBuilder closure with all the information on your rendering pipelines
+    ///
+    ///   
     public init(librarySource: String = "",
                 helpers: String = "",
-                isDrawing: Binding<Bool>,
+                isDrawing: Binding<Bool>?=nil,
                 viewSettings: MetalBuilderViewSettings?=nil,
-                @MetalResultBuilder metalContent: @escaping MetalRenderingContent){
+                @MetalResultBuilder metalContent: @escaping MetalBuilderContent){
         self.librarySource = librarySource
         self.helpers = helpers
-        self._isDrawing = isDrawing
+        if let isDrawing = isDrawing{
+            self._isDrawing = isDrawing
+        }else{
+            self._isDrawing = Binding<Bool>.constant(true)
+        }
         self.metalContent = metalContent
         if let viewSettings = viewSettings{
             self.viewSettings = viewSettings
@@ -83,6 +96,8 @@ public struct MetalBuilderView: UIViewRepresentable {
         //var device: MTLDevice!
         var renderer: MetalBuilderRenderer?
         
+        var wasInitialized = false
+        
         var isDrawing = false
         var onResizeCode: ((CGSize)->())?
         var viewSettings = MetalBuilderViewSettings()
@@ -96,7 +111,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         func setupRenderer(librarySource: String, helpers: String,
                            renderInfo: GlobalRenderInfo,
-                           metalContent: MetalRenderingContent,
+                           metalContent: MetalBuilderContent,
                            scaleFactor: Float){
             do{
                 renderer =
@@ -112,6 +127,7 @@ public struct MetalBuilderView: UIViewRepresentable {
             applyViewSettings(view)
             renderer?.setSize(size: size)
             onResizeCode?(size)
+            wasInitialized = true
         }
         
         func applyViewSettings(_ view: MTKView){
@@ -138,6 +154,9 @@ public struct MetalBuilderView: UIViewRepresentable {
         }
     
         public func draw(in view: MTKView) {
+            guard wasInitialized
+            else{ return }
+            
             guard isDrawing
             else{ return }
             

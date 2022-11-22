@@ -41,6 +41,46 @@ var defaultColorAttachments =
                        )]
 
 /// Render Component
+///
+/// Use this component for rendering primitives.
+/// This is a wrapper for `.drawPrimitives` and `.drawIndexedPrimitives` of MTLRenderPassEncoder.
+/// You pass textures and buffers to your vertex or fragment functions
+/// using modifiers like `.vertexTexture`, `.fragmentBuffer`, ect.
+/// The uniforms containers are passed to both vertex and fragment functions via the single `.uniforms` modifier.
+/// The Metal source code for the functions should be either provided in the `librarySource` parameter
+/// of the init of `MetalBuilderView`, or via the `.source` modifier:
+/// ```
+///     MetalBuilderView(){
+///         Render()
+///             .vertexBuffer(particles) //passed a buffer to the vertex shader
+///             .fragmentTexture(imageTexture) //passed a texture to the fragment shader
+///             .uniforms(uniforms) //passed uniforms to both shaders
+///             .source("""
+///             ...//Your Metal shaders here
+///             """)
+///             .fragmentBytes($myParameter) //passed a value to the fragment shader
+///     }
+/// ```
+/// You can also use the `FragmentShader` and `VertexShader` structs
+/// to have more modularity in configuring your shaders.
+/// Note that you may pass objects to the shaders directly or through the Render component:
+/// ```
+///     MetalBuilderView(){
+///         Render()
+///             .vertexShader(myVertexShader
+///                 .buffer(particles) //a buffer passed directly to the vertex shader
+///             )
+///             .fragmentShader(myFragmentShader
+///                 .texture(imageTexture) //a texture passed directly to the fragment shader
+///                 .uniforms(myUniformsForFragment) //uniforms passed directly
+///                                                  //to the fragment shader
+///             )
+///             .uniforms(uniforms) //uniforms passed to both shaders
+///                                 //through the Render component
+///             .fragmentBytes($myParameter) //a value passed to the fragment shader
+///                                          //through the Render component
+///     }
+/// ```
 public struct Render: MetalBuilderComponent{
     
     var vertexFunc: String
@@ -85,7 +125,7 @@ public struct Render: MetalBuilderComponent{
     
     var uniforms: [UniformsContainer] = []
     
-    public init(vertex: String, fragment: String="", type: MTLPrimitiveType = .triangle,
+    public init(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                 offset: Int = 0, count: Int = 3, source: String=""){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -97,7 +137,7 @@ public struct Render: MetalBuilderComponent{
         self.vertexCount = count
     }
     
-    public init<T>(vertex: String, fragment: String="", type: MTLPrimitiveType = .triangle,
+    public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                 indexBuffer: MTLBufferContainer<T>,
                    indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String=""){
         self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)

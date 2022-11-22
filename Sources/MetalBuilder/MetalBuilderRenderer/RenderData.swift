@@ -30,7 +30,7 @@ struct RenderData{
     
     init(){}
     
-    init(from renderingContent: MetalRenderingContent,
+    init(from renderingContent: MetalBuilderContent,
          librarySource: String,
          helpers: String,
          options: MetalBuilderCompileOptions,

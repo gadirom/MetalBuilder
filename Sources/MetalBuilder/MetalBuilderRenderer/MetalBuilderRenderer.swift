@@ -53,7 +53,7 @@ public extension MetalBuilderRenderer{
                 librarySource: String,
                 helpers: String,
                 options: MetalBuilderCompileOptions = .default,
-                renderingContent: MetalRenderingContent) throws{
+                renderingContent: MetalBuilderContent) throws{
         
         self.init()
         

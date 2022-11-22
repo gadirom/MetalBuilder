@@ -51,21 +51,33 @@ public struct Compute: MetalBuilderComponent{
 
 // chaining functions for result builder
 public extension Compute{
-    /// Modifier that passes a buffer for a compute kernel
+    /// Passes a buffer to the compute kernel.
     /// - Parameters:
-    ///   - container: MTLBufferContainer
-    ///   - offset: offset
-    ///   - index: buffer index in kernel arguments
+    ///   - container: The buffer container.
+    ///   - offset: The number of buffer elements to offset.
+    ///   - index: Buffer index in kernel arguments.
+    /// - Returns: The Compute component with the added buffer argument.
     ///
-    ///   This method adds MTLBuffer to a compute function and doesn't change Metal library code
-    ///   Use it if you want to declare kernel's argument manually
-
+    /// This method adds a buffer to the compute function and doesn't change the Metal library code.
+    /// Use it if you want to declare the kernel's argument manually.
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Compute{
         var c = self
         let buf = Buffer(container: container, offset: offset, index: index)
         c.buffers.append(buf)
         return c
     }
+    /// Passes a buffer to the compute kernel.
+    /// - Parameters:
+    ///   - container: The buffer container.
+    ///   - offset: The number of buffer elements to offset.
+    ///   - argument: The buffer argument describing the declaration that should be added to the kernel.
+    ///   - fitThreads: Indicates if the threads dispatched for the compute kernel should be calculated
+    /// from the size of this buffer.
+    /// - Returns: The Compute component with the added buffer argument.
+    ///
+    /// This method adds a buffer to the compute function and parses the Metal library code,
+    /// automatically adding an argument declaration to the kernel function.
+    /// Use this modifier if you do not want to declare the kernel's argument manually.
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument, fitThreads: Bool=false)->Compute{
         var c = self
         var argument = argument
@@ -78,6 +90,22 @@ public extension Compute{
         }
         return c
     }
+    /// Passes a buffer to the compute kernel.
+    /// - Parameters:
+    ///   - container: The buffer container.
+    ///   - offset: The umber of buffer elements to offset.
+    ///   - space: The address space for this buffer, default is "constant".
+    ///   - type: The Metal type of the elements of this buffer.If nil, the buffer's own `type` will be used.
+    ///   - name: The name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the buffer's own `name` will be used.
+    ///   - fitThreads: Indicates if the threads dispatched for the compute kernel should be calculated
+    /// from the size of this buffer.
+    /// - Returns: The Compute component with the added buffer argument.
+    ///
+    /// This method adds a buffer to the compute function and parses the Metal library code,
+    /// automatically adding an argument declaration to the kernel function.
+    /// Use this modifier if you do not want to declare the kernel's argument manually.
+    /// - Returns: The Compute component with the added bufer argument.
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
                    space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false) -> Compute{
         
@@ -129,19 +157,31 @@ public extension Compute{
         c.bytes.append(bytes)
         return c
     }
-    /// Modifier that passes a texture for a compute kernel
+    /// Passes a texture to the compute kernel.
     /// - Parameters:
-    ///   - container: MTLTextureContainer
-    ///   - index: texture index in kernel arguments
+    ///   - container: The texture container.
+    ///   - index: The texture index in the kernel arguments.
+    /// - Returns: The Compute component with the added texture argument.
     ///
-    ///   This method adds MTLTexture to a compute function and doesn't change Metal library code
-    ///   Use it if you want to declare kernel's argument manually
+    /// This method adds a texture to the compute function and doesn't change Metal library code.
+    /// Use it if you want to declare the kernel's argument manually.
     func texture(_ container: MTLTextureContainer, index: Int)->Compute{
         var c = self
         let tex = Texture(container: container, index: index)
         c.textures.append(tex)
         return c
     }
+    /// Passes a texture to the compute kernel.
+    /// - Parameters:
+    ///   - container: The texture container.
+    ///   - argument: The texture argument describing the declaration that should be added to the kernel.
+    ///   - fitThreads: Indicates if the threads dispatched for the compute kernel should be calculated
+    /// from the size of this texture.
+    /// - Returns: The Compute component with the added texture argument.
+    ///
+    /// This method adds a texture to the compute function and parses the Metal library code,
+    /// automatically adding an argument declaration to the kernel function.
+    /// Use this modifier if you do not want to declare the kernel's argument manually.
     func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument, fitThreads: Bool=false)->Compute{
         var c = self
         var argument = argument
@@ -155,26 +195,26 @@ public extension Compute{
         }
         return c
     }
-    /// Modifier that passes a drawable texture for a compute kernel
+    /// Passes a drawable texture to the compute kernel.
     /// - Parameters:
-    ///   - index: texture index in kernel arguments
+    ///   - index: The texture index in the kernel arguments.
+    /// - Returns: The Compute component with the added drawable texture argument.
     ///
-    ///   This method adds drawable texture to a compute function and doesn't change Metal library code
-    ///   Use it if you want to declare kernel's argument manually
+    /// This method adds a drawable texture to the compute function and doesn't change Metal library code.
+    /// Use it if you want to declare the kernel's argument manually.
     func drawableTexture(index: Int)->Compute{
         var c = self
         c.drawableTextureIndex = index
         c.gridFit = .drawable
         return c
     }
-    /// Modifier that passes a drawable texture for a compute kernel
+    /// Passes a drawable texture to the compute kernel.
     /// - Parameters:
-    ///   - index: texture index in kernel arguments
-    ///   - argument: MetalTextureArgument, describing argument declaration that should be added to the kernel
+    ///   - argument: The texture argument describing the declaration that should be added to the kernel.
     ///
-    ///   This method adds drawable texture to a compute function and parse Metal library code automatically adding an argument declaration to kernel function
-    ///   Use this modifier if you do not want to declare kernel's argument manually
-    ///
+    /// This method adds a drawable texture to the compute function and parses the Metal library code,
+    /// automatically adding an argument declaration to the kernel function.
+    /// Use this modifier if you do not want to declare the kernel's argument manually.
     func drawableTexture(argument: MetalTextureArgument)->Compute{
         var c = self
         var argument = argument
