@@ -356,8 +356,10 @@ public extension Render{
         var r = self
         //func
         r.vertexFunc = shader.vertexFunc
+        //vertexOut
+        r.vertexOut = shader.vertexOut
         //source
-        r.librarySource = shader.librarySource(vertexOut: vertexOut) + librarySource
+        r.librarySource = shader.librarySource + librarySource
         //arguments
         return r.addShaderArguments(shader)
     }

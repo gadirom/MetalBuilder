@@ -29,7 +29,7 @@ public struct VertexShader: InternalShaderProtocol{
     public var body: String?
     public var source: String?
     
-    func librarySource(vertexOut: String?) -> String{
+    var librarySource: String{
         if let source = source{
             return source
         }
