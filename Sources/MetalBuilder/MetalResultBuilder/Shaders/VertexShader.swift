@@ -38,7 +38,32 @@ public struct VertexShader: InternalShaderProtocol{
         self.source = source
         self.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
     }
-    
+    /// Creates the VertexShader with the name and the raw Metal source code
+    /// - Parameters:
+    ///   - name: Name of the vertex shader function in your Metal code
+    ///   - vertexOut: The declaration of the C-struct that the vertex shader outputs
+    ///   - body: The source code of the vertex shader without declaration
+    ///
+    /// You pass only the body of the vertex function.
+    /// MetalBuilder will generate the declaration automatically,
+    /// passing the `vertex_id` property to the shader body:
+    /// ```
+    /// let vertex = VertexShader("myVertexFunction",
+    ///       vertexOut:"""
+    ///         struct VertexOut{
+    ///         float4 pos [[position]];
+    ///         float4 color;
+    ///       };""",
+    ///       body:"""
+    ///         Vertex v = vertexBuffer[vertex_id];
+    ///         float3 pos3 = float3(v.pos, 1);
+    ///         pos3 *= viewportToDeviceTransform;
+    ///         VertexOut out;
+    ///         out.pos = float4(pos3.xy, v.depth, 1);
+    ///         out.color = v.color;
+    ///         return out;
+    ///     """)
+    ///```
     public init(_ name: String, vertexOut: String,
                 body: String=""){
         self.vertexFunc = name
