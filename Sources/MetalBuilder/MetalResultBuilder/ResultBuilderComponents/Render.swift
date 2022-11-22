@@ -316,12 +316,13 @@ public extension Render{
         r.viewport = viewport
         return r
     }
-    /// Adds destination texture for the render pass. if `nill` is passed and there no other modifier with no-nil container,
-    /// the drawable texture will be set as output.
+    /// Adds destination texture for the render pass.
     /// - Parameters:
     ///   - container: the destination texture
     ///   - index: attachement index for the texture
-    /// - Returns: <#description#>
+    ///
+    /// if `nill` is passed and there are no other modifier with no-nil container,
+    /// the drawable texture will be set as output.
     func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Render{
         var r = self
         if let container = container {
@@ -336,9 +337,19 @@ public extension Render{
         }
         return r
     }
+    /// The modifier for passing the source code of vertex and fragment shaders to a Render component
+    /// - Parameter source: The String containing the code
+    ///
+    /// The source code should obey the following structure:
+    /// - 1. declaration of the vertex shader's output C-structure
+    /// - 2. vertex shader implementation
+    /// - 3. fragment shader implementation
+    /// The first two or the last one should be ommited in case you are planning
+    /// to pass the respective code using `.vertexShader`  or`.fragmentShader` modifiers.
     func source(_ source: String)->Render{
         var r = self
         r.librarySource = source + r.librarySource
+        r.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
         return r
     }
     func fragmentShader(_ shader: FragmentShader)->Render{

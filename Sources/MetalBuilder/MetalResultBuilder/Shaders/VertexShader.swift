@@ -12,7 +12,7 @@ public struct VertexShader: InternalShaderProtocol{
     public init(_ name: String, source: String=""){
         self.vertexFunc = name
         self.source = source
-        self.vertexOut = getVertexOutTypeFromVertexSource(source)
+        self.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
     }
     
     public init(_ name: String, vertexOut: String="float4",
@@ -40,13 +40,13 @@ public struct VertexShader: InternalShaderProtocol{
         print("Couldn't get the source code for ", vertexFunc, " vertex shader!")
         return ""
     }
-    func getVertexOutTypeFromVertexSource(_ source: String) ->String?{
+    static func getVertexOutTypeFromVertexSource(_ source: String) ->String?{
         let structRange = source.range(of: "struct ")
         guard let startIndex = structRange?.upperBound
         else{ return nil }
         guard let endIndex = source[startIndex...].firstIndex(of: "{")
         else { return nil }
-        
+
         return ""+source[startIndex...source.index(before: endIndex)]
     }
 }
