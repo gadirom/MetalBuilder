@@ -348,7 +348,7 @@ public extension Render{
         //source
         r.librarySource += shader.librarySource(vertexOut: vertexOut)
         //cast to the internal protocol to access the hidden logic
-        let sh = shader as! InternalShaderProtocol
+        let sh = shader as InternalShaderProtocol
         //add buffer
         for bufAndArg in sh.bufsAndArgs{
             r = r.fragBuf(bufAndArg.0, argument: bufAndArg.1)

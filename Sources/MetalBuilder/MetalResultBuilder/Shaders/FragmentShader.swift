@@ -38,44 +38,27 @@ public struct FragmentShader: InternalShaderProtocol{
         return ""
     }
 }
-/*
+//FragmentShader's wrappers for ShaderProtocol modifiers
 public extension FragmentShader{
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> FragmentShader{
-        var f = self
-        let buf = Buffer(container: container, offset: offset, index: 0)
-        f.bufsAndArgs.append((buf, argument))
-        return f
+        return _buffer(container, offset: offset, argument: argument) as! FragmentShader
     }
     func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument) -> FragmentShader{
-        var f = self
-        let bytes = Bytes(binding: binding, index: 0)
-        f.bytesAndArgs.append((bytes, argument))
-        return f
+        return _bytes(binding, argument: argument) as! FragmentShader
     }
     func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->FragmentShader{
-        let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
-        return bytes(binding.binding, argument: argument)
+        return _bytes(binding, space: space, type: type, name: name, index: index) as! FragmentShader
     }
     func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument) -> FragmentShader{
-        var f = self
-        let tex = Texture(container: container, index: 0)
-        f.texsAndArgs.append((tex, argument))
-        return f
+        return _texture(container, argument: argument) as! FragmentShader
     }
     func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> FragmentShader{
-        var f = self
-        f.uniformsAndNames.append((uniforms, name))
-        return f
+        return _uniforms(uniforms, name: name) as! FragmentShader
     }
     func source(_ source: String)->FragmentShader{
-        var f = self
-        f.source = source
-        return f
+        return _source(source) as! FragmentShader
     }
     func body(_ body: String)->FragmentShader{
-        var f = self
-        f.body = body
-        return f
+        return _body(body) as! FragmentShader
     }
 }
-*/

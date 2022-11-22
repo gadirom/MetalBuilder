@@ -51,6 +51,31 @@ public struct VertexShader: InternalShaderProtocol{
     }
 }
 
+//VertexShader's wrappers for ShaderProtocol modifiers
+public extension VertexShader{
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> VertexShader{
+        return _buffer(container, offset: offset, argument: argument) as! VertexShader
+    }
+    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument) -> VertexShader{
+        return _bytes(binding, argument: argument) as! VertexShader
+    }
+    func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->VertexShader{
+        return _bytes(binding, space: space, type: type, name: name, index: index) as! VertexShader
+    }
+    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument) -> VertexShader{
+        return _texture(container, argument: argument) as! VertexShader
+    }
+    func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> VertexShader{
+        return _uniforms(uniforms, name: name) as! VertexShader
+    }
+    func source(_ source: String)->VertexShader{
+        return _source(source) as! VertexShader
+    }
+    func body(_ body: String)->VertexShader{
+        return _body(body) as! VertexShader
+    }
+}
+
 //Modifiers specific to VertexShader
 extension VertexShader{
     func vertexOut(_ type: String, properties: String)->VertexShader{
