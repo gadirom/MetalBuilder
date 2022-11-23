@@ -9,18 +9,50 @@ class MetalBuilderTimer{
     var justStarted = true
     var paused = true
     
+    var manualPaused = false
+    
+    let timerQueue = DispatchQueue(label: "MetalBuilderTimer_Queue",
+                                   qos: .userInitiated)
+    
     func count(){
-        if justStarted {
-            startTime = CFAbsoluteTimeGetCurrent()
-            justStarted = false
-            paused = false
+        timerQueue.sync {
+            if justStarted {
+                startTime = CFAbsoluteTimeGetCurrent()
+                justStarted = false
+                paused = false
+            }
+            if paused { return }
+            time = Float(CFAbsoluteTimeGetCurrent()-startTime)
+            print(time)
         }
-        if paused { return }
-        time = Float(CFAbsoluteTimeGetCurrent()-startTime)
-        print(time)
+    }
+    //Pause and resume manually by the client
+    func manualPause(){
+        timerQueue.sync {
+            manualPaused = true
+            pauseTime()
+        }
+    }
+    func manualResume(){
+        timerQueue.sync {
+            manualPaused = false
+            resumeTime()
+        }
+    }
+    //Pause and resume for going in and from background
+    func backgroundPause(){
+        timerQueue.sync {
+            pauseTime()
+        }
+    }
+    func backgroundResume(){
+        timerQueue.sync {
+            if manualPaused { return }
+            resumeTime()
+        }
     }
     
-    func pauseTime(){
+    private func pauseTime(){
         guard !justStarted
         else{return}
         guard !paused
@@ -29,7 +61,7 @@ class MetalBuilderTimer{
         paused = true
         print("time paused!")
     }
-    func resumeTime(){
+    private func resumeTime(){
         guard !justStarted
         else{return}
         guard paused

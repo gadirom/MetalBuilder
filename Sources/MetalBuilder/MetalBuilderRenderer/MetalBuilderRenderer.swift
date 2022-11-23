@@ -105,9 +105,9 @@ public extension MetalBuilderRenderer{
     }
     
     func pauseTime(){
-        timer.pauseTime()
+        timer.backgroundPause()
     }
     func resumeTime(){
-        timer.resumeTime()
+        timer.backgroundResume()
     }
 }

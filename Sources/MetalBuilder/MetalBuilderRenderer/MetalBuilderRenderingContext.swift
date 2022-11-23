@@ -17,10 +17,10 @@ public final class MetalBuilderRenderingContext{
     
     /// Pauses the timer.
     public func pauseTime(){
-        timer?.pauseTime()
+        timer?.manualPause()
     }
     /// Resumes the timer.
     public func resumeTime(){
-        timer?.resumeTime()
+        timer?.manualResume()
     }
 }
