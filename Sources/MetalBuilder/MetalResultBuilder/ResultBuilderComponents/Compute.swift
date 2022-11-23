@@ -93,10 +93,10 @@ public extension Compute{
     /// Passes a buffer to the compute kernel.
     /// - Parameters:
     ///   - container: The buffer container.
-    ///   - offset: The umber of buffer elements to offset.
+    ///   - offset: The number of buffer elements to offset.
     ///   - space: The address space for this buffer, default is "constant".
-    ///   - type: The Metal type of the elements of this buffer.If nil, the buffer's own `type` will be used.
-    ///   - name: The name of the property that will be passed to the shader to access this buffer.
+    ///   - type: The optional Metal type of the elements of this buffer.If nil, the buffer's own `type` will be used.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
     ///   If nil, the buffer's own `name` will be used.
     ///   - fitThreads: Indicates if the threads dispatched for the compute kernel should be calculated
     /// from the size of this buffer.
@@ -105,7 +105,6 @@ public extension Compute{
     /// This method adds a buffer to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    /// - Returns: The Compute component with the added bufer argument.
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
                    space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false) -> Compute{
         
