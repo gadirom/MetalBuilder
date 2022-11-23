@@ -9,7 +9,7 @@ enum GridFit{
          drawable,
          buffer(Int)
 }
-/// Compute Component
+/// The component for dispatching compute kernels.
 public struct Compute: MetalBuilderComponent{
     
     let kernel: String
@@ -135,10 +135,36 @@ public extension Compute{
         c.bytes.append(bytes)
         return c
     }
+    /// Passes a value to the compute kernel of a Compute component.
+    /// - Parameters:
+    ///   - binding: MetalBinding value created with the`@MetalState` property wrapper.
+    ///   - space: The address space for this value, default is "constant".
+    ///   - type: The optional Metal type of the value.
+    ///   If nil, the value's own `type` will be used that is defined in `@MetalState` declaration for this value.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the value's own `name` will be used that is defined in `@MetalState` declaration for this value.
+    /// - Returns: The Render component with the added buffer argument to the compute kernel.
+    ///
+    /// This method adds a value to the  compute kernel of a Compute component and parses the Metal library code,
+    /// automatically adding an argument declaration to the  compute kernel.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Compute{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name, index: index)
         return bytes(binding, argument: argument)
     }
+    /// Passes a value to the compute kernel of a Compute component.
+    /// - Parameters:
+    ///   - binding: The SwiftUI's binding.
+    ///   - space: The address space for this value, default is "constant".
+    ///   - type: The optional Metal type of the value.
+    ///   If nil, the value's own `type` will be used that is defined in `@State` declaration for this value.
+    ///   - name: The optional name of the property that will be passed to the shader to access this value.
+    ///   If nil, the value's own `name` will be used that is defined in `@State` declaration for this value.
+    /// - Returns: The Compute component with the added buffer argument to the compute kernel.
+    ///
+    /// This method adds a value to the compute kernel of a Compute component and parses the Metal library code,
+    /// automatically adding an argument declaration to the compute kernel.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func bytes<T>(_ binding: Binding<T>, space: String = "constant", type: String?=nil, name: String, index: Int?=nil)->Compute{
         let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
         let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name, index: index)

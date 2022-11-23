@@ -14,15 +14,15 @@ public enum ScaleType{
         case `default`
 }
 
-/// ScaleTexture Component
+/// The component to scale textures.
 ///
 /// - Parameters:
-///   - type: fit or fill with respect to destination size.
-///   - method: lanczos or biliniar
+///   - type: Fit or fill with respect to destination size.
+///   - method: lanczos or biliniar.
 ///
-/// A wrapper for MPSImageScale shader
-/// You pass textures in .source() and .destination() modifiers
-/// If destination is ommited the drawable texture will be used as a destination
+/// A wrapper for the MPSImageScale shader.
+/// Pass textures in `.source` and `.destination` modifiers.
+/// If destination is ommited the drawable texture will be used as a destination.
 public struct ScaleTexture: MetalBuilderComponent{
     
     var inTexture: MTLTextureContainer?

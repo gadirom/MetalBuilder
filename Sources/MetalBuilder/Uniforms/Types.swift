@@ -80,7 +80,6 @@ struct MetalType{
 
 typealias simd_packed_float3 = MTLPackedFloat3
 
-
 extension MTLPackedFloat3{
     init(_ xyz: [Float]){
         self = MTLPackedFloat3Make(xyz[0], xyz[1], xyz[2])
