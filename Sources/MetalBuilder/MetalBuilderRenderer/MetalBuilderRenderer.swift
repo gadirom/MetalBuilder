@@ -80,7 +80,6 @@ public extension MetalBuilderRenderer{
         commandBuffer = try startEncode()
         
         timer.count()
-        
         renderData.context.time = timer.time
         
         for pass in renderData.passes{

@@ -15,7 +15,7 @@ class MetalBuilderTimer{
             justStarted = false
             paused = false
         }
-        //if paused { return }
+        if paused { return }
         time = Float(CFAbsoluteTimeGetCurrent()-startTime)
         print(time)
     }
