@@ -38,7 +38,7 @@ public final class MetalUniforms{
     ///
     ///     constant Uniforms& u [[buffer(index)]] // the 'index' is generated automatically
     ///
-    /// Hence, you are able to access the uniforms properties in the shader code:
+    /// Then you will be able to access the uniforms properties in the shader code:
     ///
     ///     float4 color = u.someColor;
     ///     float value = u.someValue.x;

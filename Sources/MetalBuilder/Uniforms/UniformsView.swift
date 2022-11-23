@@ -1,11 +1,11 @@
 import SwiftUI
 import OrderedCollections
 
-/// View that allows you to edit uniforms in real-time
+/// View that allows you to edit uniforms in real-time.
 public struct UniformsView: View {
     
-    /// Creates a uniforms view
-    /// - Parameter uniforms: uniforms container
+    /// Creates a uniforms view.
+    /// - Parameter uniforms: The uniforms container.
     public init(_ uniforms: UniformsContainer){
         self.uniforms = uniforms
     }

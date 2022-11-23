@@ -18,7 +18,6 @@ public final class MetalBuffer<T>{
     }
     /// Initalizer of MetalBuffer property wrapper
     ///
-    ///
     /// - Parameters:
     ///   - count: size of the buffer, i.e. buffer elements count
     ///   - metalType: type that will be used to address this buffer in Metal library code
@@ -26,13 +25,12 @@ public final class MetalBuffer<T>{
     /// DISCLAMER!
     /// This initializer allows Swift to synthesize deferred init of the variable
     /// Yet, as of Swift 5.6 it isn't done correctly and it isn't called for initialization of the corresponding property
-    /// Thus, any arguments of this init will be ignored if you use in like this:
+    /// Thus, any arguments of this init will be ignored if you use it like this:
     /// struct Test{
     ///    @MetalBuffer(metalName: "buffer" var buffer
     /// }
     /// If you init Test like this: test = Test(buffer: buffer)
     /// the 'metalName' argument will be ignored.
-    ///
     public init(count: Int? = nil,
                 metalType: String? = nil,
                 metalName: String? = nil){

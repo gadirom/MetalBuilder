@@ -1,9 +1,6 @@
 import SwiftUI
 
-/// DispatchGroup Component
-///
-/// initializes a group of components
-/// 'repeating' indicates number of subsequent dispatches for the group
+/// Encodes a group of components.
 public struct EncodeGroup: MetalBuilderComponent{
     
     var repeating: Binding<Int>
@@ -11,6 +8,11 @@ public struct EncodeGroup: MetalBuilderComponent{
     //public let librarySource: String?
     @MetalResultBuilder public let metalContent: MetalContent
     
+    /// Creates a group component.
+    /// - Parameters:
+    ///   - repeating: Number of repeated passes for the group.
+    ///   - active: Indicates if the group is active.
+    ///   - metalContent: The ResultBuilder closure containing MetalBuilder components.
     public init(repeating: MetalBinding<Int>,
                 active: MetalBinding<Bool>,
                 //librarySource: String? = nil,
@@ -20,7 +22,11 @@ public struct EncodeGroup: MetalBuilderComponent{
                   //librarySource: librarySource,
                   metalContent: metalContent)
     }
-    
+    /// Creates a group component.
+    /// - Parameters:
+    ///   - repeating: Number of repeated passes for the group.
+    ///   - active: Indicates if the group is active.
+    ///   - metalContent: The ResultBuilder closure containing MetalBuilder components.
     public init(repeating: Int = 1,
                 active: MetalBinding<Bool>,
                 //librarySource: String? = nil,
@@ -30,7 +36,11 @@ public struct EncodeGroup: MetalBuilderComponent{
                   //librarySource: librarySource,
                   metalContent: metalContent)
     }
-    
+    /// Creates a group component.
+    /// - Parameters:
+    ///   - repeating: Number of repeated passes for the group.
+    ///   - active: Indicates if the group is active.
+    ///   - metalContent: The ResultBuilder closure containing MetalBuilder components.
     public init(repeating: Int = 1,
                 active: Binding<Bool> = Binding<Bool>.constant(true),
                 //librarySource: String? = nil,
@@ -40,7 +50,11 @@ public struct EncodeGroup: MetalBuilderComponent{
                   //librarySource: librarySource,
                   metalContent: metalContent)
     }
-    
+    /// Creates a group component.
+    /// - Parameters:
+    ///   - repeating: Number of repeated passes for the group.
+    ///   - active: Indicates if the group is active.
+    ///   - metalContent: The ResultBuilder closure containing MetalBuilder components.
     public init(repeating: Binding<Int>,
                 active: Binding<Bool> = Binding<Bool>.constant(true),
                 //librarySource: String? = nil,

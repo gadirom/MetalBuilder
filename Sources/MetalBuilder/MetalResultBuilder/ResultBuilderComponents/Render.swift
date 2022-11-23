@@ -40,65 +40,54 @@ var defaultColorAttachments =
                         set: { _ in } )
                        )]
 
-public struct FragmentShader{
-    public init(_ name: String, source: String=""){
-        self.fragmentFunc = name
-        self.librarySource = source
-    }
-    
-    let fragmentFunc: String
-    
-    var librarySource: String
-    
-    var bufsAndArgs: [(BufferProtocol, MetalBufferArgument)] = []
-    var bytesAndArgs: [(BytesProtocol, MetalBytesArgument)] = []
-    var texsAndArgs: [(Texture, MetalTextureArgument)] = []
-    
-    var uniformsAndNames: [(UniformsContainer, String?)] = []
-}
-
-public extension FragmentShader{
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> FragmentShader{
-        var f = self
-        let buf = Buffer(container: container, offset: offset, index: 0)
-        f.bufsAndArgs.append((buf, argument))
-        return f
-    }
-    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument) -> FragmentShader{
-        var f = self
-        let bytes = Bytes(binding: binding, index: 0)
-        f.bytesAndArgs.append((bytes, argument))
-        return f
-    }
-    func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->FragmentShader{
-        let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
-        return bytes(binding.binding, argument: argument)
-    }
-    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument) -> FragmentShader{
-        var f = self
-        let tex = Texture(container: container, index: 0)
-        f.texsAndArgs.append((tex, argument))
-        return f
-    }
-    func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> FragmentShader{
-        var f = self
-        f.uniformsAndNames.append((uniforms, name))
-        return f
-    }
-    func source(_ source: String)->FragmentShader{
-        var f = self
-        f.librarySource = source
-        return f
-    }
-}
-
-/// Render Component
+/// The component for rendering primitives.
+///
+/// With this component you render points, triangles and lines on the screen.
+/// (This is a wrapper for `.drawPrimitives` and `.drawIndexedPrimitives` of `MTLRenderPassEncoder`.)
+/// You pass textures and buffers to the vertex or fragment functions
+/// using modifiers like `.vertexTexture`, `.fragmentBuffer`, ect.
+/// The uniforms containers are passed to both vertex and fragment functions via the single `.uniforms` modifier.
+/// The Metal source code for the functions should be either provided in the `librarySource` parameter
+/// of the init of `MetalBuilderView`, or via the `.source` modifier:
+/// ```
+///     MetalBuilderView(){
+///         Render()
+///             .vertexBuffer(particles) //passed a buffer to the vertex shader
+///             .fragmentTexture(imageTexture) //passed a texture to the fragment shader
+///             .uniforms(uniforms) //passed uniforms to both shaders
+///             .source("""
+///             ...//Your Metal shaders here
+///             """)
+///             .fragmentBytes($myParameter) //passed a value to the fragment shader
+///     }
+/// ```
+/// You can also use the `FragmentShader` and `VertexShader` structs
+/// to have more modularity in configuring your shaders.
+/// Note that you may pass objects to the shaders directly or through the Render component:
+/// ```
+///     MetalBuilderView(){
+///         Render()
+///             .vertexShader(myVertexShader
+///                 .buffer(particles) //a buffer passed directly to the vertex shader
+///             )
+///             .fragmentShader(myFragmentShader
+///                 .texture(imageTexture) //a texture passed directly to the fragment shader
+///                 .uniforms(myUniformsForFragment) //uniforms passed directly
+///                                                  //to the fragment shader
+///             )
+///             .uniforms(uniforms) //uniforms passed to both shaders
+///                                 //through the Render component
+///             .fragmentBytes($myParameter) //a value passed to the fragment shader
+///                                          //through the Render component
+///     }
+/// ```
 public struct Render: MetalBuilderComponent{
     
-    let vertexFunc: String
+    var vertexFunc: String
     var fragmentFunc: String
     
     var librarySource: String
+    var vertexOut: String?
     
     var type: MTLPrimitiveType!
     var vertexOffset: Int = 0
@@ -136,7 +125,7 @@ public struct Render: MetalBuilderComponent{
     
     var uniforms: [UniformsContainer] = []
     
-    public init(vertex: String, fragment: String="", type: MTLPrimitiveType = .triangle,
+    public init(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                 offset: Int = 0, count: Int = 3, source: String=""){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -148,7 +137,7 @@ public struct Render: MetalBuilderComponent{
         self.vertexCount = count
     }
     
-    public init<T>(vertex: String, fragment: String="", type: MTLPrimitiveType = .triangle,
+    public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                 indexBuffer: MTLBufferContainer<T>,
                    indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String=""){
         self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)
@@ -234,7 +223,7 @@ extension Render{
         return r
     }
 }
-// chaining functions for result builder
+// Buffer modifiers for Render
 public extension Render{
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Render{
         var r = self
@@ -246,13 +235,27 @@ public extension Render{
         let buf = Buffer(container: container, offset: offset, index: 0)
         return self.vertexBuf(buf, argument: argument)
     }
+    /// Passes a buffer to the vertex shader of a Render component.
+    /// - Parameters:
+    ///   - container: The buffer container.
+    ///   - offset: The number of buffer elements to offset.
+    ///   - space: The address space for this buffer, default is "constant".
+    ///   - type: The optional Metal type of the elements of this buffer. If nil, the buffer's own `type` will be used.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the buffer's own `name` will be used.
+    /// - Returns: The Render component with the added buffer argument to the vertex shader.
+    ///
+    /// This method adds a buffer to the vertex shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the vertex function.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
-                   space: String = "constant", type: String?=nil, name: String?=nil) -> Render{
+                      space: String = "constant", type: String?=nil, name: String?=nil) -> Render{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
-
+        
         return self.vertexBuf(container, offset: offset, argument: argument)
     }
+    
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, index: Int)->Render{
         var r = self
         let buf = Buffer(container: container, offset: offset, index: index)
@@ -263,14 +266,30 @@ public extension Render{
         let buf = Buffer(container: container, offset: offset, index: 0)
         return self.fragBuf(buf, argument: argument)
     }
+    /// Passes a buffer to the fragment shader of a Render component.
+    /// - Parameters:
+    ///   - container: The buffer container.
+    ///   - offset: The number of buffer elements to offset.
+    ///   - space: The address space for this buffer, default is "constant".
+    ///   - type: The optional Metal type of the elements of this buffer. If nil, the buffer's own `type` will be used.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the buffer's own `name` will be used.
+    /// - Returns: The Render component with the added buffer argument to the fragment shader.
+    ///
+    /// This method adds a buffer to the fragment shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the fragment function.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
-                   space: String="constant", type: String?=nil, name: String?=nil) -> Render{
+                    space: String="constant", type: String?=nil, name: String?=nil) -> Render{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
-
+        
         return self.fragBuf(container, offset: offset, argument: argument)
         
     }
+}
+// Bytes modifiers for Render
+public extension Render{
     func vertexBytes<T>(_ binding: Binding<T>, index: Int)->Render{
         var r = self
         let bytes = Bytes(binding: binding, index: index)
@@ -284,10 +303,36 @@ public extension Render{
     func vertexBytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Render{
         self.vertexBytes(binding.binding, argument: argument)
     }
+    /// Passes a value to the vertex shader of a Render component.
+    /// - Parameters:
+    ///   - binding: MetalBinding value created with the`@MetalState` property wrapper.
+    ///   - space: The address space for this value, default is "constant".
+    ///   - type: The optional Metal type of the value.
+    ///   If nil, the value's own `type` will be used that is defined in `@MetalState` declaration for this value.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the value's own `name` will be used that is defined in `@MetalState` declaration for this value.
+    /// - Returns: The Render component with the added buffer argument to the vertex shader.
+    ///
+    /// This method adds a value to the vertex shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the vertex function.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func vertexBytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Render{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
         return vertexBytes(binding, argument: argument)
     }
+    /// Passes a value to the vertex shader of a Render component.
+    /// - Parameters:
+    ///   - binding: The SwiftUI's binding.
+    ///   - space: The address space for this value, default is "constant".
+    ///   - type: The optional Metal type of the value.
+    ///   If nil, the value's own `type` will be used that is defined in `@State` declaration for this value.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the value's own `name` will be used that is defined in `@State` declaration for this value.
+    /// - Returns: The Render component with the added buffer argument to the vertex shader.
+    ///
+    /// This method adds a value to the vertex shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the vertex function.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func vertexBytes<T>(_ binding: Binding<T>, space: String = "constant", type: String?=nil, name: String, index: Int?=nil)->Render{
         let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
         let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name)
@@ -312,15 +357,49 @@ public extension Render{
         r.fragBytes.append(bytes)
         return r
     }
+    /// Passes a value to the fargment shader of a Render component.
+    /// - Parameters:
+    ///   - binding: MetalBinding value created with the`@MetalState` property wrapper.
+    ///   - space: The address space for this value, default is "constant".
+    ///   - type: The optional Metal type of the value.
+    ///   If nil, the value's own `type` will be used that is defined in `@MetalState` declaration for this value.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the value's own `name` will be used that is defined in `@MetalState` declaration for this value.
+    /// - Returns: The Render component with the added buffer argument to the fargment shader.
+    ///
+    /// This method adds a value to the fargment shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the fargment function.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func fragBytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Render{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name)
         return fragBytes(binding, argument: argument)
     }
+    /// Passes a value to the fragment shader of a Render component.
+    /// - Parameters:
+    ///   - binding: The SwiftUI's binding.
+    ///   - space: The address space for this value, default is "constant".
+    ///   - type: The optional Metal type of the value.
+    ///   If nil, the value's own `type` will be used that is defined in `@State` declaration for this value.
+    ///   - name: The optional name of the property that will be passed to the shader to access this buffer.
+    ///   If nil, the value's own `name` will be used that is defined in `@State` declaration for this value.
+    /// - Returns: The Render component with the added buffer argument to the fragment shader.
+    ///
+    /// This method adds a value to the fragment shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the fragment function.
+    /// Use this modifier if you do not want to declare the function's argument manually.
     func fragBytes<T>(_ binding: Binding<T>, space: String = "constant", type: String?=nil, name: String, index: Int?=nil)->Render{
         let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
         let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name)
         return fragBytes(binding, argument: argument)
     }
+}
+// Uniforms modifiers for Render
+public extension Render{
+    /// Adds a uniforms container to vertex and fragment shaders of the Render component.
+    /// - Parameters:
+    ///   - uniforms: The uniforms container.
+    ///   - name: The name by which the uniforms container will be accessed in the shader functions.
+    /// - Returns: The render component with the added uniforms container.
     func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> Render{
         var r = self
         r.uniforms.append(uniforms)
@@ -329,25 +408,37 @@ public extension Render{
         argument.index = checkVertexBufferIndex(r: &r, index: nil)
         r.vertexArguments.append(.bytes(argument))
         let vertexBytes = RawBytes(binding: uniforms.pointerBinding,
-                             length: uniforms.length,
-                             index: argument.index!)
+                                   length: uniforms.length,
+                                   index: argument.index!)
         r.vertexBytes.append(vertexBytes)
         //add to fragment shader
         argument.index = checkFragmentBufferIndex(r: &r, index: nil)
         r.fragmentArguments.append(.bytes(argument))
         let fragBytes = RawBytes(binding: uniforms.pointerBinding,
-                             length: uniforms.length,
-                             index: argument.index!)
+                                 length: uniforms.length,
+                                 index: argument.index!)
         r.fragBytes.append(fragBytes)
         
         return r
     }
+}
+// Texture modifiers for Render
+public extension Render{
     func vertexTexture(_ container: MTLTextureContainer, index: Int)->Render{
         var r = self
         let tex = Texture(container: container, index: index)
         r.vertexTextures.append(tex)
         return r
     }
+    /// Passes a texture to the vertex shader of a Render component.
+    /// - Parameters:
+    ///   - container: The texture container.
+    ///   - argument: The texture argument describing the declaration that should be added to the shader.
+    /// - Returns: The Render component with the added texture argument.
+    ///
+    /// This method adds a texture to vertex shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the vertex shader.
+    /// Use this modifier if you do not want to declare the shader's argument manually.
     func vertexTexture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Render{
         let tex = Texture(container: container, index: 0)
         return self.vertexTexture(tex, argument: argument)
@@ -358,21 +449,34 @@ public extension Render{
         r.fragTextures.append(tex)
         return r
     }
+    /// Passes a texture to the fragment shader of a Render component.
+    /// - Parameters:
+    ///   - container: The texture container.
+    ///   - argument: The texture argument describing the declaration that should be added to the shader.
+    /// - Returns: The Render component with the added texture argument.
+    ///
+    /// This method adds a texture to fragment shader of a Render component and parses the Metal library code,
+    /// automatically adding an argument declaration to the fragment shader.
+    /// Use this modifier if you do not want to declare the shader's argument manually.
     func fragTexture(_ container: MTLTextureContainer, argument: MetalTextureArgument)->Render{
         let tex = Texture(container: container, index: 0)
         return self.fragTexture(tex, argument: argument)
     }
+}
+// Misc modifiers for Render
+public extension Render{
     func viewport(_ viewport: Binding<MTLViewport>)->Render{
         var r = self
         r.viewport = viewport
         return r
     }
-    /// Adds destination texture for the render pass. if `nill` is passed and there no other modifier with no-nil container,
-    /// the drawable texture will be set as output.
+    /// Adds destination texture for the render pass.
     /// - Parameters:
     ///   - container: the destination texture
     ///   - index: attachement index for the texture
-    /// - Returns: <#description#>
+    ///
+    /// if `nill` is passed and there are no other modifier with no-nil container,
+    /// the drawable texture will be set as output.
     func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Render{
         var r = self
         if let container = container {
@@ -387,53 +491,82 @@ public extension Render{
         }
         return r
     }
+    /// The modifier for passing the source code of vertex and fragment shaders to a Render component
+    /// - Parameter source: The String containing the code
+    ///
+    /// The source code should obey the following structure:
+    /// - 1. declaration of the vertex shader's output C-structure
+    /// - 2. vertex shader implementation
+    /// - 3. fragment shader implementation
+    /// The first two or the last one should be ommited in case you are planning
+    /// to pass the respective code using `.vertexShader`  or`.fragmentShader` modifiers.
     func source(_ source: String)->Render{
         var r = self
         r.librarySource = source + r.librarySource
+        r.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
         return r
     }
+    func vertexShader(_ shader: VertexShader)->Render{
+        var r = self
+        //func
+        r.vertexFunc = shader.vertexFunc
+        //vertexOut
+        r.vertexOut = shader.vertexOut
+        //source
+        r.librarySource = shader.librarySource + librarySource
+        //arguments
+        return r.addShaderArguments(shader)
+    }
+    /// Adds the fragment shader to a Rnder component.
+    /// - Parameter shader: Fragment shader that you want to use with Render.
+    /// - Returns: The Render component with the added fragment shader.
     func fragmentShader(_ shader: FragmentShader)->Render{
         var r = self
         //func
         r.fragmentFunc = shader.fragmentFunc
         //source
-        r.librarySource += shader.librarySource
-        //add buffer
-        for bufAndArg in shader.bufsAndArgs{
-            r = r.fragBuf(bufAndArg.0, argument: bufAndArg.1)
-        }
-        //add bytes
-        for byteAndArg in shader.bytesAndArgs{
-            r = r.fragBytes(byteAndArg.0, argument: byteAndArg.1)
-        }
-        //add textures
-        for texAndArg in shader.texsAndArgs{
-            r = r.fragTexture(texAndArg.0, argument: texAndArg.1)
-        }
-        //uniforms
-        for uAndName in shader.uniformsAndNames{
-            r = r.uniforms(uAndName.0, name: uAndName.1)
-        }
-        return r
+        r.librarySource += shader.librarySource(vertexOut: vertexOut)
+        //arguments
+        return r.addShaderArguments(shader)
     }
+    /// Adds the `MTLDepthStencilDescriptor` to a Render component.
+    /// - Parameter descriptor: The depth and stencil descriptor to use in the rendering pass
+    /// that you create and configure by a Render component.
+    /// - Returns: The Render component with the applied descriptor.
     func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor) -> Render{
         var r = self
         r.depthDescriptor = descriptor
         return r
     }
+    /// Adds the color attachment to a Render component.
+    /// - Parameters:
+    ///   - index: Index of the color attachment. 0 if unspecified.
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Binding to a load action value.
+    ///   - storeAction: Binding to a store action value.
+    ///   - clearColor: Binding to a clear color value (MTLClearColor).
+    /// - Returns: The Render component with the added color attachement.
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
                           loadAction: Binding<MTLLoadAction>? = nil,
                           storeAction: Binding<MTLStoreAction>? = nil,
-                          clearColor: Binding<MTLClearColor>? = nil) -> Render{
+                          mtlClearColor: Binding<MTLClearColor>? = nil) -> Render{
         var r = self
         let colorAttachement = ColorAttachment(texture: texture,
                                                loadAction: loadAction,
                                                storeAction: storeAction,
-                                               clearColor: clearColor)
+                                               clearColor: mtlClearColor)
         r.passColorAttachments[index] = colorAttachement
         return r
     }
+    /// Adds the color attachment to a Render component.
+    /// - Parameters:
+    ///   - index: Index of the color attachment. 0 if unspecified.
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Binding to a load action value.
+    ///   - storeAction: Binding to a store action value.
+    ///   - clearColor: Binding to a clear color value (Color).
+    /// - Returns: The Render component with the added color attachement.
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
@@ -455,7 +588,7 @@ public extension Render{
                                 texture: texture,
                                 loadAction: _loadAction,
                                 storeAction: _storeAction,
-                                clearColor: _clearColor)
+                                mtlClearColor: _clearColor)
     }
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
@@ -479,6 +612,9 @@ public extension Render{
                                 storeAction: storeAction,
                                 clearColor: _clearColor)
     }
+    /// Adds the render pipeline color attachment to a Render component.
+    /// - Parameter descriptor: The descriptor for the attachement to add.
+    /// - Returns: The Render component with the added render pipeline color attachment.
     func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Render{
         var r = self
         r.pipelineColorAttachment = descriptor
@@ -486,7 +622,28 @@ public extension Render{
     }
 }
 
+//Internal utils for Render
 extension Render{
+    func addShaderArguments(_ sh: InternalShaderProtocol)->Render{
+        var r = self
+        //add buffer
+        for bufAndArg in sh.bufsAndArgs{
+            r = r.fragBuf(bufAndArg.0, argument: bufAndArg.1)
+        }
+        //add bytes
+        for byteAndArg in sh.bytesAndArgs{
+            r = r.fragBytes(byteAndArg.0, argument: byteAndArg.1)
+        }
+        //add textures
+        for texAndArg in sh.texsAndArgs{
+            r = r.fragTexture(texAndArg.0, argument: texAndArg.1)
+        }
+        //uniforms
+        for uAndName in sh.uniformsAndNames{
+            r = r.uniforms(uAndName.0, name: uAndName.1)
+        }
+        return r
+    }
     func checkVertexBufferIndex(r: inout Render, index: Int?) -> Int{
         if index == nil {
             let index = vertexBufferIndexCounter

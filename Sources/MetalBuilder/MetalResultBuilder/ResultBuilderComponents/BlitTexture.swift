@@ -2,10 +2,11 @@
 import MetalKit
 import SwiftUI
 
-/// BlitTexture Component
+/// The component for copying textures.
 ///
-/// initializes a blit pass
-/// if no destination is set tries to copy to drawable
+/// Use this component to copy memory between textures on GPU.
+/// Configure source, destination, sliceCount and size with modifiers.
+/// If no destination is set tries to copy to drawable.
 public struct BlitTexture: MetalBuilderComponent{
     
     var inTexture: MTLTextureContainer?
@@ -21,7 +22,7 @@ public struct BlitTexture: MetalBuilderComponent{
     }
 }
 
-// chaining functions
+// modifiers for BlitTexture.
 public extension BlitTexture{
     func source(_ container: MTLTextureContainer, slice: Binding<Int>=Binding<Int>.constant(0))->BlitTexture{
         var b = self
@@ -29,7 +30,7 @@ public extension BlitTexture{
         b.inTexture = container
         return b
     }
-    func destination(_ container: MTLTextureContainer, slice: Binding<Int>=Binding<Int>.constant(0))->BlitTexture{
+    func destination(_ container: MTLTextureContainer?, slice: Binding<Int>=Binding<Int>.constant(0))->BlitTexture{
         var b = self
         b.destinationSlice = slice
         b.outTexture = container

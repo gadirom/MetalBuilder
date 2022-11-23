@@ -12,11 +12,9 @@ public final class MetalBuilderRenderer{
     unowned var device: MTLDevice!
     var commandQueue: MTLCommandQueue!
     
-    var startTime: Double = 0
-    var pausedTime: Double = 0
-    var justStarted = true
-    
     var commandBuffer: MTLCommandBuffer!
+    
+    let timer = MetalBuilderTimer()
     
     //@MetalState var viewportSize: simd_uint2 = [0, 0]
 }
@@ -53,7 +51,7 @@ public extension MetalBuilderRenderer{
                 librarySource: String,
                 helpers: String,
                 options: MetalBuilderCompileOptions = .default,
-                renderingContent: MetalRenderingContent) throws{
+                renderingContent: MetalBuilderContent) throws{
         
         self.init()
         
@@ -61,6 +59,7 @@ public extension MetalBuilderRenderer{
         self.commandQueue = device.makeCommandQueue()
         
         let context = MetalBuilderRenderingContext()
+        context.timer = timer
         
         do{
         
@@ -80,12 +79,8 @@ public extension MetalBuilderRenderer{
        
         commandBuffer = try startEncode()
         
-        if justStarted {
-            startTime = CFAbsoluteTimeGetCurrent()
-            justStarted = false
-        }
-        renderData.context.time = Float(CFAbsoluteTimeGetCurrent()-startTime)
-        //print(renderData.context.time)
+        timer.count()
+        renderData.context.time = timer.time
         
         for pass in renderData.passes{
             
@@ -110,15 +105,9 @@ public extension MetalBuilderRenderer{
     }
     
     func pauseTime(){
-        guard !justStarted
-        else{return}
-        pausedTime = CFAbsoluteTimeGetCurrent()
-        print("time paused!")
+        timer.backgroundPause()
     }
     func resumeTime(){
-        guard !justStarted
-        else{return}
-        startTime += CFAbsoluteTimeGetCurrent()-pausedTime
-        print("time resumed!")
+        timer.backgroundResume()
     }
 }

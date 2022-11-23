@@ -54,7 +54,6 @@ struct ContentView: View {
     @MetalState var vertexCount = 3 * particleCount
     @MetalState var particleScale: Float = 1
     
-    @State var isDrawing = false
     @State var n = 1
     @State var laplacianPasses = 0
     
@@ -72,48 +71,43 @@ struct ContentView: View {
     
     var body: some View {
         VStack{
-            MetalBuilderView(isDrawing: $isDrawing,
-                             viewSettings: viewSettings){ context in
+            MetalBuilderView(viewSettings: viewSettings){ context in
                 ComputeBlock(context: context,
                              particlesBuffer: $particlesBuffer,
                              vertexBuffer: $vertexBuffer,
                              particleScale: $particleScale,
                              u: uniforms)
-                Render(vertex: "vertexShader",
-                       indexBuffer: indexBuffer,
+                Render(indexBuffer: indexBuffer,
                        indexCount: MetalBinding<Int>.constant(vertexIndexCount))
                     .uniforms(uniforms)//, name: "uni")
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
                     .vertexBytes(context.$viewportSize, space: "constant")
-                    .source(
+                    .vertexShader(VertexShader("vertexShader",
+                                  vertexOut:
                     """
                     struct RasterizerData{
                         float4 position [[position]];
                         float4 color; //[[flat]];   // - use this flag to disable color interpolation
                     };
-                        
-                    vertex RasterizerData
-                    vertexShader(uint vertexID [[vertex_id]]){
+                    """,
+                                  body:"""
                         RasterizerData out;
 
-                        float2 pixelSpacePosition = vertices[vertexID].position.xy;
+                        float2 pixelSpacePosition = vertices[vertex_id].position.xy;
 
                         float2 viewport = float2(viewportSize);
                         
                         out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
                         out.position.xy = pixelSpacePosition / (viewport / 2.0);
 
-                        out.color = vertices[vertexID].color;
+                        out.color = vertices[vertex_id].color;
 
                         return out;
-                    }
-                    """)
-                    .fragmentShader(FragmentShader("fragmentShader", source:
+                    """))
+                    .fragmentShader(FragmentShader("fragmentShader", body:
                     """
-                    fragment float4 fragmentShader(RasterizerData in [[stage_in]]){
                         return in.color;
-                    }
                     """))
 //                Render(vertex: "vertexShader", fragment: "fragmentShader", count: vertexCount)
 //                    .uniforms(uniforms)//, name: "uni")
@@ -147,11 +141,9 @@ struct ContentView: View {
                 //let _ = print("compile")
             }
             .onResize{ size in
-                if isDrawing {return}
                 createParticles(particlesBuf: particlesBuffer,
                                 viewportSize: size)
                 createIndices(indexBuffer, count: vertexCount)
-                isDrawing = true
             }
             if showUniforms{
                 UniformsView(uniforms)
@@ -177,8 +169,11 @@ struct ContentView: View {
                 
                 Button {
                     if let json = json {
+                        showUniforms = false
                         uniforms.import(json: json)
-                        //showUniforms.toggle()
+                        DispatchQueue.main.asyncAfter(deadline: .now()+0.01) {
+                            showUniforms = true
+                        }
                     }
                 } label: {
                     Text("Load Uniforms")

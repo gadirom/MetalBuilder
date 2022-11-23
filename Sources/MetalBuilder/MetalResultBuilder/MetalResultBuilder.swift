@@ -10,4 +10,4 @@ public enum MetalResultBuilder{
 
 public typealias MetalContent = [MetalBuilderComponent]
 
-public typealias MetalRenderingContent = (MetalBuilderRenderingContext) -> MetalContent
+public typealias MetalBuilderContent = (MetalBuilderRenderingContext) -> MetalContent

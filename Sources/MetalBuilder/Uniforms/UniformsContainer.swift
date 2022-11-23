@@ -3,7 +3,7 @@ import SwiftUI
 import OrderedCollections
 import CoreMedia
 
-/// An object that contains uniforms
+/// The type for an object that contains uniforms values.
 public final class UniformsContainer: ObservableObject{
     
     @Published var bufferAllocated = false
@@ -90,7 +90,7 @@ public extension UniformsContainer{
     }
     
     /// Setups Uniforms Container before rendering
-    /// - Parameter device: MTLDevice
+    /// - Parameter device: Metal device.
     func setup(device: MTLDevice){
         print("Uniforms Container Setup")
         if pointer == nil{
@@ -105,11 +105,13 @@ public extension UniformsContainer{
             }else{
                 loadInitialValues()
             }
-            bufferAllocated = true
+            DispatchQueue.main.async { [unowned self] in
+                self.bufferAllocated = true
+            }
         }
     }
-    /// Loads Initial Values for Uniforms
-    /// - Parameter device: MTLDevice
+    /// Loads Initial Values for Uniforms.
+    /// - Parameter device: Metal device.
     func loadInitialValues(){
         print("Load Initial Values for Uniforms")
         _ = dict.map{ self.setArray($0.value.initValue, for: $0.key) }
@@ -118,8 +120,9 @@ public extension UniformsContainer{
 
 //Saving to and loading from User Defaults
 public extension UniformsContainer{
-    /// Loads uniforms values from User Defaults
-    /// If no value of an apropriate type is found for the key in User Defaults the initial value is used.
+    /// Loads uniforms values from User Defaults.
+    ///
+    /// If no value of an apropriate type is found for the key in User Defaults, the initial value is used.
     func loadFomDefaults(){
         print("Loading Uniforms values from User Defaults...")
         for p in dict.enumerated(){
@@ -135,11 +138,11 @@ public extension UniformsContainer{
             }
         }
     }
-    /// Save uniform value to User Defaults
+    /// Saves a uniform value to User Defaults.
     /// - Parameters:
-    ///   - value: an array containing the value to store
+    ///   - value: An array containing the value to store.
     ///   It should be of the exact length, e.g. 1 for `Float`, 2 for `simd_float2`, ect.
-    ///   - key: uniform name
+    ///   - key: The name of a value in a uniforms contaner.
     func saveToDefaults(value: [Float], key: String){
         guard saveToDefaults
         else{ return }
@@ -149,14 +152,14 @@ public extension UniformsContainer{
     }
     
     /// Returns the key that is used to store and retrive the value from User Defaults.
-    /// - Parameter name: uniform name
-    /// - Returns: key in User Defaults storage
+    /// - Parameter name: Uniforms name.
+    /// - Returns: key in User Defaults storage.
     func userDefaultsKeyForUniformsKey(_ name: String)->String{
         prefixForDefaults+name
     }
     /// Returns the name of a uniform value for the key that is used to store and retrive that value from User Defaults.
-    /// - Parameter key: key in User Defaults storage
-    /// - Returns: uniforms property name
+    /// - Parameter key: The key in User Defaults storage.
+    /// - Returns: Uniforms value name.
     func uniformsKeyForUserDefaultsKey(_ key: String)->String?{
         if let range = key.range(of: prefixForDefaults){
             return String(key[range.upperBound...])
@@ -165,7 +168,8 @@ public extension UniformsContainer{
     var prefixForDefaults: String{
         "Uniforms-"
     }
-    ///Clears the User Defaults storage
+    ///Clears the User Defaults storage.
+    ///
     ///Attention! All other stored values will also be erased!
     func clearDefaults(){
         print("Clearing Defaults for Uniforms")
@@ -282,7 +286,7 @@ public extension UniformsContainer{
 }
 //import and export Uniforms
 public extension UniformsContainer{
-    ///Returns uniforms encoded into json
+    ///Returns uniforms encoded into json.
     var json: Data?{
         var dictToEncode: [String: Encodable] = [:]
         for p in dict{
@@ -308,11 +312,11 @@ public extension UniformsContainer{
         }
     }
     
-    /// Import uniforms from json data
+    /// Import uniforms from json data.
     /// - Parameters:
-    ///   - json: json data
-    ///   - type: Metal type that will be useed to address uniforms in Metal library code
-    ///   - name: Name of variable by which uniforms will be accessible in Metal library code
+    ///   - json: Json data.
+    ///   - type: Metal type that will be useed to address uniforms in Metal library code.
+    ///   - name: Name of variable by which uniforms will be accessible in Metal library code.
     func `import`(json: Data, type: String? = nil, name: String? = nil){
         guard let object = try? JSONSerialization.jsonObject(with: json)
         else { return }

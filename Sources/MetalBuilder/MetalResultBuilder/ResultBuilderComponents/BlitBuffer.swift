@@ -2,9 +2,10 @@
 import MetalKit
 import SwiftUI
 
-/// BlitBuffer Component
+/// The component for copying buffers.
 ///
-/// initializes a blit pass
+/// Use this component to copy memory between buffers on GPU.
+/// Configure source, destination, count with modifiers.
 public struct BlitBuffer: MetalBuilderComponent{
     
     var inBuffer: BufferProtocol?

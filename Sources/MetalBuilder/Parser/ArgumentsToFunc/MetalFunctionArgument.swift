@@ -27,6 +27,16 @@ public enum MetalFunctionArgument{
     }
 }
 
+/// Texture argument descriptor that you use to pass texture containers to Compute and Render components.
+///
+/// Typically you use a texture argument to tell MetalBuilder to create a Metal declaration for your shader:
+///```
+///Compute("myComputeKernel")
+///      .texture(inTexture,
+///               argument: .init(type: "float", access: "read", name: "in"))
+///      .texture(outTexture,
+///               argument: .init(type: "float", access: "write", name: "out"))
+///```
 public struct MetalTextureArgument{
     let type: String
     var textureType: MTLTextureType?=nil
@@ -58,6 +68,15 @@ public struct MetalTextureArgument{
         h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
         return h
     }
+    /// Creates a texture argument.
+    /// - Parameters:
+    ///   - type: The metal type of the pixels of the texture.
+    ///   - access: The access attribute for the texture.
+    ///   - name: The name of the variable by which the texture is passed to a shader.
+    ///   - index: index of the texture in the shader declaration.
+    /// If nil, the index will be set automatically by MetalBuilder.
+    /// (Once you pass nil for the index of a texture argument of a component,
+    /// avoid passing non-nil values in texture arguments of the same component.)
     public init(type: String, access: String, name: String, index: Int?=nil) {
         self.type = type
         self.access = access
