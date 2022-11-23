@@ -2,8 +2,13 @@ import AVFoundation
 
 class MetalBuilderTimer{
     
-    public var time: Float = 0
+    public var time: Float{
+        timerQueue.sync {
+            _time
+        }
+    }
     
+    var _time: Float = 0
     var startTime: Double = 0
     var pausedTime: Double = 0
     var justStarted = true
@@ -22,8 +27,7 @@ class MetalBuilderTimer{
                 paused = false
             }
             if paused { return }
-            time = Float(CFAbsoluteTimeGetCurrent()-startTime)
-            print(time)
+            _time = Float(CFAbsoluteTimeGetCurrent()-startTime)
         }
     }
     //Pause and resume manually by the client
