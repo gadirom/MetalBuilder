@@ -8,16 +8,16 @@ class MetalBuilderTimer{
         }
     }
     
-    var _time: Float = 0
-    var startTime: Double = 0
-    var pausedTime: Double = 0
-    var justStarted = true
-    var paused = true
+    private var _time: Float = 0
+    private var startTime: Double = 0
+    private var pausedTime: Double = 0
+    private var justStarted = true
+    private var paused = true
     
-    var manualPaused = false
+    private var manualPaused = false
     
-    let timerQueue = DispatchQueue(label: "MetalBuilderTimer_Queue",
-                                   qos: .userInitiated)
+    private let timerQueue = DispatchQueue(label: "MetalBuilderTimer_Queue",
+                                           qos: .userInitiated)
     
     func count(){
         timerQueue.sync {
