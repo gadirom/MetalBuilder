@@ -571,7 +571,7 @@ public extension Render{
                           texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
                           storeAction: MTLStoreAction? = nil,
-                          clearColor: MTLClearColor? = nil) -> Render{
+                          mtlClearColor: MTLClearColor? = nil) -> Render{
         var _loadAction: Binding<MTLLoadAction>? = nil
         var _storeAction: Binding<MTLStoreAction>? = nil
         var _clearColor: Binding<MTLClearColor>? = nil
@@ -581,7 +581,7 @@ public extension Render{
         if let storeAction = storeAction {
             _storeAction = Binding<MTLStoreAction>.constant(storeAction)
         }
-        if let clearColor = clearColor {
+        if let clearColor = mtlClearColor {
             _clearColor = Binding<MTLClearColor>.constant(clearColor)
         }
         return colorAttachement(index,
@@ -610,7 +610,7 @@ public extension Render{
                                 texture: texture,
                                 loadAction: loadAction,
                                 storeAction: storeAction,
-                                clearColor: _clearColor)
+                                mtlClearColor: _clearColor)
     }
     /// Adds the render pipeline color attachment to a Render component.
     /// - Parameter descriptor: The descriptor for the attachement to add.
