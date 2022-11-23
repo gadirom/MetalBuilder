@@ -9,4 +9,14 @@ public final class MetalBuilderRenderingContext{
     @MetalState(metalName: "scaleFactor") public var scaleFactor: Float = 1
     /// Render time. Starts at zero and pauses when the app is in a background phase
     @MetalState(metalName: "time") public var time: Float = 0
+    
+    
+    var _pauseTime: (()->())?
+    var _resumeTime: (()->())?
+    public func pauseTime(){
+        _pauseTime?()
+    }
+    public func resumeTime(){
+        _resumeTime?()
+    }
 }

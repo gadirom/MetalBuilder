@@ -61,6 +61,8 @@ public extension MetalBuilderRenderer{
         self.commandQueue = device.makeCommandQueue()
         
         let context = MetalBuilderRenderingContext()
+        context._pauseTime = pauseTime
+        context._resumeTime = resumeTime
         
         do{
         
