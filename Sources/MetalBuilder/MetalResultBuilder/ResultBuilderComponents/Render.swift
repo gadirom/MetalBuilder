@@ -223,7 +223,7 @@ extension Render{
         return r
     }
 }
-// chaining functions for result builder
+// Chaining modifiers for Render
 public extension Render{
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Render{
         var r = self
@@ -403,6 +403,9 @@ public extension Render{
         //arguments
         return r.addShaderArguments(shader)
     }
+    /// Adds the fragment shader to a Rnder component.
+    /// - Parameter shader: Fragment shader that you want to use with Render.
+    /// - Returns: The Render component with the added fragment shader.
     func fragmentShader(_ shader: FragmentShader)->Render{
         var r = self
         //func
@@ -412,24 +415,44 @@ public extension Render{
         //arguments
         return r.addShaderArguments(shader)
     }
+    /// Adds the `MTLDepthStencilDescriptor` to a Render component.
+    /// - Parameter descriptor: The depth and stencil descriptor to use in the rendering pass
+    /// that you create and configure by a Render component.
+    /// - Returns: The Render component with the applied descriptor.
     func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor) -> Render{
         var r = self
         r.depthDescriptor = descriptor
         return r
     }
+    /// Adds the color attachment to a Render component.
+    /// - Parameters:
+    ///   - index: Index of the color attachment. 0 if unspecified.
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Binding to a load action value.
+    ///   - storeAction: Binding to a store action value.
+    ///   - clearColor: Binding to a clear color value (MTLClearColor).
+    /// - Returns: The Render component with the added color attachement.
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
                           loadAction: Binding<MTLLoadAction>? = nil,
                           storeAction: Binding<MTLStoreAction>? = nil,
-                          clearColor: Binding<MTLClearColor>? = nil) -> Render{
+                          mtlClearColor: Binding<MTLClearColor>? = nil) -> Render{
         var r = self
         let colorAttachement = ColorAttachment(texture: texture,
                                                loadAction: loadAction,
                                                storeAction: storeAction,
-                                               clearColor: clearColor)
+                                               clearColor: mtlClearColor)
         r.passColorAttachments[index] = colorAttachement
         return r
     }
+    /// Adds the color attachment to a Render component.
+    /// - Parameters:
+    ///   - index: Index of the color attachment. 0 if unspecified.
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Binding to a load action value.
+    ///   - storeAction: Binding to a store action value.
+    ///   - clearColor: Binding to a clear color value (Color).
+    /// - Returns: The Render component with the added color attachement.
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
@@ -451,7 +474,7 @@ public extension Render{
                                 texture: texture,
                                 loadAction: _loadAction,
                                 storeAction: _storeAction,
-                                clearColor: _clearColor)
+                                mtlClearColor: _clearColor)
     }
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
