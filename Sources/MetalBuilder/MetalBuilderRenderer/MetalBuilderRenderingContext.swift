@@ -11,12 +11,11 @@ public final class MetalBuilderRenderingContext{
     @MetalState(metalName: "time") public var time: Float = 0
     
     
-    var _pauseTime: (()->())?
-    var _resumeTime: (()->())?
+    weak var timer: MetalBuilderTimer?
     public func pauseTime(){
-        _pauseTime?()
+        timer?.pauseTime()
     }
     public func resumeTime(){
-        _resumeTime?()
+        timer?.resumeTime()
     }
 }
