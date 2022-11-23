@@ -3,9 +3,7 @@ import AVFoundation
 class MetalBuilderTimer{
     
     public var time: Float{
-        timerQueue.sync {
-            _time
-        }
+        _time
     }
     
     private var _time: Float = 0
@@ -16,11 +14,11 @@ class MetalBuilderTimer{
     
     private var manualPaused = false
     
-    private let timerQueue = DispatchQueue(label: "MetalBuilderTimer_Queue",
-                                           qos: .userInitiated)
+//    private let timerQueue = DispatchQueue(label: "MetalBuilderTimer_Queue",
+//                                           qos: .userInitiated)
     
     func count(){
-        timerQueue.sync {
+        //timerQueue.sync {
             if justStarted {
                 startTime = CFAbsoluteTimeGetCurrent()
                 justStarted = false
@@ -28,32 +26,24 @@ class MetalBuilderTimer{
             }
             if paused { return }
             _time = Float(CFAbsoluteTimeGetCurrent()-startTime)
-        }
+        //}
     }
     //Pause and resume manually by the client
     func manualPause(){
-        timerQueue.sync {
             manualPaused = true
             pauseTime()
-        }
     }
     func manualResume(){
-        timerQueue.sync {
             manualPaused = false
             resumeTime()
-        }
     }
     //Pause and resume for going in and from background
     func backgroundPause(){
-        timerQueue.sync {
             pauseTime()
-        }
     }
     func backgroundResume(){
-        timerQueue.sync {
             if manualPaused { return }
             resumeTime()
-        }
     }
     
     private func pauseTime(){
