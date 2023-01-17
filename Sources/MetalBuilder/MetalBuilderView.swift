@@ -126,6 +126,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
             applyViewSettings(view)
             renderer?.setSize(size: size)
+            renderer?.setScaleFactor(Float(view.contentScaleFactor))
             onResizeCode?(size)
             wasInitialized = true
         }

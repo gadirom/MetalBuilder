@@ -27,7 +27,7 @@ public final class MetalBuffer<T>{
     /// Yet, as of Swift 5.6 it isn't done correctly and it isn't called for initialization of the corresponding property
     /// Thus, any arguments of this init will be ignored if you use it like this:
     /// struct Test{
-    ///    @MetalBuffer(metalName: "buffer" var buffer
+    ///    @MetalBuffer(metalName: "buffer") var buffer
     /// }
     /// If you init Test like this: test = Test(buffer: buffer)
     /// the 'metalName' argument will be ignored.
