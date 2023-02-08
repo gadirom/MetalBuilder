@@ -60,10 +60,11 @@ struct RawBytes: BytesProtocol{
     let binding: Binding<UnsafeRawPointer?>
     let length: Int
     var index: Int
-    
+
     func encode(encoder: (UnsafeRawPointer, Int, Int)->()){
-        encoder(binding.wrappedValue!, length, index)
-        }
+        let value = binding.wrappedValue!
+        encoder(value, length, index)
+    }
 }
 
 struct Bytes<T>: BytesProtocol{
@@ -72,7 +73,7 @@ struct Bytes<T>: BytesProtocol{
     
     func encode(encoder: (UnsafeRawPointer, Int, Int)->()){
         let value = binding.wrappedValue
-        print(value)
+        //print(value)
         withUnsafeBytes(of: value){ pointer in
             encoder(pointer.baseAddress!,
                     MemoryLayout<T>.stride,
