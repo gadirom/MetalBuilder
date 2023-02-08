@@ -22,7 +22,7 @@ public final class MetalBuilderRenderingContext{
     /// out.position = float4(pos.xy, 0, 1);
     /// return out;
     /// ```
-    @MetalState(metalName: "viewportToDeviceTransform") var viewportToDeviceTransform = simd_float3x3()
+    @MetalState(metalName: "viewportToDeviceTransform") public var viewportToDeviceTransform = simd_float3x3()
     
     func updateViewportToDeviceTransform(){
         viewportToDeviceTransform = .init(columns: (
