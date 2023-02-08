@@ -97,8 +97,8 @@ public extension MetalBuilderRenderer{
 
         endEncode(commandBuffer: commandBuffer, drawable: drawable)
     }
-    func setScaleFactor(_ sf: Float){
-        renderData.context.scaleFactor = sf
+    func setScaleFactor(_ sf: CGFloat){
+        renderData.context.setScaleFactor(sf)
     }
     func setSize(size: CGSize){
         renderData.setViewport(size: size, device: device)

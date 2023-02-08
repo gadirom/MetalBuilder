@@ -67,7 +67,7 @@ public struct MetalBuilderView: UIViewRepresentable {
                                           helpers: helpers,
                                           renderInfo: renderInfo,
                                           metalContent: metalContent,
-                                          scaleFactor: Float(mtkView.contentScaleFactor))
+                                          scaleFactor: mtkView.contentScaleFactor)
         
         return mtkView
     }
@@ -112,7 +112,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         func setupRenderer(librarySource: String, helpers: String,
                            renderInfo: GlobalRenderInfo,
                            metalContent: MetalBuilderContent,
-                           scaleFactor: Float){
+                           scaleFactor: CGFloat){
             do{
                 renderer =
                 try MetalBuilderRenderer(renderInfo: renderInfo,
@@ -126,7 +126,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
             applyViewSettings(view)
             renderer?.setSize(size: size)
-            renderer?.setScaleFactor(Float(view.contentScaleFactor))
+            renderer?.setScaleFactor(view.contentScaleFactor)
             onResizeCode?(size)
             wasInitialized = true
         }

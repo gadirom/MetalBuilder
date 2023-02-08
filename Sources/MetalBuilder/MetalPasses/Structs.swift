@@ -73,7 +73,6 @@ struct Bytes<T>: BytesProtocol{
     
     func encode(encoder: (UnsafeRawPointer, Int, Int)->()){
         let value = binding.wrappedValue
-        //print(value)
         withUnsafeBytes(of: value){ pointer in
             encoder(pointer.baseAddress!,
                     MemoryLayout<T>.stride,

@@ -278,7 +278,7 @@ struct RenderData{
     }
     
     mutating func setViewport(size: CGSize, device: MTLDevice){
-        context.viewportSize = simd_uint2([UInt32(size.width), UInt32(size.height)])
+        context.setViewportSize(size)
         //update textures
         do{
             if !texturesCreated{
