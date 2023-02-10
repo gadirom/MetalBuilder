@@ -58,7 +58,9 @@ public struct MetalBuilderView: UIViewRepresentable {
         //mtkView.drawableSize = mtkView.frame.size
         mtkView.enableSetNeedsDisplay = false
         mtkView.isPaused = false
+        
         mtkView.isOpaque = false
+        mtkView.backgroundColor = .clear
         
         let renderInfo = GlobalRenderInfo(device: mtkView.device!,
                                           depthStencilPixelFormat: viewSettings.depthStencilPixelFormat,
