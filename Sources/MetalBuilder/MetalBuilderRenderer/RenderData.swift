@@ -244,7 +244,7 @@ struct RenderData{
             if librarySource == ""{
                 libraryContainer.library = device.makeDefaultLibrary()
             }else{
-                
+                librarySource = helpers + librarySource
                 try parse(library: &librarySource,
                           funcArguments: data.functionsAndArgumentsToAddToMetal)
                 
@@ -253,7 +253,7 @@ struct RenderData{
                 case .`default`: libraryPrefix = kMetalBuilderDefaultLibraryPrefix
                 case .custom(let prefix): libraryPrefix = prefix
                 }
-                librarySource = libraryPrefix + helpers + librarySource
+                librarySource = libraryPrefix + librarySource
                 libraryContainer.library = try device.makeLibrary(source: librarySource, options: options.mtlCompileOptions)
             }
         }
