@@ -44,8 +44,9 @@ final class RenderPass: MetalPass{
         if let pipelineColorAttachment = component.pipelineColorAttachment{
             renderPipelineDescriptor.colorAttachments[0] = pipelineColorAttachment
         }
-        
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
+        if renderPipelineDescriptor.colorAttachments[0].pixelFormat.rawValue == 0{
+            renderPipelineDescriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
+        }
         
         renderPipelineDescriptor.vertexFunction = vertexFunction
         renderPipelineDescriptor.fragmentFunction = fragmentFunction
