@@ -27,6 +27,8 @@ struct RenderData{
     
     //hold hashes for librarySources of BuildingBlocks to eliminate dublicates
     static var librarySourceHashes: [Int] = []
+    //hold hashes for helpers of BuildingBlocks to eliminate dublicates when sibrarySource is imbedded into the components that constitute the given BuildingBlock
+    static var helpersHashes: [Int] = []
     
     init(){}
     
@@ -54,6 +56,7 @@ struct RenderData{
         self.append(data)
         
         Self.librarySourceHashes = []
+        Self.helpersHashes = []
         
         try data.setupPasses(renderInfo: renderInfo)
         //try data.createTextures(context: context, device: device)
@@ -219,7 +222,12 @@ struct RenderData{
                     if !Self.librarySourceHashes.contains(sourceHash){
                         Self.librarySourceHashes.append(sourceHash)
                         librarySource = source + librarySource
-                        helpers += buildingBlockComponent.helpers
+                    }
+                    let buildingBlockHelpers = buildingBlockComponent.helpers
+                    let helpersHash = buildingBlockHelpers.hashValue
+                    if !Self.helpersHashes.contains(helpersHash){
+                        Self.helpersHashes.append(helpersHash)
+                        helpers += buildingBlockHelpers
                     }
                     
                     let blockData = try compile(
