@@ -593,7 +593,7 @@ public extension Render{
     ///   - storeAction: Store action value.
     ///   - clearStencil: Value to use when clearing the stencil attachment.
     /// - Returns: The Render component with the added color attachement.
-    func colorAttachement(_ index: Int = 0,
+    func stencilAttachment(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
                           storeAction: MTLStoreAction? = nil,
