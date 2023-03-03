@@ -718,7 +718,7 @@ public extension Render{
     /// Adds the render pipeline color attachment to a Render component.
     /// - Parameter descriptor: The descriptor for the attachement to add.
     /// - Returns: The Render component with the added render pipeline color attachment.
-    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Render{
+    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor?) -> Render{
         var r = self
         r.pipelineColorAttachment = descriptor
         return r

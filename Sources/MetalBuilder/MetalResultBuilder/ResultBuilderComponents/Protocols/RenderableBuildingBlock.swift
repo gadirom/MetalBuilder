@@ -66,7 +66,7 @@ public extension RenderableBuildingBlock{
                                  storeAction: _storeAction,
                                  clearStencil: _clearStencil)
     }
-    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Self{
+    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor?) -> Self{
         var r = self
         r.pipelineColorAttachment = descriptor
         return r
