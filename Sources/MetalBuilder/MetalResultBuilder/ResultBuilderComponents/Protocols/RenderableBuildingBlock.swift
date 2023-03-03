@@ -4,6 +4,8 @@ import SwiftUI
 public protocol RenderableBuildingBlock: MetalBuildingBlock{
     var toTextureContainer: MTLTextureContainer? { set get }
     
+    var passColorAttachments: [Int: ColorAttachment] { set get }
+    
     var depthStencilDescriptor: MTLDepthStencilDescriptor?  { set get }
     
     var passStencilAttachment: StencilAttachment?  { set get }
@@ -70,4 +72,67 @@ public extension RenderableBuildingBlock{
         return r
     }
     
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: Binding<MTLLoadAction>? = nil,
+                          storeAction: Binding<MTLStoreAction>? = nil,
+                          mtlClearColor: Binding<MTLClearColor>? = nil) -> Self{
+        var r = self
+        let colorAttachement = ColorAttachment(texture: texture,
+                                               loadAction: loadAction,
+                                               storeAction: storeAction,
+                                               clearColor: mtlClearColor)
+        r.passColorAttachments[index] = colorAttachement
+        return r
+    }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          mtlClearColor: MTLClearColor? = nil) -> Self{
+        var _loadAction: Binding<MTLLoadAction>? = nil
+        var _storeAction: Binding<MTLStoreAction>? = nil
+        var _clearColor: Binding<MTLClearColor>? = nil
+        if let loadAction = loadAction {
+            _loadAction = Binding<MTLLoadAction>.constant(loadAction)
+        }
+        if let storeAction = storeAction {
+            _storeAction = Binding<MTLStoreAction>.constant(storeAction)
+        }
+        if let clearColor = mtlClearColor {
+            _clearColor = Binding<MTLClearColor>.constant(clearColor)
+        }
+        return colorAttachement(index,
+                                texture: texture,
+                                loadAction: _loadAction,
+                                storeAction: _storeAction,
+                                mtlClearColor: _clearColor)
+    }
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          clearColor: Color? = nil) -> Self{
+        var _clearColor: MTLClearColor? = nil
+        if let color = clearColor{
+            if let cgC = UIColor(color).cgColor.components{
+                _clearColor = MTLClearColor(red:   cgC[0],
+                                            green: cgC[1],
+                                            blue:  cgC[2],
+                                            alpha: cgC[3])
+            }else{
+                print("Could not get color components for color: ", color)
+            }
+        }
+        return colorAttachement(index,
+                                texture: texture,
+                                loadAction: loadAction,
+                                storeAction: storeAction,
+                                mtlClearColor: _clearColor)
+    }
+    func colorAttachements(_ attachments: [Int: ColorAttachment]) -> Self{
+        var r = self
+        r.passColorAttachments = attachments
+        return r
+    }
 }

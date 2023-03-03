@@ -27,7 +27,7 @@ public struct ColorAttachment{
     }
 }
 /// default color attachments
-var defaultColorAttachments =
+public var defaultColorAttachments =
     [0: ColorAttachment(texture: nil,
                        loadAction: Binding<MTLLoadAction>(
                         get: { .clear },
@@ -706,6 +706,14 @@ public extension Render{
                                 loadAction: loadAction,
                                 storeAction: storeAction,
                                 mtlClearColor: _clearColor)
+    }
+    /// Adds color attachments to a Render component.
+    /// - Parameter attachments: The color attachements.
+    /// - Returns:  The Render component with the added color attachements.
+    func colorAttachements(_ attachments: [Int: ColorAttachment]) -> Render{
+        var r = self
+        r.passColorAttachments = attachments
+        return r
     }
     /// Adds the render pipeline color attachment to a Render component.
     /// - Parameter descriptor: The descriptor for the attachement to add.
