@@ -1,7 +1,7 @@
 import MetalKit
 import SwiftUI
 
-public protocol Renderable{
+public protocol RenderableBuildingBlock: MetalBuildingBlock{
     var toTextureContainer: MTLTextureContainer? { set get }
     
     var depthStencilDescriptor: MTLDepthStencilDescriptor?  { set get }
@@ -13,13 +13,13 @@ public protocol Renderable{
     var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?  { set get }
 }
 
-public extension Renderable{
-    func toTexture(_ container: MTLTextureContainer?)->Renderable{
+public extension RenderableBuildingBlock{
+    func toTexture(_ container: MTLTextureContainer?)->Self{
         var r = self
         r.toTextureContainer = container
         return r
     }
-    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor, stencilReferenceValue: UInt32?=nil) -> Renderable{
+    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor, stencilReferenceValue: UInt32?=nil) -> Self{
         var r = self
         r.depthStencilDescriptor = descriptor
         r.stencilReferenceValue = stencilReferenceValue
@@ -28,7 +28,7 @@ public extension Renderable{
     func stencilAttachment(texture: MTLTextureContainer? = nil,
                            loadAction: Binding<MTLLoadAction>? = nil,
                            storeAction: Binding<MTLStoreAction>? = nil,
-                           clearStencil: Binding<UInt32>? = nil) -> Renderable{
+                           clearStencil: Binding<UInt32>? = nil) -> Self{
         var r = self
         let stencilAttachment = StencilAttachment(texture: texture,
                                                   loadAction: loadAction,
@@ -41,7 +41,7 @@ public extension Renderable{
                           texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
                           storeAction: MTLStoreAction? = nil,
-                          clearStencil: UInt32? = nil) -> Renderable{
+                          clearStencil: UInt32? = nil) -> Self{
         var _loadAction: Binding<MTLLoadAction>? = nil
         var _storeAction: Binding<MTLStoreAction>? = nil
         var _clearStencil: Binding<UInt32>? = nil
@@ -59,7 +59,7 @@ public extension Renderable{
                                  storeAction: _storeAction,
                                  clearStencil: _clearStencil)
     }
-    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Renderable{
+    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Self{
         var r = self
         r.pipelineColorAttachment = descriptor
         return r
