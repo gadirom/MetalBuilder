@@ -38,10 +38,12 @@ final class RenderPass: MetalPass{
         if let depthDescriptor = self.component.depthStencilDescriptor{
             depthStencilState = renderInfo.device.makeDepthStencilState(descriptor: depthDescriptor)
         }
-        if let depthStencilPixelFormat = renderInfo.depthStencilPixelFormat{
-            renderPipelineDescriptor.depthAttachmentPixelFormat = depthStencilPixelFormat
+        if let depthPixelFormat = renderInfo.depthPixelFormat{
+            renderPipelineDescriptor.depthAttachmentPixelFormat = depthPixelFormat
         }
-        
+        if let stencilPixelFormat = renderInfo.stencilPixelFormat{
+            renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
+        }
         
         //Pipeline Color Attachment
         if let pipelineColorAttachment = component.pipelineColorAttachment{

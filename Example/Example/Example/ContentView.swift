@@ -62,8 +62,9 @@ struct ContentView: View {
     @State var json: Data?
     
     var viewSettings: MetalBuilderViewSettings{
-        MetalBuilderViewSettings(depthStencilPixelFormat: nil,
+        MetalBuilderViewSettings(depthPixelFormat: nil,
                                  clearDepth: nil,
+                                 stencilPixelFormat: nil,
                                  clearColor: nil,
                                  framebufferOnly: false,
                                  preferredFramesPerSecond: 60)

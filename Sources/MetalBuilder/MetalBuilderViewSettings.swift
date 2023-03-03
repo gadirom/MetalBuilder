@@ -3,14 +3,16 @@ import SwiftUI
 import MetalKit
 
 public struct MetalBuilderViewSettings{
-    public init(depthStencilPixelFormat: MTLPixelFormat? = nil,
+    public init(depthPixelFormat: MTLPixelFormat? = nil,
                 clearDepth: Double? = nil,
+                stencilPixelFormat: MTLPixelFormat? = nil,
                 clearStencil: UInt32? = nil,
                 depthStencilAttachmentTextureUsage: MTLTextureUsage? = nil,
                 clearColor: MTLClearColor? = nil,
                 framebufferOnly: Bool? = nil,
                 preferredFramesPerSecond: Int? = nil) {
-        self.depthStencilPixelFormat = depthStencilPixelFormat
+        self.depthPixelFormat = depthPixelFormat
+        self.stencilPixelFormat = stencilPixelFormat
         self.clearDepth = clearDepth
         self.clearStencil = clearStencil
         self.depthStencilAttachmentTextureUsage = depthStencilAttachmentTextureUsage
@@ -18,8 +20,9 @@ public struct MetalBuilderViewSettings{
         self.framebufferOnly = framebufferOnly
         self.preferredFramesPerSecond = preferredFramesPerSecond
     }
-    var depthStencilPixelFormat: MTLPixelFormat?
+    var depthPixelFormat: MTLPixelFormat?
     var clearDepth: Double?
+    var stencilPixelFormat: MTLPixelFormat?
     var clearStencil: UInt32?
     
     var depthStencilAttachmentTextureUsage: MTLTextureUsage?
@@ -46,13 +49,16 @@ extension MetalBuilderViewSettings{
         }
         
         //Depth routine
+        if let depthPixelFormat = self.depthPixelFormat{
+            view.depthStencilPixelFormat = depthPixelFormat
+        }
         if let clearDepth = self.clearDepth{
             view.clearDepth = clearDepth
         }
-        if let depthStencilPixelFormat = self.depthStencilPixelFormat{
-            view.depthStencilPixelFormat = depthStencilPixelFormat
-        }
         //Stencil routine
+        if let stencilPixelFormat = self.stencilPixelFormat{
+            view.depthStencilPixelFormat = stencilPixelFormat
+        }
         if let clearStencil = self.clearStencil{
             view.clearStencil = clearStencil
         }
