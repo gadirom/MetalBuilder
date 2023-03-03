@@ -133,22 +133,29 @@ struct RenderData{
                 try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
                 data.createUniforms(renderComponent.uniforms, device: device)
                 
-                librarySource += renderComponent.librarySource
-                
-                if librarySource != ""{
+                let source = renderComponent.librarySource
+                let sourceHash = source.hashValue
+                if !Self.librarySourceHashes.contains(sourceHash){
+                    Self.librarySourceHashes.append(sourceHash)
+                    librarySource = source + librarySource
                     
-                    //arguments for functions
-                    let vertex = MetalFunction.vertex(renderComponent.vertexFunc)
-                    let vertexAndArg = FunctionAndArguments(function: vertex,
-                                                            arguments: renderComponent.vertexArguments)
-                    data.functionsAndArgumentsToAddToMetal
-                        .append(vertexAndArg)
+                    //librarySource += renderComponent.librarySource
                     
-                    let fragment = MetalFunction.fragment(renderComponent.fragmentFunc)
-                    let fragAndArg = FunctionAndArguments(function: fragment,
-                                                            arguments: renderComponent.fragmentArguments)
-                    data.functionsAndArgumentsToAddToMetal
-                        .append(fragAndArg)
+                    if librarySource != ""{
+                        
+                        //arguments for functions
+                        let vertex = MetalFunction.vertex(renderComponent.vertexFunc)
+                        let vertexAndArg = FunctionAndArguments(function: vertex,
+                                                                arguments: renderComponent.vertexArguments)
+                        data.functionsAndArgumentsToAddToMetal
+                            .append(vertexAndArg)
+                        
+                        let fragment = MetalFunction.fragment(renderComponent.fragmentFunc)
+                        let fragAndArg = FunctionAndArguments(function: fragment,
+                                                              arguments: renderComponent.fragmentArguments)
+                        data.functionsAndArgumentsToAddToMetal
+                            .append(fragAndArg)
+                    }
                 }
                 
             }
