@@ -562,9 +562,11 @@ public extension Render{
     ///   - stencilReferenceValue: The stencil reference value for both front and back stencil comparison tests.
     /// that you create and configure by a Render component.
     /// - Returns: The Render component with the applied descriptor.
-    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor, stencilReferenceValue: UInt32?=nil) -> Render{
+    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor?, stencilReferenceValue: UInt32?=nil) -> Render{
         var r = self
-        r.depthStencilDescriptor = descriptor
+        if let descriptor = descriptor{
+            r.depthStencilDescriptor = descriptor
+        }
         r.stencilReferenceValue = stencilReferenceValue
         return r
     }
