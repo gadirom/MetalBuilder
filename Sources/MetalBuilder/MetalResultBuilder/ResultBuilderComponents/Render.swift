@@ -586,6 +586,35 @@ public extension Render{
         r.passStencilAttachment = stencilAttachment
         return r
     }
+    /// Adds a stencil attachment to the Render component.
+    /// - Parameters:
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Load action value.
+    ///   - storeAction: Store action value.
+    ///   - clearStencil: Value to use when clearing the stencil attachment.
+    /// - Returns: The Render component with the added color attachement.
+    func colorAttachement(_ index: Int = 0,
+                          texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          clearStencil: UInt32? = nil) -> Render{
+        var _loadAction: Binding<MTLLoadAction>? = nil
+        var _storeAction: Binding<MTLStoreAction>? = nil
+        var _clearStencil: Binding<UInt32>? = nil
+        if let loadAction = loadAction {
+            _loadAction = Binding<MTLLoadAction>.constant(loadAction)
+        }
+        if let storeAction = storeAction {
+            _storeAction = Binding<MTLStoreAction>.constant(storeAction)
+        }
+        if let clearStencil = clearStencil {
+            _clearStencil = Binding<UInt32>.constant(clearStencil)
+        }
+        return stencilAttachment(texture: texture,
+                                 loadAction: _loadAction,
+                                 storeAction: _storeAction,
+                                 clearStencil: _clearStencil)
+    }
     /// Adds a color attachment to the Render component.
     /// - Parameters:
     ///   - index: Index of the color attachment. 0 if unspecified.
@@ -611,9 +640,9 @@ public extension Render{
     /// - Parameters:
     ///   - index: Index of the color attachment. 0 if unspecified.
     ///   - texture: Texture to use in the attachement.
-    ///   - loadAction: Binding to a load action value.
-    ///   - storeAction: Binding to a store action value.
-    ///   - clearColor: Binding to a clear color value (Color).
+    ///   - loadAction: Load action value.
+    ///   - storeAction: Store action value.
+    ///   - clearColor: Clear color value (MTLClearColor).
     /// - Returns: The Render component with the added color attachement.
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
@@ -638,6 +667,14 @@ public extension Render{
                                 storeAction: _storeAction,
                                 mtlClearColor: _clearColor)
     }
+    /// Adds the color attachment to a Render component.
+    /// - Parameters:
+    ///   - index: Index of the color attachment. 0 if unspecified.
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Load action value.
+    ///   - storeAction: Store action value.
+    ///   - clearColor: Clear color value (Color).
+    /// - Returns: The Render component with the added color attachement.
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
