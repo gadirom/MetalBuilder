@@ -571,6 +571,14 @@ public extension Render{
         return r
     }
     /// Adds a stencil attachment to the Render component.
+    /// - Parameter attachement: Stencil attachment struct.
+    /// - Returns: The Render component with the added color attachement.
+    func stencilAttachment(_ attachement: StencilAttachment?) -> Render{
+        var r = self
+        r.passStencilAttachment = attachement
+        return r
+    }
+    /// Adds a stencil attachment to the Render component.
     /// - Parameters:
     ///   - texture: Texture to use in the attachement.
     ///   - loadAction: Binding to a load action value.

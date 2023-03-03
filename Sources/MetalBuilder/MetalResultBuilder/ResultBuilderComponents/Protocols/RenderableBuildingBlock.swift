@@ -25,6 +25,11 @@ public extension RenderableBuildingBlock{
         r.stencilReferenceValue = stencilReferenceValue
         return r
     }
+    func stencilAttachment(_ attachement: StencilAttachment?) -> Self{
+        var r = self
+        r.passStencilAttachment = attachement
+        return r
+    }
     func stencilAttachment(texture: MTLTextureContainer? = nil,
                            loadAction: Binding<MTLLoadAction>? = nil,
                            storeAction: Binding<MTLStoreAction>? = nil,
