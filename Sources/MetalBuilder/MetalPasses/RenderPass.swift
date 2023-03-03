@@ -91,6 +91,8 @@ final class RenderPass: MetalPass{
         //stencil attachment
         if let passStencilAttachment = component.passStencilAttachment{
             renderPassDescriptor.stencilAttachment = passStencilAttachment.descriptor
+        }else{
+            renderPassDescriptor.stencilAttachment = MTLRenderPassStencilAttachmentDescriptor()
         }
         
         guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
