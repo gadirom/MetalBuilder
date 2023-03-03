@@ -108,8 +108,6 @@ final class RenderPass: MetalPass{
         }
         renderPassEncoder.setViewport(viewport)
         
-        renderPassEncoder.setRenderPipelineState(renderPiplineState)
-        
         //set depth and stencil state
         if let depthStencilState = depthStencilState {
             renderPassEncoder.setDepthStencilState(depthStencilState)
@@ -119,6 +117,8 @@ final class RenderPass: MetalPass{
         if let stencilReferenceValue = component.stencilReferenceValue{
             renderPassEncoder.setStencilReferenceValue(stencilReferenceValue)
         }
+        
+        renderPassEncoder.setRenderPipelineState(renderPiplineState)
         
         //Set Buffers
         for buffer in component.vertexBufs{
