@@ -20,7 +20,7 @@ final class RenderPass: MetalPass{
     var indexType: MTLIndexType = .uint16
     
     var depthStencilState: MTLDepthStencilState?
-    //var stencilReferenceValue: UInt32?
+    let defaultStencilDescriptor = MTLRenderPassStencilAttachmentDescriptor()
     
     init(_ component: Render, libraryContainer: LibraryContainer){
         self.component = component
@@ -78,6 +78,8 @@ final class RenderPass: MetalPass{
         let commandBuffer = passInfo.getCommandBuffer()
         let renderPassDescriptor = passInfo.renderPassDescriptor
         
+        //Configuring Render Pass Descriptor
+        
         //color attachments
         for key in component.passColorAttachments.keys{
             if let a = component.passColorAttachments[key]?.descriptor{
@@ -92,8 +94,10 @@ final class RenderPass: MetalPass{
         if let passStencilAttachment = component.passStencilAttachment{
             renderPassDescriptor.stencilAttachment = passStencilAttachment.descriptor
         }else{
-            renderPassDescriptor.stencilAttachment = MTLRenderPassStencilAttachmentDescriptor()
+            renderPassDescriptor.stencilAttachment = defaultStencilDescriptor
         }
+        
+        //Configuring Render Pass Encoder
         
         guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         else{
