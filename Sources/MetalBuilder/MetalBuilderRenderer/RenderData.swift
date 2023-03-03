@@ -128,6 +128,7 @@ struct RenderData{
                 data.addTextures(newTexs: renderComponent.vertexTextures.map{ $0.container })
                 data.addTextures(newTexs: renderComponent.fragTextures.map{ $0.container })
                 data.addTextures(newTexs: renderComponent.passColorAttachments.values.map{ $0.texture })
+                data.addTextures(newTexs: [renderComponent.passStencilAttachment?.texture])
                 try data.createBuffers(buffers: renderComponent.vertexBufs, device: device)
                 try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
                 data.createUniforms(renderComponent.uniforms, device: device)
