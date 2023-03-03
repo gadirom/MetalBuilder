@@ -13,8 +13,8 @@ public protocol Renderable{
     var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?  { set get }
 }
 
-extension Renderable{
-    func toTexture(_ container: MTLTextureContainer)->Renderable{
+public extension Renderable{
+    func toTexture(_ container: MTLTextureContainer?)->Renderable{
         var r = self
         r.toTextureContainer = container
         return r
