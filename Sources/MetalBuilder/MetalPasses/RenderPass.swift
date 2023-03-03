@@ -45,8 +45,10 @@ final class RenderPass: MetalPass{
             renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
         }
         //Override global stencil pixel format with the one from stencil attachment texture
-        if let stencilPixelFormat = component.passStencilAttachment?.texture?.texture?.pixelFormat{
-            renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
+        if let pixelFormat = component.passStencilAttachment?.texture?.descriptor.pixelFormat{
+            if case let .fixed(stencilPixelFormat) = pixelFormat{
+                renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
+            }
         }
         
         //Pipeline Color Attachment
