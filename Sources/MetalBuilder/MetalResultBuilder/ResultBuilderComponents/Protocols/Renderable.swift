@@ -2,7 +2,7 @@ import MetalKit
 import SwiftUI
 
 public protocol Renderable{
-    var toTexture: MTLTextureContainer? { set get }
+    var toTextureContainer: MTLTextureContainer? { set get }
     
     var depthStencilDescriptor: MTLDepthStencilDescriptor?  { set get }
     
@@ -16,7 +16,7 @@ public protocol Renderable{
 extension Renderable{
     func toTexture(_ container: MTLTextureContainer)->Renderable{
         var r = self
-        r.toTexture = container
+        r.toTextureContainer = container
         return r
     }
     func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor, stencilReferenceValue: UInt32?=nil) -> Renderable{
