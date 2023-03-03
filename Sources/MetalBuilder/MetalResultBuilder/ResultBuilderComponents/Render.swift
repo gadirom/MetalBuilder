@@ -39,6 +39,28 @@ var defaultColorAttachments =
                         get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
                         set: { _ in } )
                        )]
+/// stencil attachment
+struct StencilAttachment{
+    var texture: MTLTextureContainer?
+    var loadAction: Binding<MTLLoadAction>?
+    var storeAction: Binding<MTLStoreAction>?
+    var clearStencil: Binding<UInt32>?
+    
+    var descriptor: MTLRenderPassStencilAttachmentDescriptor{
+        let d = MTLRenderPassStencilAttachmentDescriptor()
+        d.texture = texture?.texture
+        if let loadAction = loadAction?.wrappedValue{
+            d.loadAction = loadAction
+        }
+        if let storeAction = storeAction?.wrappedValue{
+            d.storeAction = storeAction
+        }
+        if let clearStencil = clearStencil?.wrappedValue{
+            d.clearStencil = clearStencil
+        }
+        return d
+    }
+}
 
 /// The component for rendering primitives.
 ///
@@ -121,7 +143,11 @@ public struct Render: MetalBuilderComponent{
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
     
-    var depthDescriptor: MTLDepthStencilDescriptor?
+    var depthStencilDescriptor: MTLDepthStencilDescriptor?
+    
+    var passStencilAttachment: StencilAttachment?
+    
+    var stencilReferenceValue: UInt32?
     
     var uniforms: [UniformsContainer] = []
     
@@ -530,15 +556,37 @@ public extension Render{
         return r.addShaderArguments(shader)
     }
     /// Adds the `MTLDepthStencilDescriptor` to a Render component.
-    /// - Parameter descriptor: The depth and stencil descriptor to use in the rendering pass
+    /// - Parameters:
+    ///   - descriptor: The depth and stencil descriptor to use in the rendering pass
+    ///   - stencilReferenceValue: The stencil reference value for both front and back stencil comparison tests.
     /// that you create and configure by a Render component.
     /// - Returns: The Render component with the applied descriptor.
-    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor) -> Render{
+    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor, stencilReferenceValue: UInt32?=nil) -> Render{
         var r = self
-        r.depthDescriptor = descriptor
+        r.depthStencilDescriptor = descriptor
+        r.stencilReferenceValue = stencilReferenceValue
         return r
     }
-    /// Adds the color attachment to a Render component.
+    /// Adds a stencil attachment to the Render component.
+    /// - Parameters:
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Binding to a load action value.
+    ///   - storeAction: Binding to a store action value.
+    ///   - clearStencil: Binding to a value to use when clearing the stencil attachment.
+    /// - Returns: The Render component with the added color attachement.
+    func stencilAttachment(texture: MTLTextureContainer? = nil,
+                           loadAction: Binding<MTLLoadAction>? = nil,
+                           storeAction: Binding<MTLStoreAction>? = nil,
+                           clearStencil: Binding<UInt32>? = nil) -> Render{
+        var r = self
+        let stencilAttachment = StencilAttachment(texture: texture,
+                                                  loadAction: loadAction,
+                                                  storeAction: storeAction,
+                                                  clearStencil: clearStencil)
+        r.passStencilAttachment = stencilAttachment
+        return r
+    }
+    /// Adds a color attachment to the Render component.
     /// - Parameters:
     ///   - index: Index of the color attachment. 0 if unspecified.
     ///   - texture: Texture to use in the attachement.
