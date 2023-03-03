@@ -109,11 +109,9 @@ final class RenderPass: MetalPass{
         renderPassEncoder.setViewport(viewport)
         
         //set depth and stencil state
-        //if let depthStencilState = depthStencilState {
-        
-        //should set to nil if it's nil
-        renderPassEncoder.setDepthStencilState(depthStencilState)
-        //}
+        if let depthStencilState = depthStencilState {
+            renderPassEncoder.setDepthStencilState(depthStencilState)
+        }
         
         //set stencil reference value
         if let stencilReferenceValue = component.stencilReferenceValue{
