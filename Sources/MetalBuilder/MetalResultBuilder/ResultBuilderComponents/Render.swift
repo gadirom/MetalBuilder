@@ -5,7 +5,7 @@ enum MetalDSPRenderSetupError: Error{
     //case noGridFit(String)
 }
 /// color attachment with bindings
-struct ColorAttachment{
+public struct ColorAttachment{
     var texture: MTLTextureContainer?
     var loadAction: Binding<MTLLoadAction>?
     var storeAction: Binding<MTLStoreAction>?
@@ -40,7 +40,7 @@ var defaultColorAttachments =
                         set: { _ in } )
                        )]
 /// stencil attachment
-struct StencilAttachment{
+public struct StencilAttachment{
     var texture: MTLTextureContainer?
     var loadAction: Binding<MTLLoadAction>?
     var storeAction: Binding<MTLStoreAction>?
