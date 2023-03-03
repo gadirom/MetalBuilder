@@ -44,6 +44,10 @@ final class RenderPass: MetalPass{
         if let stencilPixelFormat = renderInfo.stencilPixelFormat{
             renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
         }
+        //Override global stencil pixel format with the one from stencil attachment texture
+        if let stencilPixelFormat = component.passStencilAttachment?.texture?.texture?.pixelFormat{
+            renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
+        }
         
         //Pipeline Color Attachment
         if let pipelineColorAttachment = component.pipelineColorAttachment{
@@ -109,7 +113,7 @@ final class RenderPass: MetalPass{
             renderPassEncoder.setDepthStencilState(depthStencilState)
         }
         
-        //set stencil
+        //set stencil reference value
         if let stencilReferenceValue = component.stencilReferenceValue{
             renderPassEncoder.setStencilReferenceValue(stencilReferenceValue)
         }

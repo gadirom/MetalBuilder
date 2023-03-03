@@ -45,6 +45,7 @@ struct StencilAttachment{
     var loadAction: Binding<MTLLoadAction>?
     var storeAction: Binding<MTLStoreAction>?
     var clearStencil: Binding<UInt32>?
+    var onlyStencil: Bool = false
     
     var descriptor: MTLRenderPassStencilAttachmentDescriptor{
         let d = MTLRenderPassStencilAttachmentDescriptor()
