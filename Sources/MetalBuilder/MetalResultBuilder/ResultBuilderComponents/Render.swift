@@ -132,10 +132,6 @@ public struct Render: MetalBuilderComponent{
     var fragBytes: [BytesProtocol] = []
     var fragTextures: [Texture] = []
     
-    var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
-    
-    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
-    
     var vertexArguments: [MetalFunctionArgument] = []
     var fragmentArguments: [MetalFunctionArgument] = []
     
@@ -144,10 +140,10 @@ public struct Render: MetalBuilderComponent{
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
     
+    var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
+    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
     var depthStencilDescriptor: MTLDepthStencilDescriptor?
-    
     var passStencilAttachment: StencilAttachment?
-    
     var stencilReferenceValue: UInt32?
     
     var uniforms: [UniformsContainer] = []
