@@ -35,7 +35,7 @@ final class RenderPass: MetalPass{
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         
         //depth and stencil routine
-        if let depthDescriptor = self.component.depthStencilDescriptor{
+        if let depthDescriptor = self.component.renderableData.depthStencilDescriptor{
             depthStencilState = renderInfo.device.makeDepthStencilState(descriptor: depthDescriptor)
         }
         if let depthPixelFormat = renderInfo.depthPixelFormat{
@@ -45,14 +45,14 @@ final class RenderPass: MetalPass{
             renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
         }
         //Override global stencil pixel format with the one from stencil attachment texture
-        if let pixelFormat = component.passStencilAttachment?.texture?.descriptor.pixelFormat{
+        if let pixelFormat = component.renderableData.passStencilAttachment?.texture?.descriptor.pixelFormat{
             if case let .fixed(stencilPixelFormat) = pixelFormat{
                 renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
             }
         }
         
         //Pipeline Color Attachment
-        if let pipelineColorAttachment = component.pipelineColorAttachment{
+        if let pipelineColorAttachment = component.renderableData.pipelineColorAttachment{
             renderPipelineDescriptor.colorAttachments[0] = pipelineColorAttachment
         }
         if renderPipelineDescriptor.colorAttachments[0].pixelFormat.rawValue == 0{
@@ -81,8 +81,8 @@ final class RenderPass: MetalPass{
         //Configuring Render Pass Descriptor
         
         //color attachments
-        for key in component.passColorAttachments.keys{
-            if let a = component.passColorAttachments[key]?.descriptor{
+        for key in component.renderableData.passColorAttachments.keys{
+            if let a = component.renderableData.passColorAttachments[key]?.descriptor{
                 if a.texture == nil{
                     a.texture = passInfo.drawable?.texture
                 }
@@ -91,7 +91,7 @@ final class RenderPass: MetalPass{
         }
         
         //stencil attachment
-        if let passStencilAttachment = component.passStencilAttachment{
+        if let passStencilAttachment = component.renderableData.passStencilAttachment{
             renderPassDescriptor.stencilAttachment = passStencilAttachment.descriptor
         }else{
             renderPassDescriptor.stencilAttachment = defaultStencilDescriptor
@@ -120,7 +120,7 @@ final class RenderPass: MetalPass{
         }
         
         //set stencil reference value
-        if let stencilReferenceValue = component.stencilReferenceValue{
+        if let stencilReferenceValue = component.renderableData.stencilReferenceValue{
             renderPassEncoder.setStencilReferenceValue(stencilReferenceValue)
         }
         

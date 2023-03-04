@@ -4,64 +4,6 @@ import SwiftUI
 enum MetalDSPRenderSetupError: Error{
     //case noGridFit(String)
 }
-/// color attachment with bindings
-public struct ColorAttachment{
-    var texture: MTLTextureContainer?
-    var loadAction: Binding<MTLLoadAction>?
-    var storeAction: Binding<MTLStoreAction>?
-    var clearColor: Binding<MTLClearColor>?
-    
-    var descriptor: MTLRenderPassColorAttachmentDescriptor{
-        let d = MTLRenderPassColorAttachmentDescriptor()
-        d.texture = texture?.texture
-        if let loadAction = loadAction?.wrappedValue{
-            d.loadAction = loadAction
-        }
-        if let storeAction = storeAction?.wrappedValue{
-            d.storeAction = storeAction
-        }
-        if let clearColor = clearColor?.wrappedValue{
-            d.clearColor = clearColor
-        }
-        return d
-    }
-}
-/// default color attachments
-public var defaultColorAttachments =
-    [0: ColorAttachment(texture: nil,
-                       loadAction: Binding<MTLLoadAction>(
-                        get: { .clear },
-                        set: { _ in }),
-                       storeAction: Binding<MTLStoreAction>(
-                        get: { .store },
-                        set: { _ in }),
-                       clearColor: Binding<MTLClearColor>(
-                        get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
-                        set: { _ in } )
-                       )]
-/// stencil attachment
-public struct StencilAttachment{
-    var texture: MTLTextureContainer?
-    var loadAction: Binding<MTLLoadAction>?
-    var storeAction: Binding<MTLStoreAction>?
-    var clearStencil: Binding<UInt32>?
-    var onlyStencil: Bool = false
-    
-    var descriptor: MTLRenderPassStencilAttachmentDescriptor{
-        let d = MTLRenderPassStencilAttachmentDescriptor()
-        d.texture = texture?.texture
-        if let loadAction = loadAction?.wrappedValue{
-            d.loadAction = loadAction
-        }
-        if let storeAction = storeAction?.wrappedValue{
-            d.storeAction = storeAction
-        }
-        if let clearStencil = clearStencil?.wrappedValue{
-            d.clearStencil = clearStencil
-        }
-        return d
-    }
-}
 
 /// The component for rendering primitives.
 ///
@@ -140,11 +82,7 @@ public struct Render: MetalBuilderComponent{
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
     
-    var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
-    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
-    var depthStencilDescriptor: MTLDepthStencilDescriptor?
-    var passStencilAttachment: StencilAttachment?
-    var stencilReferenceValue: UInt32?
+    var renderableData = RenderableData()
     
     var uniforms: [UniformsContainer] = []
     
@@ -504,13 +442,13 @@ public extension Render{
         var r = self
         if let container = container {
             var a: ColorAttachment
-            if let aExistent = passColorAttachments[index]{
+            if let aExistent = renderableData.passColorAttachments[index]{
                 a = aExistent
             }else{
                 a = ColorAttachment()
             }
             a.texture = container
-            r.passColorAttachments[index] = a
+            r.renderableData.passColorAttachments[index] = a
         }
         return r
     }
@@ -561,9 +499,9 @@ public extension Render{
     func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor?, stencilReferenceValue: UInt32?=nil) -> Render{
         var r = self
         if let descriptor = descriptor{
-            r.depthStencilDescriptor = descriptor
+            r.renderableData.depthStencilDescriptor = descriptor
         }
-        r.stencilReferenceValue = stencilReferenceValue
+        r.renderableData.stencilReferenceValue = stencilReferenceValue
         return r
     }
     /// Adds a stencil attachment to the Render component.
@@ -571,7 +509,7 @@ public extension Render{
     /// - Returns: The Render component with the added color attachement.
     func stencilAttachment(_ attachement: StencilAttachment?) -> Render{
         var r = self
-        r.passStencilAttachment = attachement
+        r.renderableData.passStencilAttachment = attachement
         return r
     }
     /// Adds a stencil attachment to the Render component.
@@ -590,7 +528,7 @@ public extension Render{
                                                   loadAction: loadAction,
                                                   storeAction: storeAction,
                                                   clearStencil: clearStencil)
-        r.passStencilAttachment = stencilAttachment
+        r.renderableData.passStencilAttachment = stencilAttachment
         return r
     }
     /// Adds a stencil attachment to the Render component.
@@ -639,7 +577,7 @@ public extension Render{
                                                loadAction: loadAction,
                                                storeAction: storeAction,
                                                clearColor: mtlClearColor)
-        r.passColorAttachments[index] = colorAttachement
+        r.renderableData.passColorAttachments[index] = colorAttachement
         return r
     }
     /// Adds the color attachment to a Render component.
@@ -708,7 +646,7 @@ public extension Render{
     /// - Returns:  The Render component with the added color attachements.
     func colorAttachements(_ attachments: [Int: ColorAttachment]) -> Render{
         var r = self
-        r.passColorAttachments = attachments
+        r.renderableData.passColorAttachments = attachments
         return r
     }
     /// Adds the render pipeline color attachment to a Render component.
@@ -716,7 +654,7 @@ public extension Render{
     /// - Returns: The Render component with the added render pipeline color attachment.
     func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor?) -> Render{
         var r = self
-        r.pipelineColorAttachment = descriptor
+        r.renderableData.pipelineColorAttachment = descriptor
         return r
     }
 }
