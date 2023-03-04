@@ -9,6 +9,24 @@ public struct RenderableData{
     var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
 }
 
+extension RenderableData{
+    mutating func apply(_ data: RenderableData){
+        self.passColorAttachments = data.passColorAttachments
+        if let depthStencilDescriptor = data.depthStencilDescriptor{
+            self.depthStencilDescriptor = depthStencilDescriptor
+        }
+        if let passStencilAttachment = data.passStencilAttachment{
+            self.passStencilAttachment = passStencilAttachment
+        }
+        if let stencilReferenceValue = data.stencilReferenceValue{
+            self.stencilReferenceValue = stencilReferenceValue
+        }
+        if let pipelineColorAttachment = data.pipelineColorAttachment{
+            self.pipelineColorAttachment = pipelineColorAttachment
+        }
+    }
+}
+
 /// color attachment with bindings
 public struct ColorAttachment{
     var texture: MTLTextureContainer?

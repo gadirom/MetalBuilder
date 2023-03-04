@@ -1,13 +1,18 @@
 import MetalKit
 import SwiftUI
 
-public protocol RenderableBuildingBlock: MetalBuildingBlock{
+public protocol Renderable{
     var renderableData: RenderableData { get set }
 }
 
-public extension RenderableBuildingBlock{
-    func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Self{
-        var r = self
+public extension Renderable{
+    func renderData<T: Renderable>(_ data: RenderableData)->T{
+        var r = self as! T
+        r.renderableData.apply(data)
+        return r
+    }
+    func toTexture<T: Renderable>(_ container: MTLTextureContainer?, index: Int = 0)->T{
+        var r = self as! T
         if let container = container {
             var a: ColorAttachment
             if let aExistent = renderableData.passColorAttachments[index]{

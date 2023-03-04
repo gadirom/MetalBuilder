@@ -424,13 +424,9 @@ public extension Render{
         return self.fragTexture(tex, argument: argument)
     }
 }
-// Misc modifiers for Render
+
+// RenderableData modifiers for Render
 public extension Render{
-    func viewport(_ viewport: Binding<MTLViewport>)->Render{
-        var r = self
-        r.viewport = viewport
-        return r
-    }
     /// Adds destination texture for the render pass.
     /// - Parameters:
     ///   - container: the destination texture
@@ -451,44 +447,6 @@ public extension Render{
             r.renderableData.passColorAttachments[index] = a
         }
         return r
-    }
-    /// The modifier for passing the source code of vertex and fragment shaders to a Render component
-    /// - Parameter source: The String containing the code
-    ///
-    /// The source code should obey the following structure:
-    /// - 1. declaration of the vertex shader's output C-structure
-    /// - 2. vertex shader implementation
-    /// - 3. fragment shader implementation
-    /// The first two or the last one should be ommited in case you are planning
-    /// to pass the respective code using `.vertexShader`  or`.fragmentShader` modifiers.
-    func source(_ source: String)->Render{
-        var r = self
-        r.librarySource = source + r.librarySource
-        r.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
-        return r
-    }
-    func vertexShader(_ shader: VertexShader)->Render{
-        var r = self
-        //func
-        r.vertexFunc = shader.vertexFunc
-        //vertexOut
-        r.vertexOut = shader.vertexOut
-        //source
-        r.librarySource = shader.librarySource + librarySource
-        //arguments
-        return r.addShaderArguments(shader)
-    }
-    /// Adds the fragment shader to a Rnder component.
-    /// - Parameter shader: Fragment shader that you want to use with Render.
-    /// - Returns: The Render component with the added fragment shader.
-    func fragmentShader(_ shader: FragmentShader)->Render{
-        var r = self
-        //func
-        r.fragmentFunc = shader.fragmentFunc
-        //source
-        r.librarySource += shader.librarySource(vertexOut: vertexOut)
-        //arguments
-        return r.addShaderArguments(shader)
     }
     /// Adds the `MTLDepthStencilDescriptor` to a Render component.
     /// - Parameters:
@@ -656,6 +614,56 @@ public extension Render{
         var r = self
         r.renderableData.pipelineColorAttachment = descriptor
         return r
+    }
+}
+
+// Misc modifiers for Render
+public extension Render{
+    func viewport(_ viewport: Binding<MTLViewport>)->Render{
+        var r = self
+        r.viewport = viewport
+        return r
+    }
+    /// The modifier for passing the source code of vertex and fragment shaders to a Render component
+    /// - Parameter source: The String containing the code
+    ///
+    /// The source code should obey the following structure:
+    /// - 1. declaration of the vertex shader's output C-structure
+    /// - 2. vertex shader implementation
+    /// - 3. fragment shader implementation
+    /// The first two or the last one should be ommited in case you are planning
+    /// to pass the respective code using `.vertexShader`  or`.fragmentShader` modifiers.
+    func source(_ source: String)->Render{
+        var r = self
+        r.librarySource = source + r.librarySource
+        r.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
+        return r
+    }
+}
+// Shader modifiers for Render
+public extension Render{
+    func vertexShader(_ shader: VertexShader)->Render{
+        var r = self
+        //func
+        r.vertexFunc = shader.vertexFunc
+        //vertexOut
+        r.vertexOut = shader.vertexOut
+        //source
+        r.librarySource = shader.librarySource + librarySource
+        //arguments
+        return r.addShaderArguments(shader)
+    }
+    /// Adds the fragment shader to a Rnder component.
+    /// - Parameter shader: Fragment shader that you want to use with Render.
+    /// - Returns: The Render component with the added fragment shader.
+    func fragmentShader(_ shader: FragmentShader)->Render{
+        var r = self
+        //func
+        r.fragmentFunc = shader.fragmentFunc
+        //source
+        r.librarySource += shader.librarySource(vertexOut: vertexOut)
+        //arguments
+        return r.addShaderArguments(shader)
     }
 }
 
