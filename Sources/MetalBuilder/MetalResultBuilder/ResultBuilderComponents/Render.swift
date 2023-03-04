@@ -87,7 +87,7 @@ public struct Render: MetalBuilderComponent, Renderable{
     var uniforms: [UniformsContainer] = []
     
     public init(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
-                offset: Int = 0, count: Int = 3, source: String=""){
+                offset: Int = 0, count: Int = 3, source: String="", renderableData: RenderableData = RenderableData()){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
         
@@ -96,6 +96,7 @@ public struct Render: MetalBuilderComponent, Renderable{
         self.type = type
         self.vertexOffset = offset
         self.vertexCount = count
+        self.renderableData = renderableData
     }
     
     public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
