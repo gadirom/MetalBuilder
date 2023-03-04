@@ -2,14 +2,26 @@ import MetalKit
 import SwiftUI
 
 public struct RenderableData{
-    var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
+    public init(passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
+                  depthStencilDescriptor: MTLDepthStencilDescriptor? = nil,
+                  passStencilAttachment: StencilAttachment? = nil,
+                  stencilReferenceValue: UInt32? = nil,
+                  pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil) {
+        self.passColorAttachments = passColorAttachments
+        self.depthStencilDescriptor = depthStencilDescriptor
+        self.passStencilAttachment = passStencilAttachment
+        self.stencilReferenceValue = stencilReferenceValue
+        self.pipelineColorAttachment = pipelineColorAttachment
+    }
+    
+    var passColorAttachments: [Int: ColorAttachment]
     var depthStencilDescriptor: MTLDepthStencilDescriptor?
     var passStencilAttachment: StencilAttachment?
     var stencilReferenceValue: UInt32?
     var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
 }
 
-extension RenderableData{
+public extension RenderableData{
     mutating func apply(_ data: RenderableData){
         self.passColorAttachments = data.passColorAttachments
         if let depthStencilDescriptor = data.depthStencilDescriptor{
