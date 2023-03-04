@@ -3,10 +3,10 @@ import SwiftUI
 
 public struct RenderableData{
     public init(passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
-                  depthStencilDescriptor: MTLDepthStencilDescriptor? = nil,
-                  passStencilAttachment: StencilAttachment? = nil,
-                  stencilReferenceValue: UInt32? = nil,
-                  pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil) {
+                depthStencilDescriptor: MTLDepthStencilDescriptor? = nil,
+                passStencilAttachment: StencilAttachment? = nil,
+                stencilReferenceValue: UInt32? = nil,
+                pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil) {
         self.passColorAttachments = passColorAttachments
         self.depthStencilDescriptor = depthStencilDescriptor
         self.passStencilAttachment = passStencilAttachment
