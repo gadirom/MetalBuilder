@@ -46,7 +46,7 @@ enum MetalDSPRenderSetupError: Error{
 ///                                          //through the Render component
 ///     }
 /// ```
-public struct Render: MetalBuilderComponent{
+public struct Render: MetalBuilderComponent, Renderable{
     
     var vertexFunc: String
     var fragmentFunc: String
@@ -82,7 +82,7 @@ public struct Render: MetalBuilderComponent{
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
     
-    var renderableData = RenderableData()
+    public var renderableData = RenderableData()
     
     var uniforms: [UniformsContainer] = []
     
@@ -426,6 +426,7 @@ public extension Render{
 }
 
 // RenderableData modifiers for Render
+/*
 public extension Render{
     /// Adds destination texture for the render pass.
     /// - Parameters:
@@ -616,7 +617,7 @@ public extension Render{
         return r
     }
 }
-
+*/
 // Misc modifiers for Render
 public extension Render{
     func viewport(_ viewport: Binding<MTLViewport>)->Render{

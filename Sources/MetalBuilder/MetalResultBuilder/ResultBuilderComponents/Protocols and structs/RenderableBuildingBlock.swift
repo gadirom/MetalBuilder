@@ -5,14 +5,14 @@ public protocol Renderable{
     var renderableData: RenderableData { get set }
 }
 
-public extension Renderable{
-    func renderData<T: Renderable>(_ data: RenderableData)->T{
-        var r = self as! T
+public extension MetalBuilderComponent where Self: Renderable{
+    func renderData(_ data: RenderableData)->Self{
+        var r = self
         r.renderableData.apply(data)
         return r
     }
-    func toTexture<T: Renderable>(_ container: MTLTextureContainer?, index: Int = 0)->T{
-        var r = self as! T
+    func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Self{
+        var r = self
         if let container = container {
             var a: ColorAttachment
             if let aExistent = renderableData.passColorAttachments[index]{
