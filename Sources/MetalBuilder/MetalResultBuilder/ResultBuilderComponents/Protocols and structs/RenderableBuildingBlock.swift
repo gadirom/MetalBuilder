@@ -6,11 +6,11 @@ public protocol Renderable{
 }
 
 public extension MetalBuilderComponent where Self: Renderable{
-    func renderData(_ data: RenderableData)->Self{
-        var r = self
-        r.renderableData.apply(data)
-        return r
-    }
+//    func renderData(_ data: RenderableData)->Self{
+//        var r = self
+//        r.renderableData.apply(data)
+//        return r
+//    }
     func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Self{
         var r = self
         if let container = container {
