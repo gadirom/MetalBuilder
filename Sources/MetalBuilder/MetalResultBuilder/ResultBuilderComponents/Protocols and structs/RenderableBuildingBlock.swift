@@ -2,34 +2,33 @@ import MetalKit
 import SwiftUI
 
 public protocol RenderableBuildingBlock: MetalBuildingBlock{
-    var toTextureContainer: MTLTextureContainer? { set get }
-    
-    var passColorAttachments: [Int: ColorAttachment] { set get }
-    
-    var depthStencilDescriptor: MTLDepthStencilDescriptor?  { set get }
-    
-    var passStencilAttachment: StencilAttachment?  { set get }
-    
-    var stencilReferenceValue: UInt32?  { set get }
-    
-    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?  { set get }
+    var renderableData: RenderableData { get set }
 }
 
 public extension RenderableBuildingBlock{
-    func toTexture(_ container: MTLTextureContainer?)->Self{
+    func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Self{
         var r = self
-        r.toTextureContainer = container
+        if let container = container {
+            var a: ColorAttachment
+            if let aExistent = renderableData.passColorAttachments[index]{
+                a = aExistent
+            }else{
+                a = ColorAttachment()
+            }
+            a.texture = container
+            r.renderableData.passColorAttachments[index] = a
+        }
         return r
     }
     func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor, stencilReferenceValue: UInt32?=nil) -> Self{
         var r = self
-        r.depthStencilDescriptor = descriptor
-        r.stencilReferenceValue = stencilReferenceValue
+        r.renderableData.depthStencilDescriptor = descriptor
+        r.renderableData.stencilReferenceValue = stencilReferenceValue
         return r
     }
     func stencilAttachment(_ attachement: StencilAttachment?) -> Self{
         var r = self
-        r.passStencilAttachment = attachement
+        r.renderableData.passStencilAttachment = attachement
         return r
     }
     func stencilAttachment(texture: MTLTextureContainer? = nil,
@@ -41,7 +40,7 @@ public extension RenderableBuildingBlock{
                                                   loadAction: loadAction,
                                                   storeAction: storeAction,
                                                   clearStencil: clearStencil)
-        r.passStencilAttachment = stencilAttachment
+        r.renderableData.passStencilAttachment = stencilAttachment
         return r
     }
     func stencilAttachment(_ index: Int = 0,
@@ -68,7 +67,7 @@ public extension RenderableBuildingBlock{
     }
     func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor?) -> Self{
         var r = self
-        r.pipelineColorAttachment = descriptor
+        r.renderableData.pipelineColorAttachment = descriptor
         return r
     }
     
@@ -82,7 +81,7 @@ public extension RenderableBuildingBlock{
                                                loadAction: loadAction,
                                                storeAction: storeAction,
                                                clearColor: mtlClearColor)
-        r.passColorAttachments[index] = colorAttachement
+        r.renderableData.passColorAttachments[index] = colorAttachement
         return r
     }
     func colorAttachement(_ index: Int = 0,
@@ -132,7 +131,7 @@ public extension RenderableBuildingBlock{
     }
     func colorAttachements(_ attachments: [Int: ColorAttachment]) -> Self{
         var r = self
-        r.passColorAttachments = attachments
+        r.renderableData.passColorAttachments = attachments
         return r
     }
 }
