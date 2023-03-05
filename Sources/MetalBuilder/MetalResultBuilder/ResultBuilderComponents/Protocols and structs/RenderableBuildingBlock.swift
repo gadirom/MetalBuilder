@@ -136,12 +136,22 @@ public extension MetalBuilderComponent where Self: Renderable{
     ///   - storeAction: Binding to a store action value.
     ///   - clearColor: Binding to a clear color value (MTLClearColor).
     /// - Returns: The Renderable component with the added color attachement.
+    ///
+    /// If the texture for the attachement is ommited then the drawable texure will be used,
+    /// unless the texture for this attachment is set with `toTexture` modifier.
     func colorAttachement(_ index: Int = 0,
                           texture: MTLTextureContainer? = nil,
                           loadAction: Binding<MTLLoadAction>? = nil,
                           storeAction: Binding<MTLStoreAction>? = nil,
                           mtlClearColor: Binding<MTLClearColor>? = nil) -> Self{
         var r = self
+        //If texture for this attachment is already set (e.g. in toTexture modifier), then ignore nil
+        var texture = texture
+        if texture == nil{
+            if let existingTexture = r.renderableData.passColorAttachments[index]?.texture{
+                texture = existingTexture
+            }
+        }
         let colorAttachement = ColorAttachment(texture: texture,
                                                loadAction: loadAction,
                                                storeAction: storeAction,
