@@ -14,11 +14,11 @@ public struct RenderableData{
         self.pipelineColorAttachment = pipelineColorAttachment
     }
     
-    var passColorAttachments: [Int: ColorAttachment]
-    var depthStencilDescriptor: MTLDepthStencilDescriptor?
-    var passStencilAttachment: StencilAttachment?
-    var stencilReferenceValue: UInt32?
-    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
+    public var passColorAttachments: [Int: ColorAttachment]
+    public var depthStencilDescriptor: MTLDepthStencilDescriptor?
+    public var passStencilAttachment: StencilAttachment?
+    public var stencilReferenceValue: UInt32?
+    public var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
 }
 
 public extension RenderableData{
