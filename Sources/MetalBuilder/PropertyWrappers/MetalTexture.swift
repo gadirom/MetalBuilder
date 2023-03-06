@@ -20,7 +20,7 @@ case textureNotCreated, noDescriptor, descriptorSizeContainsZero
 }
 
 public final class MTLTextureContainer{
-    var descriptor: TextureDescriptor
+    public var descriptor: TextureDescriptor
     weak var device: MTLDevice?
     public var texture: MTLTexture?
     
@@ -93,21 +93,21 @@ public extension MTLTextureContainer{
     }
 }
 
-enum TextureSize{
+public enum TextureSize{
 case fixed(CGSize), fromViewport(Double)
 }
 
-enum TexturePixelFormat{
+public enum TexturePixelFormat{
 case fixed(MTLPixelFormat), fromDrawable
 }
 
 public struct TextureDescriptor{
-    var size: TextureSize? = nil
-    var pixelFormat: TexturePixelFormat? = nil
+    public var size: TextureSize? = nil
+    public var pixelFormat: TexturePixelFormat? = nil
     
-    var type: MTLTextureType = .type2D
-    var arrayLength: Int = 1
-    var usage: MTLTextureUsage = [.shaderRead, .shaderWrite, .renderTarget]
+    public var type: MTLTextureType = .type2D
+    public var arrayLength: Int = 1
+    public var usage: MTLTextureUsage = [.shaderRead, .shaderWrite, .renderTarget]
     
     
     public init() {}
