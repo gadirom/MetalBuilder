@@ -41,10 +41,10 @@ public extension RenderableData{
 
 /// color attachment with bindings
 public struct ColorAttachment{
-    var texture: MTLTextureContainer?
-    var loadAction: Binding<MTLLoadAction>?
-    var storeAction: Binding<MTLStoreAction>?
-    var clearColor: Binding<MTLClearColor>?
+    public var texture: MTLTextureContainer?
+    public var loadAction: Binding<MTLLoadAction>?
+    public var storeAction: Binding<MTLStoreAction>?
+    public var clearColor: Binding<MTLClearColor>?
     
     var descriptor: MTLRenderPassColorAttachmentDescriptor{
         let d = MTLRenderPassColorAttachmentDescriptor()
