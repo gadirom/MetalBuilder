@@ -28,7 +28,10 @@ public final class MTLTextureContainer{
         self.descriptor = descriptor
     }
     
-    public func create(device: MTLDevice, drawable: CAMetalDrawable) throws{
+    public func create(device: MTLDevice, drawable: CAMetalDrawable, newDescriptor: TextureDescriptor?=nil) throws{
+        if let desc = newDescriptor{
+            self.descriptor = desc
+        }
         try create(device: device,
                viewportSize: simd_uint2(x: UInt32(drawable.texture.width),
                                         y: UInt32(drawable.texture.height)),
