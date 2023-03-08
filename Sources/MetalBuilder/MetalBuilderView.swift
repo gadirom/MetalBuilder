@@ -63,7 +63,8 @@ public struct MetalBuilderView: UIViewRepresentable {
         mtkView.backgroundColor = .clear
         
         let renderInfo = GlobalRenderInfo(device: mtkView.device!,
-                                          depthStencilPixelFormat: viewSettings.depthStencilPixelFormat,
+                                          depthPixelFormat: viewSettings.depthPixelFormat,
+                                          stencilPixelFormat: viewSettings.stencilPixelFormat,
                                           pixelFormat: mtkView.colorPixelFormat)
         
         context.coordinator.setupRenderer(librarySource: librarySource,
@@ -127,34 +128,11 @@ public struct MetalBuilderView: UIViewRepresentable {
         }
         
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-            applyViewSettings(view)
+            viewSettings.apply(toView: view)
             renderer?.setSize(size: size)
             renderer?.setScaleFactor(view.contentScaleFactor)
             onResizeCode?(size)
             wasInitialized = true
-        }
-        
-        func applyViewSettings(_ view: MTKView){
-            
-            if let preferredFramesPerSecond = viewSettings.preferredFramesPerSecond{
-                view.preferredFramesPerSecond = preferredFramesPerSecond
-            }
-            
-            if let framebufferOnly = viewSettings.framebufferOnly{
-                view.framebufferOnly = framebufferOnly
-            }
-           
-            if let clearColor = viewSettings.clearColor{
-                view.clearColor = clearColor
-            }
-            
-            //Depth routine
-            if let clearDepth = viewSettings.clearDepth{
-                view.clearDepth = clearDepth
-            }
-            if let depthStencilPixelFormat = viewSettings.depthStencilPixelFormat{
-                view.depthStencilPixelFormat = depthStencilPixelFormat
-            }
         }
     
         public func draw(in view: MTKView) {

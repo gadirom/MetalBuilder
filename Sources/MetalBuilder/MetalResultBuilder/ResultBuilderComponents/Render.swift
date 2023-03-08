@@ -4,41 +4,6 @@ import SwiftUI
 enum MetalDSPRenderSetupError: Error{
     //case noGridFit(String)
 }
-/// color attachment with bindings
-struct ColorAttachment{
-    var texture: MTLTextureContainer?
-    var loadAction: Binding<MTLLoadAction>?
-    var storeAction: Binding<MTLStoreAction>?
-    var clearColor: Binding<MTLClearColor>?
-    
-    var descriptor: MTLRenderPassColorAttachmentDescriptor{
-        let d = MTLRenderPassColorAttachmentDescriptor()
-        d.texture = texture?.texture
-        if let loadAction = loadAction?.wrappedValue{
-            d.loadAction = loadAction
-        }
-        if let storeAction = storeAction?.wrappedValue{
-            d.storeAction = storeAction
-        }
-        if let clearColor = clearColor?.wrappedValue{
-            d.clearColor = clearColor
-        }
-        return d
-    }
-}
-/// default color attachments
-var defaultColorAttachments =
-    [0: ColorAttachment(texture: nil,
-                       loadAction: Binding<MTLLoadAction>(
-                        get: { .clear },
-                        set: { _ in }),
-                       storeAction: Binding<MTLStoreAction>(
-                        get: { .store },
-                        set: { _ in }),
-                       clearColor: Binding<MTLClearColor>(
-                        get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
-                        set: { _ in } )
-                       )]
 
 /// The component for rendering primitives.
 ///
@@ -81,7 +46,7 @@ var defaultColorAttachments =
 ///                                          //through the Render component
 ///     }
 /// ```
-public struct Render: MetalBuilderComponent{
+public struct Render: MetalBuilderComponent, Renderable{
     
     var vertexFunc: String
     var fragmentFunc: String
@@ -109,10 +74,6 @@ public struct Render: MetalBuilderComponent{
     var fragBytes: [BytesProtocol] = []
     var fragTextures: [Texture] = []
     
-    var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
-    
-    var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
-    
     var vertexArguments: [MetalFunctionArgument] = []
     var fragmentArguments: [MetalFunctionArgument] = []
     
@@ -121,12 +82,13 @@ public struct Render: MetalBuilderComponent{
     var vertexTextureIndexCounter = 0
     var fragmentTextureIndexCounter = 0
     
-    var depthDescriptor: MTLDepthStencilDescriptor?
+    public var renderableData = RenderableData()
     
     var uniforms: [UniformsContainer] = []
     
     public init(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
-                offset: Int = 0, count: Int = 3, source: String=""){
+                offset: Int = 0, count: Int = 3, source: String="",
+                renderableData: RenderableData = RenderableData()){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
         
@@ -135,11 +97,13 @@ public struct Render: MetalBuilderComponent{
         self.type = type
         self.vertexOffset = offset
         self.vertexCount = count
+        self.renderableData = renderableData
     }
     
     public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
-                indexBuffer: MTLBufferContainer<T>,
-                   indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String=""){
+                   indexBuffer: MTLBufferContainer<T>,
+                   indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String="",
+                   renderableData: RenderableData = RenderableData()){
         self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)
         
         self.vertexFunc = vertex
@@ -152,6 +116,7 @@ public struct Render: MetalBuilderComponent{
         self.indexCount = indexCount
         self.indexBufferOffset = indexOffset
         self.indexedPrimitives = true
+        self.renderableData = renderableData
     }
     
     mutating func setup() throws{
@@ -463,32 +428,12 @@ public extension Render{
         return self.fragTexture(tex, argument: argument)
     }
 }
+
 // Misc modifiers for Render
 public extension Render{
     func viewport(_ viewport: Binding<MTLViewport>)->Render{
         var r = self
         r.viewport = viewport
-        return r
-    }
-    /// Adds destination texture for the render pass.
-    /// - Parameters:
-    ///   - container: the destination texture
-    ///   - index: attachement index for the texture
-    ///
-    /// if `nill` is passed and there are no other modifier with no-nil container,
-    /// the drawable texture will be set as output.
-    func toTexture(_ container: MTLTextureContainer?, index: Int = 0)->Render{
-        var r = self
-        if let container = container {
-            var a: ColorAttachment
-            if let aExistent = passColorAttachments[index]{
-                a = aExistent
-            }else{
-                a = ColorAttachment()
-            }
-            a.texture = container
-            r.passColorAttachments[index] = a
-        }
         return r
     }
     /// The modifier for passing the source code of vertex and fragment shaders to a Render component
@@ -506,6 +451,9 @@ public extension Render{
         r.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
         return r
     }
+}
+// Shader modifiers for Render
+public extension Render{
     func vertexShader(_ shader: VertexShader)->Render{
         var r = self
         //func
@@ -528,97 +476,6 @@ public extension Render{
         r.librarySource += shader.librarySource(vertexOut: vertexOut)
         //arguments
         return r.addShaderArguments(shader)
-    }
-    /// Adds the `MTLDepthStencilDescriptor` to a Render component.
-    /// - Parameter descriptor: The depth and stencil descriptor to use in the rendering pass
-    /// that you create and configure by a Render component.
-    /// - Returns: The Render component with the applied descriptor.
-    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor) -> Render{
-        var r = self
-        r.depthDescriptor = descriptor
-        return r
-    }
-    /// Adds the color attachment to a Render component.
-    /// - Parameters:
-    ///   - index: Index of the color attachment. 0 if unspecified.
-    ///   - texture: Texture to use in the attachement.
-    ///   - loadAction: Binding to a load action value.
-    ///   - storeAction: Binding to a store action value.
-    ///   - clearColor: Binding to a clear color value (MTLClearColor).
-    /// - Returns: The Render component with the added color attachement.
-    func colorAttachement(_ index: Int = 0,
-                          texture: MTLTextureContainer? = nil,
-                          loadAction: Binding<MTLLoadAction>? = nil,
-                          storeAction: Binding<MTLStoreAction>? = nil,
-                          mtlClearColor: Binding<MTLClearColor>? = nil) -> Render{
-        var r = self
-        let colorAttachement = ColorAttachment(texture: texture,
-                                               loadAction: loadAction,
-                                               storeAction: storeAction,
-                                               clearColor: mtlClearColor)
-        r.passColorAttachments[index] = colorAttachement
-        return r
-    }
-    /// Adds the color attachment to a Render component.
-    /// - Parameters:
-    ///   - index: Index of the color attachment. 0 if unspecified.
-    ///   - texture: Texture to use in the attachement.
-    ///   - loadAction: Binding to a load action value.
-    ///   - storeAction: Binding to a store action value.
-    ///   - clearColor: Binding to a clear color value (Color).
-    /// - Returns: The Render component with the added color attachement.
-    func colorAttachement(_ index: Int = 0,
-                          texture: MTLTextureContainer? = nil,
-                          loadAction: MTLLoadAction? = nil,
-                          storeAction: MTLStoreAction? = nil,
-                          mtlClearColor: MTLClearColor? = nil) -> Render{
-        var _loadAction: Binding<MTLLoadAction>? = nil
-        var _storeAction: Binding<MTLStoreAction>? = nil
-        var _clearColor: Binding<MTLClearColor>? = nil
-        if let loadAction = loadAction {
-            _loadAction = Binding<MTLLoadAction>.constant(loadAction)
-        }
-        if let storeAction = storeAction {
-            _storeAction = Binding<MTLStoreAction>.constant(storeAction)
-        }
-        if let clearColor = mtlClearColor {
-            _clearColor = Binding<MTLClearColor>.constant(clearColor)
-        }
-        return colorAttachement(index,
-                                texture: texture,
-                                loadAction: _loadAction,
-                                storeAction: _storeAction,
-                                mtlClearColor: _clearColor)
-    }
-    func colorAttachement(_ index: Int = 0,
-                          texture: MTLTextureContainer? = nil,
-                          loadAction: MTLLoadAction? = nil,
-                          storeAction: MTLStoreAction? = nil,
-                          clearColor: Color? = nil) -> Render{
-        var _clearColor: MTLClearColor? = nil
-        if let color = clearColor{
-            if let cgC = UIColor(color).cgColor.components{
-                _clearColor = MTLClearColor(red:   cgC[0],
-                                            green: cgC[1],
-                                            blue:  cgC[2],
-                                            alpha: cgC[3])
-            }else{
-                print("Could not get color components for color: ", color)
-            }
-        }
-        return colorAttachement(index,
-                                texture: texture,
-                                loadAction: loadAction,
-                                storeAction: storeAction,
-                                mtlClearColor: _clearColor)
-    }
-    /// Adds the render pipeline color attachment to a Render component.
-    /// - Parameter descriptor: The descriptor for the attachement to add.
-    /// - Returns: The Render component with the added render pipeline color attachment.
-    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor) -> Render{
-        var r = self
-        r.pipelineColorAttachment = descriptor
-        return r
     }
 }
 
