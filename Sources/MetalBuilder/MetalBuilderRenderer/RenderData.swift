@@ -212,7 +212,10 @@ struct RenderData{
                     context: context,
                     level: level+1
                 )
-                data.textures.append(contentsOf: groupData.textures)
+                
+                data.addTextures(newTexs: groupData.textures)
+                data.addBuffers(newBuffs: groupData.buffers)
+                
                 let groupPass = EncodeGroupPass(groupData.passes,
                                                 repeating: encodeGroupComponent.repeating,
                                                 active: encodeGroupComponent.active)
