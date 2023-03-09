@@ -389,11 +389,9 @@ struct RenderData{
         addTextures(newTexs: data.textures)
         addBuffers(newBuffs: data.buffers)
         
-        //librarySourceHashes.append(contentsOf: data.librarySourceHashes)
-        
         functionsAndArgumentsToAddToMetal
             .append(contentsOf: data.functionsAndArgumentsToAddToMetal)
-        
-        //libraryBindings.append(contentsOf: data.libraryBindings)
+    
+        setupFunctions.append(contentsOf: data.setupFunctions)
     }
 }
