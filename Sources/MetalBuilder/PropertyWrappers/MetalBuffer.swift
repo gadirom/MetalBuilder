@@ -103,7 +103,12 @@ public final class MTLBufferContainer<T>: BufferContainer{
     weak var device: MTLDevice?
     
     public override var count: Int?{
-        _count
+        get {
+            _count
+        }
+        set {
+            _count = newValue
+        }
     }
     
     private var _count: Int?
