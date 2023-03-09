@@ -1,7 +1,7 @@
 import MetalKit
 import SwiftUI
 
-public protocol BufferProtocol{
+protocol BufferProtocol{
     var mtlBuffer: MTLBuffer? { get }
     var offset: Int { get }
     var index: Int { get set }
@@ -12,6 +12,12 @@ public protocol BufferProtocol{
     var elementType: Any.Type { get }
     var swiftTypeToMetal: SwiftTypeToMetal? { get }
     func create(device: MTLDevice) throws
+    
+    var id: UnsafeMutableRawPointer { get }
+}
+
+func ===(lhr: BufferProtocol, rhr: BufferProtocol)->Bool{
+    lhr.id == rhr.id
 }
 
 struct Buffer<T>: BufferProtocol{
@@ -44,6 +50,9 @@ struct Buffer<T>: BufferProtocol{
         }else{
             return nil
         }
+    }
+    var id: UnsafeMutableRawPointer{
+          Unmanaged.passUnretained(container).toOpaque()
     }
 }
 struct Texture{

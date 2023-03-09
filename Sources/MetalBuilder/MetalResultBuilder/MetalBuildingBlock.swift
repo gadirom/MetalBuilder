@@ -11,5 +11,11 @@ public protocol MetalBuildingBlock: MetalBuilderComponent{
     var librarySource: String { get }
     var compileOptions: MetalBuilderCompileOptions? { get }
     @MetalResultBuilder var metalContent: MetalContent{ get }
+    func setup()
+}
+
+public extension MetalBuildingBlock{
+    func setup(){
+    }
 }
 

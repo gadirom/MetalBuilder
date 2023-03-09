@@ -15,19 +15,27 @@ struct RenderData{
     //Some of these textures needs to be recreated on resize
     //that's why I keep track on them
     var textures: [MTLTextureContainer] = []
+    
+    //Byffers a stored here and created after setupFunction of all the building blocks are done,
+    //since there some properties of containers might be changed in a setupFunction.
+    var buffers: [BufferProtocol] = []
+    
     var texturesCreated = false
     
     var functionsAndArgumentsToAddToMetal: [FunctionAndArguments] = []
-    
-//    var helpers = ""
 
     var renderInfo: GlobalRenderInfo!
     
     var context: MetalBuilderRenderingContext!
     
-    //hold hashes for librarySources of BuildingBlocks to eliminate dublicates
+    //functions that run before texture and buffer creation, but after compilation
+    //this is needed if you correct descriptors depending on renderableData
+    //that can be changed via chaining modifiers and is not available in initializers of Building Blocks
+    var setupFunctions: [()->()] = []
+    
+    //hold hashes for librarySources of BuildingBlocks and Render components to eliminate dublicates
     static var librarySourceHashes: [Int] = []
-    //hold hashes for helpers of BuildingBlocks to eliminate dublicates when sibrarySource is imbedded into the components that constitute the given BuildingBlock
+    //hold hashes for helpers of BuildingBlocks to eliminate dublicates when librarySource is embedded into the components that constitute the given BuildingBlock
     static var helpersHashes: [Int] = []
     
     init(){}
@@ -58,8 +66,9 @@ struct RenderData{
         Self.librarySourceHashes = []
         Self.helpersHashes = []
         
+        try createBuffers(device: renderInfo.device)
+        
         try data.setupPasses(renderInfo: renderInfo)
-        //try data.createTextures(context: context, device: device)
     }
     
     static func compile(device: MTLDevice,
@@ -103,7 +112,7 @@ struct RenderData{
             if let computeComponent = component as? Compute{
                 data.passes.append(ComputePass(computeComponent, libraryContainer: libraryContainer))
                 data.addTextures(newTexs: computeComponent.textures.map{ $0.container })
-                try data.createBuffers(buffers: computeComponent.buffers, device: device)
+                data.addBuffers(newBuffs: computeComponent.buffers)
                 data.createUniforms(computeComponent.uniforms, device: device)
                 
                 librarySource += computeComponent.librarySource
@@ -127,10 +136,12 @@ struct RenderData{
                 data.passes.append(RenderPass(renderComponent, libraryContainer: libraryContainer))
                 data.addTextures(newTexs: renderComponent.vertexTextures.map{ $0.container })
                 data.addTextures(newTexs: renderComponent.fragTextures.map{ $0.container })
+                
                 data.addTextures(newTexs: renderComponent.renderableData.passColorAttachments.values.map{ $0.texture })
                 data.addTextures(newTexs: [renderComponent.renderableData.passStencilAttachment?.texture])
-                try data.createBuffers(buffers: renderComponent.vertexBufs, device: device)
-                try data.createBuffers(buffers: renderComponent.fragBufs, device: device)
+                data.addBuffers(newBuffs: renderComponent.vertexBufs)
+                data.addBuffers(newBuffs: renderComponent.fragBufs)
+                
                 data.createUniforms(renderComponent.uniforms, device: device)
                 
                 let source = renderComponent.librarySource
@@ -179,9 +190,8 @@ struct RenderData{
             }
             //Blit Buffer
             if let blitBufferComponent = component as? BlitBuffer{
-                try data.createBuffers(buffers: [blitBufferComponent.inBuffer!,
-                                                blitBufferComponent.outBuffer!],
-                                       device: device)
+                data.addBuffers(newBuffs: [blitBufferComponent.inBuffer!,
+                                           blitBufferComponent.outBuffer!])
                 data.passes.append(BlitBufferPass(blitBufferComponent))
             }
             //Scale Texture
@@ -211,9 +221,10 @@ struct RenderData{
             }
             //Building Block
             if let buildingBlockComponent = component as? MetalBuildingBlock{
+                let blockData: RenderData
                 if let options = buildingBlockComponent.compileOptions{
                     //compile to it's own library
-                    let blockData = try compile(
+                    blockData = try compile(
                         device: device,
                         pixelFormat: pixelFormat,
                         content: buildingBlockComponent.metalContent,
@@ -222,7 +233,6 @@ struct RenderData{
                         options: options,
                         context: context
                     )
-                    data.append(blockData)
                 }else{
                     //compile to shared library
                     let source = buildingBlockComponent.librarySource
@@ -238,7 +248,7 @@ struct RenderData{
                         helpers += buildingBlockHelpers
                     }
                     
-                    let blockData = try compile(
+                    blockData = try compile(
                         device: device,
                         pixelFormat: pixelFormat,
                         content: buildingBlockComponent.metalContent,
@@ -249,8 +259,9 @@ struct RenderData{
                         context: context,
                         level: level+1
                     )
-                    data.append(blockData)
                 }
+                data.append(blockData)
+                data.setupFunctions.append(buildingBlockComponent.setup)
             }
         }
         
@@ -287,6 +298,17 @@ struct RenderData{
         textures.append(contentsOf: newTextures)
     }
     
+    //adds only unique buffers
+    mutating func addBuffers(newBuffs: [BufferProtocol?]){
+        let newBuffers = newBuffs.compactMap{ $0 }
+            .filter{ newBuffer in
+                !buffers.contains{ oldBuffer in
+                    newBuffer === oldBuffer
+                }
+            }
+        buffers.append(contentsOf: newBuffers)
+    }
+    
     func createUniforms(_ u: [UniformsContainer], device: MTLDevice){
         _ = u.map{ u in
             u.setup(device: device)
@@ -318,6 +340,12 @@ struct RenderData{
             }
         }
     }
+
+    func createBuffers(device: MTLDevice) throws{
+        for buf in buffers{
+            try buf.create(device: device)
+        }
+    }
     
     func updateTextures(device: MTLDevice) throws{
         for tex in textures{
@@ -340,15 +368,6 @@ struct RenderData{
         }
     }
     
-    //creates only new buffers
-    func createBuffers(buffers: [BufferProtocol], device: MTLDevice) throws{
-        for buf in buffers{
-            if buf.mtlBuffer == nil {
-                try buf.create(device: device)
-            }
-        }
-    }
-    
     static func addSwiftTypes(from buffers: [BufferProtocol], to swiftTypes: inout [SwiftTypeToMetal]){
         for buf in buffers {
             if let type = buf.swiftTypeToMetal{
@@ -359,7 +378,8 @@ struct RenderData{
     
     mutating func append(_ data: RenderData){
         passes.append(contentsOf: data.passes)
-        textures.append(contentsOf: data.textures)
+        addTextures(newTexs: data.textures)
+        addBuffers(newBuffs: data.buffers)
         
         //librarySourceHashes.append(contentsOf: data.librarySourceHashes)
         
