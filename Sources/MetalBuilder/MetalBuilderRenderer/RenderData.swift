@@ -66,6 +66,10 @@ struct RenderData{
         Self.librarySourceHashes = []
         Self.helpersHashes = []
         
+        for sf in setupFunctions {
+            sf()
+        }
+        
         try createBuffers(device: renderInfo.device)
         
         try data.setupPasses(renderInfo: renderInfo)
@@ -263,6 +267,7 @@ struct RenderData{
                         level: level+1
                     )
                 }
+                
                 data.append(blockData)
                 data.setupFunctions.append(buildingBlockComponent.setup)
             }
