@@ -19,7 +19,8 @@ final class RenderPass: MetalPass{
     
     var indexType: MTLIndexType = .uint16
     
-    var depthState: MTLDepthStencilState?
+    var depthStencilState: MTLDepthStencilState?
+    let defaultStencilDescriptor = MTLRenderPassStencilAttachmentDescriptor()
     
     init(_ component: Render, libraryContainer: LibraryContainer){
         self.component = component
@@ -33,15 +34,25 @@ final class RenderPass: MetalPass{
         
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         
-        //depth routine
-        if let depthDescriptor = self.component.depthDescriptor{
-            depthState = renderInfo.device.makeDepthStencilState(descriptor: depthDescriptor)
+        //depth and stencil routine
+        if let depthDescriptor = self.component.renderableData.depthStencilDescriptor{
+            depthStencilState = renderInfo.device.makeDepthStencilState(descriptor: depthDescriptor)
         }
-        if let depthStencilPixelFormat = renderInfo.depthStencilPixelFormat{
-            renderPipelineDescriptor.depthAttachmentPixelFormat = depthStencilPixelFormat
+        if let depthPixelFormat = renderInfo.depthPixelFormat{
+            renderPipelineDescriptor.depthAttachmentPixelFormat = depthPixelFormat
+        }
+        if let stencilPixelFormat = renderInfo.stencilPixelFormat{
+            renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
+        }
+        //Override global stencil pixel format with the one from stencil attachment texture
+        if let pixelFormat = component.renderableData.passStencilAttachment?.texture?.descriptor.pixelFormat{
+            if case let .fixed(stencilPixelFormat) = pixelFormat{
+                renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
+            }
         }
         
-        if let pipelineColorAttachment = component.pipelineColorAttachment{
+        //Pipeline Color Attachment
+        if let pipelineColorAttachment = component.renderableData.pipelineColorAttachment{
             renderPipelineDescriptor.colorAttachments[0] = pipelineColorAttachment
         }
         if renderPipelineDescriptor.colorAttachments[0].pixelFormat.rawValue == 0{
@@ -67,14 +78,27 @@ final class RenderPass: MetalPass{
         let commandBuffer = passInfo.getCommandBuffer()
         let renderPassDescriptor = passInfo.renderPassDescriptor
         
-        for key in component.passColorAttachments.keys{
-            if let a = component.passColorAttachments[key]?.descriptor{
+        //Configuring Render Pass Descriptor
+        
+        //color attachments
+        for key in component.renderableData.passColorAttachments.keys{
+            if let a = component.renderableData.passColorAttachments[key]?.descriptor{
                 if a.texture == nil{
                     a.texture = passInfo.drawable?.texture
                 }
                 renderPassDescriptor.colorAttachments[key] = a
             }
         }
+        
+        //stencil attachment
+        if let passStencilAttachment = component.renderableData.passStencilAttachment{
+            renderPassDescriptor.stencilAttachment = passStencilAttachment.descriptor
+        }else{
+            renderPassDescriptor.stencilAttachment = defaultStencilDescriptor
+        }
+        
+        //Configuring Render Pass Encoder
+        
         guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         else{
             throw MetalBuilderRenderError
@@ -90,12 +114,17 @@ final class RenderPass: MetalPass{
         }
         renderPassEncoder.setViewport(viewport)
         
-        renderPassEncoder.setRenderPipelineState(renderPiplineState)
-        
-        //set depth state
-        if let depthState = depthState {
-            renderPassEncoder.setDepthStencilState(depthState)
+        //set depth and stencil state
+        if let depthStencilState = depthStencilState {
+            renderPassEncoder.setDepthStencilState(depthStencilState)
         }
+        
+        //set stencil reference value
+        if let stencilReferenceValue = component.renderableData.stencilReferenceValue{
+            renderPassEncoder.setStencilReferenceValue(stencilReferenceValue)
+        }
+        
+        renderPassEncoder.setRenderPipelineState(renderPiplineState)
         
         //Set Buffers
         for buffer in component.vertexBufs{

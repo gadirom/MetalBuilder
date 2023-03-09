@@ -20,7 +20,7 @@ case textureNotCreated, noDescriptor, descriptorSizeContainsZero
 }
 
 public final class MTLTextureContainer{
-    var descriptor: TextureDescriptor
+    public var descriptor: TextureDescriptor
     weak var device: MTLDevice?
     public var texture: MTLTexture?
     
@@ -28,7 +28,10 @@ public final class MTLTextureContainer{
         self.descriptor = descriptor
     }
     
-    public func create(device: MTLDevice, drawable: CAMetalDrawable) throws{
+    public func create(device: MTLDevice, drawable: CAMetalDrawable, newDescriptor: TextureDescriptor?=nil) throws{
+        if let desc = newDescriptor{
+            self.descriptor = desc
+        }
         try create(device: device,
                viewportSize: simd_uint2(x: UInt32(drawable.texture.width),
                                         y: UInt32(drawable.texture.height)),
@@ -93,21 +96,21 @@ public extension MTLTextureContainer{
     }
 }
 
-enum TextureSize{
+public enum TextureSize{
 case fixed(CGSize), fromViewport(Double)
 }
 
-enum TexturePixelFormat{
+public enum TexturePixelFormat{
 case fixed(MTLPixelFormat), fromDrawable
 }
 
 public struct TextureDescriptor{
-    var size: TextureSize? = nil
-    var pixelFormat: TexturePixelFormat? = nil
+    public var size: TextureSize? = nil
+    public var pixelFormat: TexturePixelFormat? = nil
     
-    var type: MTLTextureType = .type2D
-    var arrayLength: Int = 1
-    var usage: MTLTextureUsage = [.shaderRead, .shaderWrite, .renderTarget]
+    public var type: MTLTextureType = .type2D
+    public var arrayLength: Int = 1
+    public var usage: MTLTextureUsage = [.shaderRead, .shaderWrite, .renderTarget]
     
     
     public init() {}
