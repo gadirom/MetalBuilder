@@ -75,7 +75,7 @@ struct RenderData{
             self.setupFunctions.append(setupFunction)
         }
         if let startupFunction = startupFunction{
-            self.setupFunctions.append(startupFunction)
+            self.startupFunctions.append(startupFunction)
         }
         
         for sf in setupFunctions {
