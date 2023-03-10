@@ -48,10 +48,12 @@ extension MetalBuilderRenderer{
 public extension MetalBuilderRenderer{
     
     convenience init(renderInfo: GlobalRenderInfo,
-                librarySource: String,
-                helpers: String,
-                options: MetalBuilderCompileOptions = .default,
-                renderingContent: MetalBuilderContent) throws{
+                     librarySource: String,
+                     helpers: String,
+                     options: MetalBuilderCompileOptions = .default,
+                     renderingContent: MetalBuilderContent,
+                     setupFunction: (()->())?,
+                     startupFunction: (()->())?) throws{
         
         self.init()
         
@@ -68,7 +70,9 @@ public extension MetalBuilderRenderer{
                                         helpers: helpers,
                                         options: options,
                                         context: context,
-                                        renderInfo: renderInfo)
+                                        renderInfo: renderInfo,
+                                        setupFunction: setupFunction,
+                                        startupFunction: startupFunction)
             
         }catch{
             print(error)

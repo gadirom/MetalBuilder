@@ -14,6 +14,8 @@ public struct MetalBuilderView: UIViewRepresentable {
     var viewSettings = MetalBuilderViewSettings()
     
     var onResizeCode: ((CGSize)->())?
+    var setupFunction: (()->())?
+    var startupFunction: (()->())?
     
     /// The wrapper for MTKView that takes `MetalBuilderContent` to dispatch
     /// - Parameters:
@@ -62,6 +64,11 @@ public struct MetalBuilderView: UIViewRepresentable {
         mtkView.isOpaque = false
         mtkView.backgroundColor = .clear
         
+        context.coordinator.onResizeCode = onResizeCode
+        context.coordinator.setupFunction = setupFunction
+        context.coordinator.startupFunction = startupFunction
+        context.coordinator.viewSettings = viewSettings
+        
         let renderInfo = GlobalRenderInfo(device: mtkView.device!,
                                           depthPixelFormat: viewSettings.depthPixelFormat,
                                           stencilPixelFormat: viewSettings.stencilPixelFormat,
@@ -77,8 +84,6 @@ public struct MetalBuilderView: UIViewRepresentable {
     }
     public func updateUIView(_ uiView: UIView, context: Context){
         context.coordinator.isDrawing = isDrawing
-        context.coordinator.onResizeCode = onResizeCode
-        context.coordinator.viewSettings = viewSettings
         
         switch scenePhase{
         case .background:
@@ -104,6 +109,9 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         var isDrawing = false
         var onResizeCode: ((CGSize)->())?
+        var setupFunction: (()->())?
+        var startupFunction: (()->())?
+        
         var viewSettings = MetalBuilderViewSettings()
         
         var background = false
@@ -122,7 +130,9 @@ public struct MetalBuilderView: UIViewRepresentable {
                 try MetalBuilderRenderer(renderInfo: renderInfo,
                                          librarySource: librarySource,
                                          helpers: helpers,
-                                         renderingContent: metalContent)
+                                         renderingContent: metalContent,
+                                         setupFunction: setupFunction,
+                                         startupFunction: startupFunction)
                 renderer?.setScaleFactor(scaleFactor)
             }catch{ print(error) }
         }

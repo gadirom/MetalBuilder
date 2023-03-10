@@ -32,6 +32,9 @@ struct RenderData{
     //this is needed if you correct descriptors depending on renderableData
     //that can be changed via chaining modifiers and is not available in initializers of Building Blocks
     var setupFunctions: [()->()] = []
+    //functions that run after textures and buffers are created but before rendering
+    //(actually, when rendering is already started since some textures cannot be created before you get a drawable)
+    var startupFunctions: [()->()] = []
     
     //hold hashes for librarySources of BuildingBlocks and Render components to eliminate dublicates
     static var librarySourceHashes: [Int] = []
@@ -45,7 +48,9 @@ struct RenderData{
          helpers: String,
          options: MetalBuilderCompileOptions,
          context: MetalBuilderRenderingContext,
-         renderInfo: GlobalRenderInfo) throws{
+         renderInfo: GlobalRenderInfo,
+         setupFunction: (()->())?,
+         startupFunction: (()->())?) throws{
         
         self.context = context
         //self.device = device
@@ -65,6 +70,13 @@ struct RenderData{
         
         Self.librarySourceHashes = []
         Self.helpersHashes = []
+        
+        if let setupFunction = setupFunction{
+            self.setupFunctions.append(setupFunction)
+        }
+        if let startupFunction = startupFunction{
+            self.setupFunctions.append(startupFunction)
+        }
         
         for sf in setupFunctions {
             sf()
@@ -270,6 +282,7 @@ struct RenderData{
                 
                 data.append(blockData)
                 data.setupFunctions.append(buildingBlockComponent.setup)
+                data.startupFunctions.append(buildingBlockComponent.startup)
             }
         }
         
@@ -330,6 +343,11 @@ struct RenderData{
             if !texturesCreated{
                 try createTextures(context: context, device: device)
                 texturesCreated = true
+                
+                for sf in startupFunctions{
+                    sf()
+                }
+                
             }else{
                 try updateTextures(device: device)
             }
@@ -393,5 +411,6 @@ struct RenderData{
             .append(contentsOf: data.functionsAndArgumentsToAddToMetal)
     
         setupFunctions.append(contentsOf: data.setupFunctions)
+        startupFunctions.append(contentsOf: data.startupFunctions)
     }
 }

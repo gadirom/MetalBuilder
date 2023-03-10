@@ -11,10 +11,15 @@ public extension MetalBuilderView{
         var v = self
         v.onResizeCode = perform
         return v
-//        MetalBuilderView(librarySource: librarySource,
-//                         helpers: helpers,
-//                         isDrawing: $isDrawing,
-//                         metalContent: metalContent,
-//                         onResizeCode: perform)
+    }
+    func onSetup(perform: @escaping ()->())->MetalBuilderView{
+        var v = self
+        v.setupFunction = perform
+        return v
+    }
+    func onStartup(perform: @escaping ()->())->MetalBuilderView{
+        var v = self
+        v.startupFunction = perform
+        return v
     }
 }
