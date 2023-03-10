@@ -229,14 +229,18 @@ struct RenderData{
                     level: level+1
                 )
                 
-                data.addTextures(newTexs: groupData.textures)
-                data.addBuffers(newBuffs: groupData.buffers)
+//                data.addTextures(newTexs: groupData.textures)
+//                data.addBuffers(newBuffs: groupData.buffers)
                 
                 let groupPass = EncodeGroupPass(groupData.passes,
                                                 repeating: encodeGroupComponent.repeating,
                                                 active: encodeGroupComponent.active)
                 data.passes.append(groupPass)
-                data.functionsAndArgumentsToAddToMetal.append(contentsOf: groupData.functionsAndArgumentsToAddToMetal)
+                
+                data.append(groupData, noPasses: true)
+//                data.functionsAndArgumentsToAddToMetal.append(contentsOf: groupData.functionsAndArgumentsToAddToMetal)
+//                data.setupFunctions.append(contentsOf: groupData.setupFunctions)
+//                data.startupFunctions.append(contentsOf: groupData.startupFunctions)
             }
             //Building Block
             if let buildingBlockComponent = component as? MetalBuildingBlock{
@@ -404,8 +408,11 @@ struct RenderData{
         }
     }
     
-    mutating func append(_ data: RenderData){
-        passes.append(contentsOf: data.passes)
+    mutating func append(_ data: RenderData, noPasses: Bool = false){
+        if !noPasses{
+            passes.append(contentsOf: data.passes)
+        }
+        
         addTextures(newTexs: data.textures)
         addBuffers(newBuffs: data.buffers)
         
