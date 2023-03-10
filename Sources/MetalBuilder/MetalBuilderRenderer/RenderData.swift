@@ -345,7 +345,9 @@ struct RenderData{
                 texturesCreated = true
                 
                 for sf in startupFunctions{
-                    sf()
+                    DispatchQueue.main.async{
+                        sf()
+                    }
                 }
                 
             }else{
