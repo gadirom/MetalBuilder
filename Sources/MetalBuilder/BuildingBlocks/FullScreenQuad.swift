@@ -29,7 +29,7 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     }
     
     //Renderable Protocol
-    internal var renderableData: RenderableData
+    public var renderableData: RenderableData
     //
     
     struct FullScreenQuadVertex: MetalStruct{
@@ -37,10 +37,10 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
         var uv: simd_float2 = [0, 0]
     }
     
-    var context: MetalBuilderRenderingContext
-    var helpers = ""
-    var librarySource = ""
-    var compileOptions: MetalBuilderCompileOptions? = nil
+    public var context: MetalBuilderRenderingContext
+    public var helpers = ""
+    public var librarySource = ""
+    public var compileOptions: MetalBuilderCompileOptions? = nil
     
     var sampleTexture: MTLTextureContainer! = nil
     
@@ -60,7 +60,7 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     
     @MetalBuffer<FullScreenQuadVertex>(count: 6, metalName: "quadBuffer") var quadBuffer
     
-    func startup(){
+    public func startup(){
         //create quad
         let p = quadBuffer.pointer!
         p[0] = .init(coord: [-1, 1], uv: [0,0])
@@ -72,7 +72,7 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
         p[5] = .init(coord: [1, -1], uv: [1,1])
     }
     
-    var metalContent: MetalContent{
+    public var metalContent: MetalContent{
         Render(type: .triangle, count: 6, renderableData: renderableData)
             .vertexBuf(quadBuffer)
             .vertexBytes(context.$viewportToDeviceTransform)
