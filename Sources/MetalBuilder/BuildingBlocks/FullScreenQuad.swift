@@ -2,7 +2,7 @@ import MetalKit
 import SwiftUI
 
 /// Building block for rendering full screen quad
-struct FullScreenQuad: MetalBuildingBlock, Renderable {
+public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     /// Creates a new building block that renders full scrwwn quad.
     /// - Parameters:
     ///   - renderableData: renderable data struct. Pass the `renderableData` property of your building block.
