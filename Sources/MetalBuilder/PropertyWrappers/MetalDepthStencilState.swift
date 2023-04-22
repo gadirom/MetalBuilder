@@ -19,6 +19,17 @@ public final class MetalDepthStencilState{
     }
 }
 
+extension MetalDepthStencilState{
+    public convenience init(label: String? = nil,
+                isDepthWriteEnabled: Bool? = true,
+                depthCompareFunction: MTLCompareFunction? = nil){
+        let descriptor = MetalDepthStencilDescriptor(label: label,
+                                                     isDepthWriteEnabled: isDepthWriteEnabled,
+                                                     depthCompareFunction: depthCompareFunction)
+        self.init(descriptor)
+    }
+}
+
 public struct MetalDepthStencilDescriptor{
     
     var _label: String?
