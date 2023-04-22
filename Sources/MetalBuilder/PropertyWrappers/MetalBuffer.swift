@@ -2,7 +2,7 @@
 import SwiftUI
 import MetalKit
 
-/// Declares an MTLBufferContainer state
+/// Declares a state for a MTLBuffer object
 ///
 /// metalType and metalName - supposed type and name for the buffer in MSL code
 @propertyWrapper

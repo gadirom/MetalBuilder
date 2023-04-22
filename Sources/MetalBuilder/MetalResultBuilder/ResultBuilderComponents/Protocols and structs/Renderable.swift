@@ -59,17 +59,15 @@ public extension MetalBuilderComponent where Self: Renderable{
         }
         return r
     }
-    /// Adds the `MTLDepthStencilDescriptor` to a Renderable component.
+    /// Adds the ``MetalDepthStencilStateContainer`` to a Renderable component.
     /// - Parameters:
     ///   - descriptor: The depth and stencil descriptor to use in the rendering pass
     ///   - stencilReferenceValue: The stencil reference value for both front and back stencil comparison tests.
     /// that you create and configure by a Render component.
     /// - Returns: The Renderable component with the applied descriptor.
-    func depthDescriptor(_ descriptor: MTLDepthStencilDescriptor?, stencilReferenceValue: UInt32?=nil) -> Self{
+    func depthStencilState(_ state: MetalDepthStencilStateContainer, stencilReferenceValue: UInt32?=nil) -> Self{
         var r = self
-        if let descriptor = descriptor{
-            r.renderableData.depthStencilDescriptor = descriptor
-        }
+        r.renderableData.depthStencilState = state
         r.renderableData.stencilReferenceValue = stencilReferenceValue
         return r
     }

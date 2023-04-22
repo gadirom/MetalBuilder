@@ -3,19 +3,19 @@ import SwiftUI
 
 public struct RenderableData{
     public init(passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
-                depthStencilDescriptor: MTLDepthStencilDescriptor? = nil,
+                depthStencilState: MetalDepthStencilStateContainer? = nil,
                 passStencilAttachment: StencilAttachment? = nil,
                 stencilReferenceValue: UInt32? = nil,
                 pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil) {
         self.passColorAttachments = passColorAttachments
-        self.depthStencilDescriptor = depthStencilDescriptor
+        self.depthStencilState = depthStencilState
         self.passStencilAttachment = passStencilAttachment
         self.stencilReferenceValue = stencilReferenceValue
         self.pipelineColorAttachment = pipelineColorAttachment
     }
     
     public var passColorAttachments: [Int: ColorAttachment]
-    public var depthStencilDescriptor: MTLDepthStencilDescriptor?
+    public var depthStencilState: MetalDepthStencilStateContainer?
     public var passStencilAttachment: StencilAttachment?
     public var stencilReferenceValue: UInt32?
     public var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
@@ -24,8 +24,8 @@ public struct RenderableData{
 public extension RenderableData{
     mutating func apply(_ data: RenderableData){
         self.passColorAttachments = data.passColorAttachments
-        if let depthStencilDescriptor = data.depthStencilDescriptor{
-            self.depthStencilDescriptor = depthStencilDescriptor
+        if let depthStencilState = data.depthStencilState{
+            self.depthStencilState = depthStencilState
         }
         if let passStencilAttachment = data.passStencilAttachment{
             self.passStencilAttachment = passStencilAttachment
