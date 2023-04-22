@@ -59,7 +59,7 @@ public extension MetalBuilderComponent where Self: Renderable{
         }
         return r
     }
-    /// Adds the ``MetalDepthStencilStateContainer`` to a Renderable component.
+    /// Adds a depth stencil state to a Renderable component.
     /// - Parameters:
     ///   - descriptor: The depth and stencil descriptor to use in the rendering pass
     ///   - stencilReferenceValue: The stencil reference value for both front and back stencil comparison tests.
@@ -73,7 +73,7 @@ public extension MetalBuilderComponent where Self: Renderable{
     }
     /// Adds a stencil attachment to the Renderable component.
     /// - Parameter attachement: Stencil attachment struct.
-    /// - Returns: The Renderable component with the added color attachement.
+    /// - Returns: The Renderable component with the added stencil attachement.
     func stencilAttachment(_ attachement: StencilAttachment?) -> Self{
         var r = self
         r.renderableData.passStencilAttachment = attachement
@@ -85,7 +85,7 @@ public extension MetalBuilderComponent where Self: Renderable{
     ///   - loadAction: Binding to a load action value.
     ///   - storeAction: Binding to a store action value.
     ///   - clearStencil: Binding to a value to use when clearing the stencil attachment.
-    /// - Returns: The Renderable component with the added color attachement.
+    /// - Returns: The Renderable component with the added stencil attachement.
     func stencilAttachment(texture: MTLTextureContainer? = nil,
                            loadAction: Binding<MTLLoadAction>? = nil,
                            storeAction: Binding<MTLStoreAction>? = nil,
@@ -104,7 +104,7 @@ public extension MetalBuilderComponent where Self: Renderable{
     ///   - loadAction: Load action value.
     ///   - storeAction: Store action value.
     ///   - clearStencil: Value to use when clearing the stencil attachment.
-    /// - Returns: The Renderable component with the added color attachement.
+    /// - Returns: The Renderable component with the added stencil attachement.
     func stencilAttachment(texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
                           storeAction: MTLStoreAction? = nil,
@@ -125,6 +125,61 @@ public extension MetalBuilderComponent where Self: Renderable{
                                  loadAction: _loadAction,
                                  storeAction: _storeAction,
                                  clearStencil: _clearStencil)
+    }
+    /// Adds a depth attachment to the Renderable component.
+    /// - Parameter attachement: Depth attachment struct.
+    /// - Returns: The Renderable component with the added depth attachement.
+    func depthAttachment(_ attachement: DepthAttachment?) -> Self{
+        var r = self
+        r.renderableData.passDepthAttachment = attachement
+        return r
+    }
+    /// Adds a depth attachment to the Renderable component.
+    /// - Parameters:
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Binding to a load action value.
+    ///   - storeAction: Binding to a store action value.
+    ///   - clearStencil: Binding to a value to use when clearing the depth attachment.
+    /// - Returns: The Renderable component with the added color attachement.
+    func depthAttachment(texture: MTLTextureContainer? = nil,
+                         loadAction: Binding<MTLLoadAction>? = nil,
+                         storeAction: Binding<MTLStoreAction>? = nil,
+                         clearDepth: Binding<Double>? = nil) -> Self{
+        var r = self
+        let depthAttachment = DepthAttachment(texture: texture,
+                                              loadAction: loadAction,
+                                              storeAction: storeAction,
+                                              clearDepth: clearDepth)
+        r.renderableData.passDepthAttachment = depthAttachment
+        return r
+    }
+    /// Adds a depth attachment to the Renderable component.
+    /// - Parameters:
+    ///   - texture: Texture to use in the attachement.
+    ///   - loadAction: Load action value.
+    ///   - storeAction: Store action value.
+    ///   - clearStencil: Value to use when clearing the depth attachment.
+    /// - Returns: The Renderable component with the added depth attachement.
+    func depthAttachment(texture: MTLTextureContainer? = nil,
+                          loadAction: MTLLoadAction? = nil,
+                          storeAction: MTLStoreAction? = nil,
+                          clearDepth: Double? = nil) -> Self{
+        var _loadAction: Binding<MTLLoadAction>? = nil
+        var _storeAction: Binding<MTLStoreAction>? = nil
+        var _clearDepth: Binding<Double>? = nil
+        if let loadAction = loadAction {
+            _loadAction = Binding<MTLLoadAction>.constant(loadAction)
+        }
+        if let storeAction = storeAction {
+            _storeAction = Binding<MTLStoreAction>.constant(storeAction)
+        }
+        if let clearDepth = clearDepth {
+            _clearDepth = Binding<Double>.constant(clearDepth)
+        }
+        return depthAttachment(texture: texture,
+                               loadAction: _loadAction,
+                               storeAction: _storeAction,
+                               clearDepth: _clearDepth)
     }
     /// Adds a color attachment to the Renderable component.
     /// - Parameters:

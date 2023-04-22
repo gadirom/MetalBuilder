@@ -96,6 +96,14 @@ final class RenderPass: MetalPass{
             renderPassDescriptor.stencilAttachment = defaultStencilDescriptor
         }
         
+        //depth attachment
+        if let passDepthAttachment = component.renderableData.passDepthAttachment{
+            renderPassDescriptor.depthAttachment = passDepthAttachment.descriptor
+        }
+//            else{
+//            renderPassDescriptor.stencilAttachment = defaultStencilDescriptor
+//        }
+        
         //Configuring Render Pass Encoder
         
         guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)

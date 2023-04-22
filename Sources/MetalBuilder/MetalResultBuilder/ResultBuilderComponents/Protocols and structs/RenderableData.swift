@@ -5,6 +5,7 @@ public struct RenderableData{
     public init(passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
                 depthStencilState: MetalDepthStencilStateContainer? = nil,
                 passStencilAttachment: StencilAttachment? = nil,
+                passDepthAttachment: DepthAttachment? = nil,
                 stencilReferenceValue: UInt32? = nil,
                 pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil) {
         self.passColorAttachments = passColorAttachments
@@ -17,6 +18,7 @@ public struct RenderableData{
     public var passColorAttachments: [Int: ColorAttachment]
     public var depthStencilState: MetalDepthStencilStateContainer?
     public var passStencilAttachment: StencilAttachment?
+    public var passDepthAttachment: DepthAttachment?
     public var stencilReferenceValue: UInt32?
     public var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
 }
@@ -74,13 +76,14 @@ public var defaultColorAttachments =
                         get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
                         set: { _ in } )
                        )]
-/// stencil attachment
+
+/// Stencil attachment
 public struct StencilAttachment{
     var texture: MTLTextureContainer?
     var loadAction: Binding<MTLLoadAction>?
     var storeAction: Binding<MTLStoreAction>?
     var clearStencil: Binding<UInt32>?
-    var onlyStencil: Bool = false
+    //var onlyStencil: Bool = false
     
     var descriptor: MTLRenderPassStencilAttachmentDescriptor{
         let d = MTLRenderPassStencilAttachmentDescriptor()
@@ -93,6 +96,31 @@ public struct StencilAttachment{
         }
         if let clearStencil = clearStencil?.wrappedValue{
             d.clearStencil = clearStencil
+        }
+        return d
+    }
+}
+
+/// Depth attachment
+public struct DepthAttachment{
+    var texture: MTLTextureContainer?
+    var loadAction: Binding<MTLLoadAction>?
+    var storeAction: Binding<MTLStoreAction>?
+    var clearDepth: Binding<Double>?
+    
+    var descriptor: MTLRenderPassDepthAttachmentDescriptor{
+        let d = MTLRenderPassDepthAttachmentDescriptor()
+        if let texture{
+            d.texture = texture.texture
+        }
+        if let loadAction = loadAction?.wrappedValue{
+            d.loadAction = loadAction
+        }
+        if let storeAction = storeAction?.wrappedValue{
+            d.storeAction = storeAction
+        }
+        if let clearDepth = clearDepth?.wrappedValue{
+            d.clearDepth = clearDepth
         }
         return d
     }
