@@ -19,7 +19,6 @@ final class RenderPass: MetalPass{
     
     var indexType: MTLIndexType = .uint16
     
-    var depthStencilState: MetalDepthStencilStateContainer?
     let defaultStencilDescriptor = MTLRenderPassStencilAttachmentDescriptor()
     
     init(_ component: Render, libraryContainer: LibraryContainer){
@@ -115,7 +114,7 @@ final class RenderPass: MetalPass{
         renderPassEncoder.setViewport(viewport)
         
         //set depth and stencil state
-        if let depthStencilState = depthStencilState {
+        if let depthStencilState = component.renderableData.depthStencilState {
             renderPassEncoder.setDepthStencilState(depthStencilState.state)
         }
         
