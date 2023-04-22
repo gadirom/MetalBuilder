@@ -144,7 +144,7 @@ public extension MetalBuilderComponent where Self: Renderable{
     func depthAttachment(texture: MTLTextureContainer? = nil,
                          loadAction: Binding<MTLLoadAction>? = nil,
                          storeAction: Binding<MTLStoreAction>? = nil,
-                         clearDepth: Binding<Double>? = nil) -> Self{
+                         clearDepth: Binding<Double>) -> Self{
         var r = self
         let depthAttachment = DepthAttachment(texture: texture,
                                               loadAction: loadAction,
@@ -163,19 +163,19 @@ public extension MetalBuilderComponent where Self: Renderable{
     func depthAttachment(texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
                           storeAction: MTLStoreAction? = nil,
-                          clearDepth: Double? = nil) -> Self{
+                          clearDepth: Double = 1) -> Self{
         var _loadAction: Binding<MTLLoadAction>? = nil
         var _storeAction: Binding<MTLStoreAction>? = nil
-        var _clearDepth: Binding<Double>? = nil
+        var _clearDepth: Binding<Double>
         if let loadAction = loadAction {
             _loadAction = Binding<MTLLoadAction>.constant(loadAction)
         }
         if let storeAction = storeAction {
             _storeAction = Binding<MTLStoreAction>.constant(storeAction)
         }
-        if let clearDepth = clearDepth {
+        //if let clearDepth = clearDepth {
             _clearDepth = Binding<Double>.constant(clearDepth)
-        }
+        //}
         return depthAttachment(texture: texture,
                                loadAction: _loadAction,
                                storeAction: _storeAction,
