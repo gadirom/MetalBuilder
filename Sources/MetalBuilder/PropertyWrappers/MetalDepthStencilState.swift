@@ -41,7 +41,9 @@ public struct MetalDepthStencilDescriptor{
         if let _backFaceStencil{
             dephDescriptor.backFaceStencil = _backFaceStencil
         }
-        dephDescriptor.label = _label
+        if let _label{
+            dephDescriptor.label = _label
+        }
         return dephDescriptor
     }
 
