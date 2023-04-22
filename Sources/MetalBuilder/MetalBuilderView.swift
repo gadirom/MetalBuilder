@@ -161,7 +161,7 @@ public struct MetalBuilderView: UIViewRepresentable {
             guard let renderPassDescriptor = view.currentRenderPassDescriptor
             else { return }
             
-            //renderer?.setDepthStencilTexture(view.depthStencilTexture)
+            renderer?.setDepthStencilTexture(view.depthStencilTexture)
             
             do {
                 try renderer?.draw(drawable: drawable,
