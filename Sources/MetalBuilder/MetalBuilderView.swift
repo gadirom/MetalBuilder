@@ -139,9 +139,9 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
             viewSettings.apply(toView: view)
-            if wasInitialized{
-                renderer?.setDepthStencilTexture(view.depthStencilTexture)
-            }
+//            if wasInitialized{
+//                renderer?.setDepthStencilTexture(view.depthStencilTexture)
+//            }
             renderer?.setSize(size: size)
             renderer?.setScaleFactor(view.contentScaleFactor)
             onResizeCode?(size)
