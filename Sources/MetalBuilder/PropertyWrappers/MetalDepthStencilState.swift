@@ -83,7 +83,7 @@ public final class MetalDepthStencilStateContainer {
     
     public func create(device: MTLDevice) {
         if state == nil{
-            device.makeDepthStencilState(descriptor: descriptor.descriptor)
+            state = device.makeDepthStencilState(descriptor: descriptor.descriptor)
         }
     }
 }
