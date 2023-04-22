@@ -24,6 +24,10 @@ public final class MTLTextureContainer{
     weak var device: MTLDevice?
     public var texture: MTLTexture?
     
+    init(){
+        descriptor = TextureDescriptor()
+    }
+    
     public init(_ descriptor: TextureDescriptor){
         self.descriptor = descriptor
     }

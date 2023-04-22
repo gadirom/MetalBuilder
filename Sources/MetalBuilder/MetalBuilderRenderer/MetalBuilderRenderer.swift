@@ -16,6 +16,9 @@ public final class MetalBuilderRenderer{
     
     let timer = MetalBuilderTimer()
     
+    //depthStencilTexture of the MTKView (if there is any)
+    var depthStencilTexture: MTLTexture?
+    
     //@MetalState var viewportSize: simd_uint2 = [0, 0]
 }
 
@@ -89,10 +92,10 @@ public extension MetalBuilderRenderer{
         for pass in renderData.passes{
             
             let passInfo = MetalPassInfo(getCommandBuffer: getCommandBuffer,
-                                         drawable: drawable,
+                                         drawable: drawable, depthStencilTexture: depthStencilTexture,
                                          renderPassDescriptor: renderPassDescriptor){
                 try self.restartEncode(commandBuffer: self.commandBuffer,
-                                  drawable: nil)
+                                       drawable: nil)
             }
             
             try pass.encode(passInfo: passInfo)
@@ -106,6 +109,9 @@ public extension MetalBuilderRenderer{
     }
     func setSize(size: CGSize){
         renderData.setViewport(size: size, device: device)
+    }
+    func setDepthStencilTexture(_ texture: MTLTexture?){
+        depthStencilTexture = texture
     }
     
     func pauseTime(){

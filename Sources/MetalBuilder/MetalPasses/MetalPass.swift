@@ -9,6 +9,7 @@ protocol MetalPass{
 struct MetalPassInfo {
     let getCommandBuffer: ()->MTLCommandBuffer
     let drawable: CAMetalDrawable?
+    let depthStencilTexture: MTLTexture?
     let renderPassDescriptor: MTLRenderPassDescriptor
     let restartEncode: () throws ->()
 }
