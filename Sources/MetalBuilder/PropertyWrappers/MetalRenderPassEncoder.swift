@@ -69,29 +69,30 @@ extension MTLCommandBuffer{
 //
 //        renderableData.viewportTextureSize = [viewportTexture.width, viewportTexture.height]
         
-        return self.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+        let encoder = self.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+        
+        //Viewport
+        var viewport: MTLViewport
+        if renderableData.viewport == nil{
+            let outTexture = renderPassDescriptor.colorAttachments[0].texture!
+            
+            viewport = MTLViewport(originX: 0.0, originY: 0.0,
+                                   width:  Double(outTexture.width),
+                                   height: Double(outTexture.height), znear: 0.0, zfar: 1.0)
+            encoder?.setViewport(viewport)
+        }
+        
+        return encoder
     }
 }
 
 extension MTLRenderCommandEncoder{
     /// Configures an existing encoder
     func configure(renderableData: RenderableData, passInfo: MetalPassInfo){
-        //Viewport
-        var viewport: MTLViewport
+        
         if let v = renderableData.viewport?.wrappedValue{
-            viewport = v
-        }else{
-            let outTexture: MTLTexture
-            if let texture = renderableData.passColorAttachments[0]?.texture?.texture{
-                outTexture = texture
-            }else{
-                outTexture = passInfo.drawable!.texture
-            }
-            viewport = MTLViewport(originX: 0.0, originY: 0.0,
-                                   width:  Double(outTexture.width),
-                                   height: Double(outTexture.height), znear: 0.0, zfar: 1.0)
+            setViewport(v)
         }
-        setViewport(viewport)
         
         //set depth and stencil state
         if let depthStencilState = renderableData.depthStencilState {
