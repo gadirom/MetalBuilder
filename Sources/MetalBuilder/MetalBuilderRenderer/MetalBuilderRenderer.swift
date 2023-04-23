@@ -19,7 +19,7 @@ public final class MetalBuilderRenderer{
     //depthStencilTexture of the MTKView (if there is any)
     var depthStencilTexture: MTLTexture?
     
-    //@MetalState var viewportSize: simd_uint2 = [0, 0]
+//    var currentRenderPassEncoder: MetalRenderPassEncoderContainer?
 }
 
 extension MetalBuilderRenderer{
@@ -35,6 +35,9 @@ extension MetalBuilderRenderer{
         return commandBuffer
     }
     func endEncode(commandBuffer: MTLCommandBuffer, drawable: CAMetalDrawable?){
+        
+//        self.currentRenderPassEncoder?.encoder?.endEncoding()
+        
         if let drawable = drawable{
             commandBuffer.present(drawable)
         }
@@ -90,6 +93,16 @@ public extension MetalBuilderRenderer{
         renderData.context.time = timer.time
         
         for pass in renderData.passes{
+            
+//            if let renderPass = pass as? RenderPass{
+//                let passRenderEncoder = renderPass.component.renderableData.passRenderEncoder
+//                if passRenderEncoder === currentRenderPassEncoder{
+//
+//                }else{
+//                    currentRenderPassEncoder?.encoder?.endEncoding()
+//                    currentRenderPassEncoder = passRenderEncoder
+//                }
+//            }
             
             let passInfo = MetalPassInfo(getCommandBuffer: getCommandBuffer,
                                          drawable: drawable, depthStencilTexture: depthStencilTexture,

@@ -54,6 +54,8 @@ struct ContentView: View {
     @MetalState var vertexCount = 3 * particleCount
     @MetalState var particleScale: Float = 1
     
+    @MetalRenderPassEncoder var renderEncoder
+    
     @State var n = 1
     @State var laplacianPasses = 0
     
@@ -81,6 +83,7 @@ struct ContentView: View {
                 Render(indexBuffer: indexBuffer,
                        indexCount: MetalBinding<Int>.constant(vertexIndexCount))
                     .uniforms(uniforms)//, name: "uni")
+                    //.renderEncoder($renderEncoder, lastPass: true)
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
                     .vertexBytes(context.$viewportSize, space: "constant")

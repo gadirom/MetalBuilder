@@ -2,30 +2,42 @@ import MetalKit
 import SwiftUI
 
 public struct RenderableData{
-    public init(passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
+    public init(passRenderEncoder: MetalRenderPassEncoderContainer? = nil,
+                lastPass: Bool = false,
+                passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
                 depthStencilState: MetalDepthStencilStateContainer? = nil,
                 passStencilAttachment: StencilAttachment? = nil,
                 passDepthAttachment: DepthAttachment? = nil,
                 stencilReferenceValue: UInt32? = nil,
-                pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil) {
+                pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil,
+                viewport: Binding<MTLViewport>? = nil) {
+        self.passRenderEncoder = passRenderEncoder
+        self.lastPass = lastPass
         self.passColorAttachments = passColorAttachments
         self.depthStencilState = depthStencilState
         self.passStencilAttachment = passStencilAttachment
         self.stencilReferenceValue = stencilReferenceValue
         self.pipelineColorAttachment = pipelineColorAttachment
+        self.viewport = viewport
     }
     
+    public var passRenderEncoder: MetalRenderPassEncoderContainer?
+    public var lastPass = false
     public var passColorAttachments: [Int: ColorAttachment]
     public var depthStencilState: MetalDepthStencilStateContainer?
     public var passStencilAttachment: StencilAttachment?
     public var passDepthAttachment: DepthAttachment?
     public var stencilReferenceValue: UInt32?
     public var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
+    public var viewport: Binding<MTLViewport>?
 }
 
 public extension RenderableData{
     mutating func apply(_ data: RenderableData){
+        self.passRenderEncoder = data.passRenderEncoder
+        self.lastPass = data.lastPass
         self.passColorAttachments = data.passColorAttachments
+        self.viewport = data.viewport
         if let depthStencilState = data.depthStencilState{
             self.depthStencilState = depthStencilState
         }

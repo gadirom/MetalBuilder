@@ -19,8 +19,6 @@ final class RenderPass: MetalPass{
     
     var indexType: MTLIndexType = .uint16
     
-    let defaultStencilDescriptor = MTLRenderPassStencilAttachmentDescriptor()
-    
     init(_ component: Render, libraryContainer: LibraryContainer){
         self.component = component
         self.libraryContainer = libraryContainer
@@ -73,67 +71,37 @@ final class RenderPass: MetalPass{
         }
     }
     
-    func encode(passInfo: MetalPassInfo) throws {
+    func makeEncoder(passInfo: MetalPassInfo) throws -> MTLRenderCommandEncoder{
         let commandBuffer = passInfo.getCommandBuffer()
-        let renderPassDescriptor = passInfo.renderPassDescriptor
-        
-        //Configuring Render Pass Descriptor
-        
-        //color attachments
-        for key in component.renderableData.passColorAttachments.keys{
-            if let a = component.renderableData.passColorAttachments[key]?.descriptor{
-                if a.texture == nil{
-                    a.texture = passInfo.drawable?.texture
-                }
-                renderPassDescriptor.colorAttachments[key] = a
-            }
-        }
-        
-        //stencil attachment
-        if let passStencilAttachment = component.renderableData.passStencilAttachment{
-            renderPassDescriptor.stencilAttachment = passStencilAttachment.descriptor
-        }else{
-            renderPassDescriptor.stencilAttachment = defaultStencilDescriptor
-        }
-        
-        //depth attachment
-        if let passDepthAttachment = component.renderableData.passDepthAttachment{
-            let descriptor = passDepthAttachment.descriptor
-            if descriptor.texture == nil{
-                descriptor.texture = passInfo.depthStencilTexture
-            }
-            renderPassDescriptor.depthAttachment = descriptor
-        }
-//            else{
-//            renderPassDescriptor.stencilAttachment = defaultStencilDescriptor
-//        }
-        
-        //Configuring Render Pass Encoder
-        
-        guard let renderPassEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+        guard let createdRenderPassEncoder = commandBuffer.makeRenderCommandEncoder(renderableData: component.renderableData,
+                                                                                    passInfo: passInfo)
         else{
             throw MetalBuilderRenderError
                 .noRenderEncoder("Wasn't able to create renderEncoder for the vertex shader: '"+component.vertexFunc+"'!")
         }
+        return createdRenderPassEncoder
+    }
+    
+    func encode(passInfo: MetalPassInfo) throws {
         
-        //Viewport
-        var viewport: MTLViewport
-        if let v = component.viewport?.wrappedValue{
-            viewport = v
+        let encoderIsExternal: Bool
+        let renderPassEncoder: MTLRenderCommandEncoder
+    
+        // render encoder external (passed in RenderableData) or internal
+        if let externalEncoder = component.renderableData.passRenderEncoder{
+            encoderIsExternal = true
+            if let encoder = externalEncoder.encoder{
+                renderPassEncoder = encoder
+            }else{
+                renderPassEncoder = try makeEncoder(passInfo: passInfo)
+                externalEncoder.encoder = renderPassEncoder
+            }
         }else{
-            viewport = MTLViewport(originX: 0.0, originY: 0.0, width: Double(renderPassDescriptor.colorAttachments[0].texture!.width), height: Double(renderPassDescriptor.colorAttachments[0].texture!.height), znear: 0.0, zfar: 1.0)
-        }
-        renderPassEncoder.setViewport(viewport)
-        
-        //set depth and stencil state
-        if let depthStencilState = component.renderableData.depthStencilState {
-            renderPassEncoder.setDepthStencilState(depthStencilState.state)
+            encoderIsExternal = false
+            renderPassEncoder = try makeEncoder(passInfo: passInfo)
         }
         
-        //set stencil reference value
-        if let stencilReferenceValue = component.renderableData.stencilReferenceValue{
-            renderPassEncoder.setStencilReferenceValue(stencilReferenceValue)
-        }
+        renderPassEncoder.configure(renderableData: component.renderableData, passInfo: passInfo)
         
         renderPassEncoder.setRenderPipelineState(renderPiplineState)
         
@@ -183,8 +151,10 @@ final class RenderPass: MetalPass{
             renderPassEncoder.drawPrimitives(type: component.type, vertexStart: component.vertexOffset, vertexCount: component.vertexCount)
         }
         
-        
-        renderPassEncoder.endEncoding()
+        if !encoderIsExternal || component.renderableData.lastPass{
+            renderPassEncoder.endEncoding()
+            component.renderableData.passRenderEncoder?.encoder = nil
+        }
     }
     func getIndexType(_ indexType: Any.Type) throws ->MTLIndexType{
         

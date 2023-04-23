@@ -62,8 +62,6 @@ public struct Render: MetalBuilderComponent, Renderable{
     var indexBufferOffset: Int = 0
     var indexedPrimitives = false
     
-    var viewport: Binding<MTLViewport>?
-    
     var indexBuf: BufferProtocol?
     
     var vertexBufs: [BufferProtocol] = []
@@ -431,11 +429,6 @@ public extension Render{
 
 // Misc modifiers for Render
 public extension Render{
-    func viewport(_ viewport: Binding<MTLViewport>)->Render{
-        var r = self
-        r.viewport = viewport
-        return r
-    }
     /// The modifier for passing the source code of vertex and fragment shaders to a Render component
     /// - Parameter source: The String containing the code
     ///

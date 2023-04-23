@@ -7,8 +7,8 @@ import MetalKit
 public final class MetalDepthStencilState{
     public var wrappedValue: MetalDepthStencilStateContainer
     
-    public var projectedValue: MetalDepthStencilState{
-        self
+    public var projectedValue: MetalDepthStencilStateContainer{
+        wrappedValue
     }
     
     public init(wrappedValue: MetalDepthStencilStateContainer){
