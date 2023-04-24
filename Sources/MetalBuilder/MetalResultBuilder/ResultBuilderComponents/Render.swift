@@ -465,9 +465,9 @@ public extension Render{
         r.vertexOut = getTypeFromFromStructDeclaration(source)
         return r
     }
-    func instanceCount(_ count: Int)->Render{
+    func instanceCount(_ count: MetalBinding<Int>)->Render{
         var r = self
-        r.instanceCount = instanceCount
+        r.instanceCount = count
         return r
     }
 }
