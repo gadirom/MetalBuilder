@@ -61,6 +61,7 @@ public struct Render: MetalBuilderComponent, Renderable{
     var indexCount: MetalBinding<Int> = MetalBinding<Int>.constant(0)
     var indexBufferOffset: Int = 0
     var indexedPrimitives = false
+    var instanceCount: Int?
     
     var indexBuf: BufferProtocol?
     
@@ -86,6 +87,7 @@ public struct Render: MetalBuilderComponent, Renderable{
     
     public init(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                 offset: Int = 0, count: Int = 3, source: String="",
+                instanceCount: Int? = nil,
                 renderableData: RenderableData = RenderableData()){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -96,11 +98,14 @@ public struct Render: MetalBuilderComponent, Renderable{
         self.vertexOffset = offset
         self.vertexCount = count
         self.renderableData = renderableData
+        
+        self.instanceCount = instanceCount
     }
     
     public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                    indexBuffer: MTLBufferContainer<T>,
                    indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String="",
+                   instanceCount: Int? = nil,
                    renderableData: RenderableData = RenderableData()){
         self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)
         
@@ -115,6 +120,8 @@ public struct Render: MetalBuilderComponent, Renderable{
         self.indexBufferOffset = indexOffset
         self.indexedPrimitives = true
         self.renderableData = renderableData
+        
+        self.instanceCount = instanceCount
     }
     
     mutating func setup() throws{
@@ -438,10 +445,16 @@ public extension Render{
     /// - 3. fragment shader implementation
     /// The first two or the last one should be ommited in case you are planning
     /// to pass the respective code using `.vertexShader`  or`.fragmentShader` modifiers.
+    /// If you need to declare the output type for fragment shader declare it in `helpers` or consider using dedicated ``FragmentShader``.
     func source(_ source: String)->Render{
         var r = self
         r.librarySource = source + r.librarySource
-        r.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
+        r.vertexOut = getTypeFromFromStructDeclaration(source)
+        return r
+    }
+    func instanceCount(_ count: Int)->Render{
+        var r = self
+        r.instanceCount = instanceCount
         return r
     }
 }
