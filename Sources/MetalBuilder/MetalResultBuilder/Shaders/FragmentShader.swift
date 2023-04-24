@@ -64,8 +64,31 @@ public struct FragmentShader: InternalShaderProtocol{
         self.returnType = returns
         self.body = body
     }
+    /// Creates the Fragment Shader with the name, return type and and the body of the fragment function
+    /// - Parameters:
+    ///   - name: Name of the fragment shader function in your Metal code
+    ///   - returns: The Metal type the the fragment returns. Default type is `float4`.
+    ///   - source: The body of the Fragment shader without the function declaration
+    ///
+    /// You pass only the body of the fragment function.
+    /// MetalBuilder will generate the declaration automatically, passing the output of the vertex function as `in`:
+    /// ```
+    /// let fragment = FragmentShader("myFragmetFunction", body:"""
+    ///     return in.color;
+    /// """
+    /// ```
+    public init(_ name: String, fragmentOut: String,
+                body: String=""){
+        self.fragmentFunc = name
+        self.returnType = getTypeFromFromStructDeclaration(fragmentOut)
+        self.returnTypeDeclaration = fragmentOut
+        self.body = body
+    }
     
     let fragmentFunc: String
+    
+    var returnTypeDeclaration: String?
+    
     var returnType: String?
     
     public var body: String?
@@ -75,8 +98,15 @@ public struct FragmentShader: InternalShaderProtocol{
         if let source = source{
             return source
         }
+        
+        let returnTypeDeclaration: String
+        if let declaration = self.returnTypeDeclaration{
+            returnTypeDeclaration = declaration
+        }else{
+            returnTypeDeclaration = ""
+        }
         if let body = body, let returns = returnType, let vertexOut = vertexOut{
-            return "fragment "+returns+" "+fragmentFunc+"("+vertexOut+" in [[stage_in]]){"+body+"}"
+            return returnTypeDeclaration + "fragment "+returns+" "+fragmentFunc+"("+vertexOut+" in [[stage_in]]){"+body+"}"
         }
         print("Couldn't get the source code for ", fragmentFunc, " fragment shader!")
         return ""
@@ -104,5 +134,18 @@ public extension FragmentShader{
     }
     func body(_ body: String)->FragmentShader{
         return _body(body) as! FragmentShader
+    }
+}
+
+//Modifiers specific to FragmentShader
+public extension FragmentShader{
+    ///  Adds the declaration of the C-struct that used as output of the fragment shader
+    /// - Parameter declaration: Declaration of the output type.
+    /// - Returns: Fragment shader with the added declaration of output type.
+    func fragmentOut(_ declaration: String)->FragmentShader{
+        var v = self
+        v.returnType = getTypeFromFromStructDeclaration(declaration)
+        v.returnTypeDeclaration = declaration
+        return v
     }
 }

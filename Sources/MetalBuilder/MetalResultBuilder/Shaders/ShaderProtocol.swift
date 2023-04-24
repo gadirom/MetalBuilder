@@ -57,3 +57,13 @@ extension InternalShaderProtocol{
     }
 }
 
+func getTypeFromFromStructDeclaration(_ source: String) ->String?{
+    let structRange = source.range(of: "struct ")
+    guard let startIndex = structRange?.upperBound
+    else{ return nil }
+    guard let endIndex = source[startIndex...].firstIndex(of: "{")
+    else { return nil }
+
+    return ""+source[startIndex...source.index(before: endIndex)]
+}
+

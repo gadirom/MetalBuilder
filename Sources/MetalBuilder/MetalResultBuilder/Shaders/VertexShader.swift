@@ -36,7 +36,7 @@ public struct VertexShader: InternalShaderProtocol{
     public init(_ name: String, source: String=""){
         self.vertexFunc = name
         self.source = source
-        self.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(source)
+        self.vertexOut = getTypeFromFromStructDeclaration(source)
     }
     /// Creates the VertexShader with the name and the raw Metal source code
     /// - Parameters:
@@ -64,11 +64,13 @@ public struct VertexShader: InternalShaderProtocol{
     ///         return out;
     ///     """)
     ///```
-    public init(_ name: String, vertexOut: String,
+    public init(_ name: String, vertexOut: String? = nil,
                 body: String=""){
         self.vertexFunc = name
         self.vertexOutDeclaration = vertexOut
-        self.vertexOut = VertexShader.getVertexOutTypeFromVertexSource(vertexOut)
+        if let vertexOut{
+            self.vertexOut = getTypeFromFromStructDeclaration(vertexOut)
+        }
         self.body = body
     }
     
@@ -89,15 +91,6 @@ public struct VertexShader: InternalShaderProtocol{
         }
         print("Couldn't get the source code for ", vertexFunc, " vertex shader!")
         return ""
-    }
-    static func getVertexOutTypeFromVertexSource(_ source: String) ->String?{
-        let structRange = source.range(of: "struct ")
-        guard let startIndex = structRange?.upperBound
-        else{ return nil }
-        guard let endIndex = source[startIndex...].firstIndex(of: "{")
-        else { return nil }
-
-        return ""+source[startIndex...source.index(before: endIndex)]
     }
 }
 
@@ -127,11 +120,14 @@ public extension VertexShader{
 }
 
 //Modifiers specific to VertexShader
-extension VertexShader{
-    func vertexOut(_ type: String, properties: String)->VertexShader{
+public extension VertexShader{
+    ///  Adds the declaration of the C-struct that used as output of the vertex shader
+    /// - Parameter declaration: Declaration of the output type.
+    /// - Returns: Vertex shader with the added declaration of output type.
+    func vertexOut(_ declaration: String)->VertexShader{
         var v = self
-        v.vertexOut = type
-        v.vertexOutDeclaration = "struct "+"vertexOut{"+properties+"};"
+        v.vertexOut = getTypeFromFromStructDeclaration(declaration)
+        v.vertexOutDeclaration = declaration
         return v
     }
 }

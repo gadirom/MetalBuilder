@@ -87,14 +87,8 @@ struct ContentView: View {
                     .toTexture(targetTexture)
                     .vertexBuf(vertexBuffer, offset: 0)
                     .vertexBytes(context.$viewportSize, space: "constant")
-                    .vertexShader(VertexShader("vertexShader",
-                                  vertexOut:
-                    """
-                    struct RasterizerData{
-                        float4 position [[position]];
-                        float4 color; //[[flat]];   // - use this flag to disable color interpolation
-                    };
-                    """,
+                    .vertexShader(
+                        VertexShader("vertexShader",
                                   body:"""
                         RasterizerData out;
 
@@ -108,10 +102,27 @@ struct ContentView: View {
                         out.color = vertices[vertex_id].color;
 
                         return out;
-                    """))
-                    .fragmentShader(FragmentShader("fragmentShader", body:
+                    """)
+                        .vertexOut(
+                                                """
+                                                struct RasterizerData{
+                                                    float4 position [[position]];
+                                                    float4 color; //[[flat]];   // - use this flag to disable color interpolation
+                                                };
+                                                """
+                        )
+                    )
+                    .fragmentShader(FragmentShader("fragmentShader",
+                                                   fragmentOut:
                     """
-                        return in.color;
+                       struct FragmentOut{
+                           float4 color [[color(0)]];
+                       };
+                    """, body:
+                    """
+                        FragmentOut out;
+                        out.color = in.color;
+                        return out;
                     """))
 //                Render(vertex: "vertexShader", fragment: "fragmentShader", count: vertexCount)
 //                    .uniforms(uniforms)//, name: "uni")
