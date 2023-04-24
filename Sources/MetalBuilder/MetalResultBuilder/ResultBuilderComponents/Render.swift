@@ -62,15 +62,10 @@ public struct Render: MetalBuilderComponent, Renderable{
     var indexBufferOffset: Int = 0
     var indexedPrimitives = false
     
-    var _instanceCount: MetalBinding<Int>?
     var instanceCount: MetalBinding<Int>?{
-        get {
-            self._instanceCount
-        }
-        set {
-            if newValue != nil{
+        didSet {
+            if instanceCount != nil{
                 self.vertexArguments.append(MetalFunctionArgument.instanceID)
-                self._instanceCount = newValue
             }
         }
     }
@@ -111,7 +106,10 @@ public struct Render: MetalBuilderComponent, Renderable{
         self.vertexCount = count
         self.renderableData = renderableData
         
-        self.instanceCount = instanceCount
+        //Properties with didSet logic
+        defer {
+            self.instanceCount = instanceCount
+        }
     }
     
     public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
@@ -133,7 +131,10 @@ public struct Render: MetalBuilderComponent, Renderable{
         self.indexedPrimitives = true
         self.renderableData = renderableData
         
-        self.instanceCount = instanceCount
+        //Properties with didSet logic
+        defer {
+            self.instanceCount = instanceCount
+        }
     }
     
     mutating func setup() throws{
