@@ -142,13 +142,31 @@ final class RenderPass: MetalPass{
         }
         
         if component.indexedPrimitives{
-            renderPassEncoder.drawIndexedPrimitives(type: component.type,
-                                                    indexCount: component.indexCount.wrappedValue,
-                                                    indexType: indexType,
-                                                    indexBuffer: component.indexBuf!.mtlBuffer!,
-                                                    indexBufferOffset: component.indexBufferOffset)
+            if let instanceCount = component.instanceCount{
+                renderPassEncoder.drawIndexedPrimitives(type: component.type,
+                                                        indexCount: component.indexCount.wrappedValue,
+                                                        indexType: indexType,
+                                                        indexBuffer: component.indexBuf!.mtlBuffer!,
+                                                        indexBufferOffset: component.indexBufferOffset,
+                                                        instanceCount: instanceCount.wrappedValue)
+            }else{
+                renderPassEncoder.drawIndexedPrimitives(type: component.type,
+                                                        indexCount: component.indexCount.wrappedValue,
+                                                        indexType: indexType,
+                                                        indexBuffer: component.indexBuf!.mtlBuffer!,
+                                                        indexBufferOffset: component.indexBufferOffset)
+            }
         }else{
-            renderPassEncoder.drawPrimitives(type: component.type, vertexStart: component.vertexOffset, vertexCount: component.vertexCount)
+            if let instanceCount = component.instanceCount{
+                renderPassEncoder.drawPrimitives(type: component.type,
+                                                 vertexStart: component.vertexOffset,
+                                                 vertexCount: component.vertexCount,
+                                                 instanceCount: instanceCount.wrappedValue)
+            }else{
+                renderPassEncoder.drawPrimitives(type: component.type,
+                                                 vertexStart: component.vertexOffset,
+                                                 vertexCount: component.vertexCount)
+            }
         }
         
         if !encoderIsExternal || component.renderableData.lastPass{

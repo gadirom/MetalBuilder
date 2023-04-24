@@ -78,39 +78,57 @@ struct ContentView: View {
                 ComputeBlock(context: context,
                              particlesBuffer: $particlesBuffer,
                              vertexBuffer: $vertexBuffer,
-                             particleScale: $particleScale,
+                             //particleScale: $particleScale,
                              u: uniforms)
                 Render(indexBuffer: indexBuffer,
-                       indexCount: MetalBinding<Int>.constant(vertexIndexCount),
-                       instanceCount: MetalBinding<Int>.constant(1))
+                       indexCount: MetalBinding<Int>.constant(3),
+                       instanceCount: MetalBinding<Int>.constant(particleCount))
                     .uniforms(uniforms)//, name: "uni")
                     //.renderEncoder($renderEncoder, lastPass: true)
                     .toTexture(targetTexture)
-                    .vertexBuf(vertexBuffer, offset: 0)
+                    //.vertexBuf(vertexBuffer, offset: 0)
+                    .vertexBytes($particleScale, name: "scale")
+                    .vertexBuf(particlesBuffer)
                     .vertexBytes(context.$viewportSize, space: "constant")
                     .vertexShader(
                         VertexShader("vertexShader",
                                   body:"""
                         RasterizerData out;
+                    
+                        Particle particle = particles[instance_id];
+                        float size = particle.size*scale;
+                        float angle = particle.angle;
+                        float2 position = particle.position;
+                        float4 color = particle.color;
+                        
+                        switch(vertex_id){
+                        case 0: color = float4(color.rgb, 0.5); break;
+                        case 1: color = float4((color.rgb + u.color)/2., 0.5); break;
+                        case 2: color = float4(u.color, 1);
+                        }
 
-                        float2 pixelSpacePosition = vertices[vertex_id].position.xy;
+                        float pi = 3.14;
+
+                        float2 scA = sincos2(angle+pi*2/3*float(vertex_id));
+
+                        float2 pixelSpacePosition = position + size*scA;
 
                         float2 viewport = float2(viewportSize);
                         
                         out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
                         out.position.xy = pixelSpacePosition / (viewport / 2.0);
 
-                        out.color = vertices[vertex_id].color;
+                        out.color = color;
 
                         return out;
                     """)
                         .vertexOut(
-                                                """
-                                                struct RasterizerData{
-                                                    float4 position [[position]];
-                                                    float4 color; //[[flat]];   // - use this flag to disable color interpolation
-                                                };
-                                                """
+                    """
+                    struct RasterizerData{
+                        float4 position [[position]];
+                        float4 color; //[[flat]];   // - use this flag to disable color interpolation
+                    };
+                    """
                         )
                     )
                     .fragmentShader(FragmentShader("fragmentShader",

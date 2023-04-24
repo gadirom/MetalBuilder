@@ -37,7 +37,7 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     @MetalBuffer<Particle>(metalName: "particles") var particlesBuffer
     @MetalBuffer<Vertex>(metalName: "vertices") var vertexBuffer
     
-    @MetalBinding var particleScale: Float
+    //@MetalBinding var particleScale: Float
     
     let u: UniformsContainer
     
@@ -46,7 +46,7 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
                 .buffer(particlesBuffer, offset: 0, space: "device", fitThreads: true)
                 .buffer(vertexBuffer, offset: 0, space: "device")
                 .bytes(context.$viewportSize)
-                .bytes($particleScale, name: "scale")
+                //.bytes($particleScale, name: "scale")
                 .uniforms(u)
         }
    
@@ -58,26 +58,26 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
                                  uint count [[ threads_per_grid ]]){
     if(id>=count) return;
     Particle particle = particles[id];
-    float size = particle.size*scale;
-    float angle = particle.angle;
-    float2 position = particle.position;
-    float4 color = particle.color;
-
-    int j = id * 3;
-
-    vertices[j].color = float4(color.rgb, 0.5);
-    vertices[j+1].color = float4((color.rgb + u.color)/2., 0.5);
-    vertices[j+2].color = float4(u.color, 1);
-
-    float pi = 3.14;
-
-    float2 scA = sincos2(angle);
-    float2 scA23 = sincos2(angle+pi*2/3);
-    float2 scA43 = sincos2(angle+pi*4/3);
-
-    vertices[j].position = position + size*scA;
-    vertices[j+1].position = position + size*scA23;
-    vertices[j+2].position = position + size*scA43;
+    //    float size = particle.size*scale;
+    //    float angle = particle.angle;
+        float2 position = particle.position;
+    //    float4 color = particle.color;
+    //
+    //    int j = id * 3;
+    //
+    //    vertices[j].color = float4(color.rgb, 0.5);
+    //    vertices[j+1].color = float4((color.rgb + u.color)/2., 0.5);
+    //    vertices[j+2].color = float4(u.color, 1);
+    //
+       float pi = 3.14;
+    //
+    //    float2 scA = sincos2(angle);
+    //    float2 scA23 = sincos2(angle+pi*2/3);
+    //    float2 scA43 = sincos2(angle+pi*4/3);
+    //
+    //    vertices[j].position = position + size*scA;
+    //    vertices[j+1].position = position + size*scA23;
+    //    vertices[j+2].position = position + size*scA43;
 
     float2 viewport = float2(viewportSize);
 

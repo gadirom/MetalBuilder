@@ -61,13 +61,16 @@ public struct Render: MetalBuilderComponent, Renderable{
     var indexCount: MetalBinding<Int> = MetalBinding<Int>.constant(0)
     var indexBufferOffset: Int = 0
     var indexedPrimitives = false
+    
+    var _instanceCount: MetalBinding<Int>?
     var instanceCount: MetalBinding<Int>?{
         get {
-            indexCount
+            self._instanceCount
         }
         set {
             if newValue != nil{
                 self.vertexArguments.append(MetalFunctionArgument.instanceID)
+                self._instanceCount = newValue
             }
         }
     }
