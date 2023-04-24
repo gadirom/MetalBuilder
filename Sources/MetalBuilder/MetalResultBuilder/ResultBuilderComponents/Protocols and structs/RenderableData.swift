@@ -10,7 +10,8 @@ public struct RenderableData{
                 passDepthAttachment: DepthAttachment? = nil,
                 stencilReferenceValue: UInt32? = nil,
                 pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil,
-                viewport: Binding<MTLViewport>? = nil) {
+                viewport: MetalBinding<MTLViewport>? = nil,
+                depthBias: MetalBinding<DepthBias>? = nil) {
         self.passRenderEncoder = passRenderEncoder
         self.lastPass = lastPass
         self.passColorAttachments = passColorAttachments
@@ -19,6 +20,7 @@ public struct RenderableData{
         self.stencilReferenceValue = stencilReferenceValue
         self.pipelineColorAttachment = pipelineColorAttachment
         self.viewport = viewport
+        self.depthBias = depthBias
     }
     
     public var passRenderEncoder: MetalRenderPassEncoderContainer?
@@ -29,7 +31,8 @@ public struct RenderableData{
     public var passDepthAttachment: DepthAttachment?
     public var stencilReferenceValue: UInt32?
     public var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
-    public var viewport: Binding<MTLViewport>?
+    public var viewport: MetalBinding<MTLViewport>?
+    public var depthBias: MetalBinding<DepthBias>?
 }
 
 public extension RenderableData{
@@ -38,6 +41,9 @@ public extension RenderableData{
         self.lastPass = data.lastPass
         self.passColorAttachments = data.passColorAttachments
         self.viewport = data.viewport
+        if let depthBias = data.depthBias{
+            self.depthBias = depthBias
+        }
         if let depthStencilState = data.depthStencilState{
             self.depthStencilState = depthStencilState
         }
@@ -136,4 +142,11 @@ public struct DepthAttachment{
         }
         return d
     }
+}
+
+/// Structure for setting depth bias for a render command encoder.
+public struct DepthBias{
+    var depthBias: Float
+    var slopeScale: Float
+    var clamp: Float
 }

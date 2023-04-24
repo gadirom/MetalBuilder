@@ -298,9 +298,25 @@ public extension MetalBuilderComponent where Self: Renderable{
         r.renderableData.lastPass = lastPass
         return r
     }
-    func viewport(_ viewport: Binding<MTLViewport>)->Self{
+    func viewport(_ viewport: MetalBinding<MTLViewport>)->Self{
         var r = self
         r.renderableData.viewport = viewport
+        return r
+    }
+    func depthBias(_ bias: MetalBinding<DepthBias>)->Self{
+        var r = self
+        r.renderableData.depthBias = bias
+        return r
+    }
+    func depthBias(_ bias: DepthBias)->Self{
+        var r = self
+        r.renderableData.depthBias = MetalBinding.constant(bias)
+        return r
+    }
+    func depthBias(_ depthBias: Float, slopeScale: Float, clamp: Float)->Self{
+        var r = self
+        let bias = DepthBias(depthBias: depthBias, slopeScale: slopeScale, clamp: clamp)
+        r.renderableData.depthBias = MetalBinding.constant(bias)
         return r
     }
 }

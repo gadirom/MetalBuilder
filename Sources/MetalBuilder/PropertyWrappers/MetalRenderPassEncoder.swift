@@ -99,6 +99,10 @@ extension MTLRenderCommandEncoder{
             setDepthStencilState(depthStencilState.state)
         }
         
+        if let depthBias = renderableData.depthBias?.wrappedValue {
+            setDepthBias(depthBias.depthBias, slopeScale: depthBias.slopeScale, clamp: depthBias.clamp)
+        }
+        
         //set stencil reference value
         if let stencilReferenceValue = renderableData.stencilReferenceValue{
             setStencilReferenceValue(stencilReferenceValue)
