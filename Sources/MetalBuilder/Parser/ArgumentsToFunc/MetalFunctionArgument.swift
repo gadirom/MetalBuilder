@@ -9,13 +9,15 @@ case bufferArgumentError(String), textureArgumentError(String)
 public enum MetalFunctionArgument{
     case texture(MetalTextureArgument),
          buffer(MetalBufferArgument),
-         bytes(MetalBytesArgument)
+         bytes(MetalBytesArgument),
+         instanceID
     
     func string() throws -> String{
         switch self{
         case .texture(let arg): return try arg.string()
         case .buffer(let arg): return arg.string
         case .bytes(let arg): return arg.string
+        case .instanceID: return "uint instance_id [[instance_id]]"
         }
     }
     var index: Int{
@@ -23,6 +25,7 @@ public enum MetalFunctionArgument{
         case .texture(let arg): return arg.index!
         case .buffer(let arg): return arg.index!
         case .bytes(let arg): return arg.index!
+        case .instanceID: return -1 // no index for instanceID
         }
     }
 }

@@ -61,7 +61,16 @@ public struct Render: MetalBuilderComponent, Renderable{
     var indexCount: MetalBinding<Int> = MetalBinding<Int>.constant(0)
     var indexBufferOffset: Int = 0
     var indexedPrimitives = false
-    var instanceCount: Int?
+    var instanceCount: MetalBinding<Int>?{
+        get {
+            indexCount
+        }
+        set {
+            if newValue != nil{
+                self.vertexArguments.append(MetalFunctionArgument.instanceID)
+            }
+        }
+    }
     
     var indexBuf: BufferProtocol?
     
@@ -87,7 +96,7 @@ public struct Render: MetalBuilderComponent, Renderable{
     
     public init(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                 offset: Int = 0, count: Int = 3, source: String="",
-                instanceCount: Int? = nil,
+                instanceCount: MetalBinding<Int>? = nil,
                 renderableData: RenderableData = RenderableData()){
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -105,7 +114,7 @@ public struct Render: MetalBuilderComponent, Renderable{
     public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                    indexBuffer: MTLBufferContainer<T>,
                    indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String="",
-                   instanceCount: Int? = nil,
+                   instanceCount: MetalBinding<Int>? = nil,
                    renderableData: RenderableData = RenderableData()){
         self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)
         

@@ -81,7 +81,8 @@ struct ContentView: View {
                              particleScale: $particleScale,
                              u: uniforms)
                 Render(indexBuffer: indexBuffer,
-                       indexCount: MetalBinding<Int>.constant(vertexIndexCount))
+                       indexCount: MetalBinding<Int>.constant(vertexIndexCount),
+                       instanceCount: MetalBinding<Int>.constant(1))
                     .uniforms(uniforms)//, name: "uni")
                     //.renderEncoder($renderEncoder, lastPass: true)
                     .toTexture(targetTexture)

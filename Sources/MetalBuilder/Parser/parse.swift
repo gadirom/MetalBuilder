@@ -22,8 +22,7 @@ func parse(library: inout String,
 
     for funcAndArgID in funcArguments.indices{
         for argID in funcArguments[funcAndArgID].arguments.indices{
-            let arg = funcArguments[funcAndArgID]
-                .arguments[argID]
+            let arg = funcArguments[funcAndArgID].arguments[argID]
             switch arg{
             case .buffer(let buf):
                 let type = buf.swiftTypeToMetal
@@ -43,8 +42,6 @@ func parse(library: inout String,
                            .arguments[argID] = argNew
                     }
                 }
-                
-                
             case .bytes(let bytes):
                 let metalDeclaration: MetalTypeDeclaration?
                 let type = bytes.swiftTypeToMetal
@@ -89,7 +86,6 @@ func parse(library: inout String,
                            .arguments[argID] = argNew
                     }
                 }
-                
             default: break
             }
        
