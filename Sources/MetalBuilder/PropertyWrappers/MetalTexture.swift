@@ -6,6 +6,10 @@ import MetalKit
 public final class MetalTexture{
     public var wrappedValue: MTLTextureContainer
     
+    public var projectedValue: MetalTexture{
+        self
+    }
+    
     public init(wrappedValue: MTLTextureContainer){
         self.wrappedValue = wrappedValue
     }
