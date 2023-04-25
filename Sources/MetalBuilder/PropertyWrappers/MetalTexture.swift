@@ -165,17 +165,17 @@ public extension TextureDescriptor{
     func type(_ type: MTLTextureType) -> TextureDescriptor {
         var d = self
         d.type = type
-        return self
+        return d
     }
     func arrayLength(_ n: Int) -> TextureDescriptor {
         var d = self
         d.arrayLength = n
-        return self
+        return d
     }
     func usage(_ usage: MTLTextureUsage) -> TextureDescriptor {
         var d = self
         d.usage = usage
-        return self
+        return d
     }
     func pixelFormat(_ pixelFormat: MTLPixelFormat) -> TextureDescriptor {
         var d = self
