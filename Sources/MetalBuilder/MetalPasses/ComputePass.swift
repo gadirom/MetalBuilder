@@ -44,7 +44,7 @@ final class ComputePass: MetalPass{
                 throw MetalBuilderComputeError
                     .gridFitTextureIsNil("fitTextrure for threads dispatching for the kernel: "+component.kernel+" is nil!")
             }
-            size = MTLSize(width: texture.width, height: texture.height, depth: 1)
+            size = MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
         case .size(let s):
             size = s.wrappedValue
         case .drawable: size = MTLSize(width: drawable!.texture.width, height: drawable!.texture.height, depth: 1)
@@ -64,7 +64,7 @@ final class ComputePass: MetalPass{
         threadsPerThreadGroup = MTLSize(width: w, height: h, depth: 1)
         threadGroupsPerGrid = MTLSize(
             width: Int(ceil(Double(size.width)/Double(w))),
-            height: Int(ceil(Double(size.height)/Double(h))), depth: 1)
+            height: Int(ceil(Double(size.height)/Double(h))), depth: size.depth)
     }
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()
