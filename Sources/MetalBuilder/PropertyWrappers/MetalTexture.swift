@@ -105,7 +105,7 @@ public extension MTLTextureContainer{
 }
 
 public enum TextureSize{
-case fixed(CGSize), fromViewport(Double)
+case fixed(MTLSize), fromViewport(Double)
 }
 
 public enum TexturePixelFormat{
@@ -132,18 +132,20 @@ public struct TextureDescriptor{
         d.usage = usage
         
         //Determine size
-        var s: (Int, Int)?
+        var s: MTLSize?
         if size == nil{ size = .fromViewport(1) }
         switch size! {
-        case .fixed(let size): s = (Int(size.width), Int(size.height))
+        case .fixed(let size): s = size
         case .fromViewport(let scale):
-            s = (Int(Double(viewportSize.x)*scale),
-                 Int(Double(viewportSize.y)*scale))
+            s = MTLSize(width: Int(Double(viewportSize.x)*scale),
+                        height: Int(Double(viewportSize.y)*scale),
+                        depth: 1)
         }
         guard let size = s
         else{ return nil }
-        d.width = size.0
-        d.height = size.1
+        d.width = size.width
+        d.height = size.height
+        d.depth = size.depth
         
         //Determine PixelFormat
         var pf: MTLPixelFormat
@@ -187,7 +189,13 @@ public extension TextureDescriptor{
     }
     func fixedSize(_ size: CGSize) -> TextureDescriptor {
         var d = self
-        d.size = .fixed(size)
+        let mtlSize = MTLSize(width: Int(size.width), height: Int(size.height), depth: 1)
+        d = fixedSize(mtlSize)
+        return d
+    }
+    func fixedSize(_ mtlSize: MTLSize) -> TextureDescriptor {
+        var d = self
+        d.size = .fixed(mtlSize)
         return d
     }
     func sizeFromViewport(scaled: Double = 1) -> TextureDescriptor {
