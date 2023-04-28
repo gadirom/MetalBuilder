@@ -61,6 +61,16 @@ public func metalType(for swiftType: Any.Type)->String?{
     case is SIMD3<Int>.Type: return "long3"
     case is SIMD4<Int>.Type: return "long4"
         
+    case is UInt16.Type: return "ushort"
+    case is SIMD2<UInt16>.Type: return "ushort2"
+    case is SIMD3<UInt16>.Type: return "ushort3"
+    case is SIMD4<UInt16>.Type: return "ushort4"
+        
+    case is Int16.Type: return "ushort"
+    case is SIMD2<Int16>.Type: return "ushort2"
+    case is SIMD3<Int16>.Type: return "ushort3"
+    case is SIMD4<Int16>.Type: return "ushort4"
+        
     case is Float.Type: return "float"
     case is SIMD2<Float>.Type: return "float2"
     case is SIMD3<Float>.Type: return "float3"
