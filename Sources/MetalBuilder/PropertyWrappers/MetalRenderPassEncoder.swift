@@ -107,5 +107,13 @@ extension MTLRenderCommandEncoder{
         if let stencilReferenceValue = renderableData.stencilReferenceValue{
             setStencilReferenceValue(stencilReferenceValue)
         }
+        
+        //Face CullMode
+        if let cullMode = renderableData.cullMode?.wrappedValue{
+            setCullMode(cullMode.mtlCullMode)
+            if let frontFacingWinding = cullMode.frontFacingWinding{
+                setFrontFacing(frontFacingWinding)
+            }
+        }
     }
 }

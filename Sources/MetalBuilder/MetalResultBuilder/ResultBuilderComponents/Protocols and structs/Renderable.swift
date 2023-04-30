@@ -309,14 +309,19 @@ public extension MetalBuilderComponent where Self: Renderable{
         return r
     }
     func depthBias(_ bias: DepthBias)->Self{
-        var r = self
-        r.renderableData.depthBias = MetalBinding.constant(bias)
-        return r
+        return self.depthBias(MetalBinding.constant(bias))
     }
     func depthBias(_ depthBias: Float, slopeScale: Float, clamp: Float)->Self{
-        var r = self
         let bias = DepthBias(depthBias: depthBias, slopeScale: slopeScale, clamp: clamp)
-        r.renderableData.depthBias = MetalBinding.constant(bias)
+        return self.depthBias(bias)
+    }
+    func cullMode(_ cullMode: MetalBinding<CullMode>)->Self{
+        var r = self
+        r.renderableData.cullMode = cullMode
         return r
+    }
+    func cullMode(_ mtlCullMode: MTLCullMode, frontFacingWinding: MTLWinding?=nil)->Self{
+        let cullMode = CullMode(mtlCullMode: mtlCullMode, frontFacingWinding: frontFacingWinding)
+        return self.cullMode(MetalBinding<CullMode>.constant(cullMode))
     }
 }

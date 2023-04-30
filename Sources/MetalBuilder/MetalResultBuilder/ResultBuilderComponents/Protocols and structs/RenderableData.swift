@@ -2,30 +2,32 @@ import MetalKit
 import SwiftUI
 
 public struct RenderableData{
-    public init(passRenderEncoder: MetalRenderPassEncoderContainer? = nil,
-                lastPass: Bool = false,
-                passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
-                depthStencilState: MetalDepthStencilStateContainer? = nil,
-                passStencilAttachment: StencilAttachment? = nil,
-                passDepthAttachment: DepthAttachment? = nil,
-                stencilReferenceValue: UInt32? = nil,
-                pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil,
-                viewport: MetalBinding<MTLViewport>? = nil,
-                depthBias: MetalBinding<DepthBias>? = nil) {
-        self.passRenderEncoder = passRenderEncoder
-        self.lastPass = lastPass
-        self.passColorAttachments = passColorAttachments
-        self.depthStencilState = depthStencilState
-        self.passStencilAttachment = passStencilAttachment
-        self.stencilReferenceValue = stencilReferenceValue
-        self.pipelineColorAttachment = pipelineColorAttachment
-        self.viewport = viewport
-        self.depthBias = depthBias
+    public init(){
     }
+//    public init(passRenderEncoder: MetalRenderPassEncoderContainer? = nil,
+//                lastPass: Bool = false,
+//                passColorAttachments: [Int : ColorAttachment] = defaultColorAttachments,
+//                depthStencilState: MetalDepthStencilStateContainer? = nil,
+//                passStencilAttachment: StencilAttachment? = nil,
+//                passDepthAttachment: DepthAttachment? = nil,
+//                stencilReferenceValue: UInt32? = nil,
+//                pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor? = nil,
+//                viewport: MetalBinding<MTLViewport>? = nil,
+//                depthBias: MetalBinding<DepthBias>? = nil) {
+//        self.passRenderEncoder = passRenderEncoder
+//        self.lastPass = lastPass
+//        self.passColorAttachments = passColorAttachments
+//        self.depthStencilState = depthStencilState
+//        self.passStencilAttachment = passStencilAttachment
+//        self.stencilReferenceValue = stencilReferenceValue
+//        self.pipelineColorAttachment = pipelineColorAttachment
+//        self.viewport = viewport
+//        self.depthBias = depthBias
+//    }
     
     public var passRenderEncoder: MetalRenderPassEncoderContainer?
     public var lastPass = false
-    public var passColorAttachments: [Int: ColorAttachment]
+    public var passColorAttachments: [Int: ColorAttachment] = defaultColorAttachments
     public var depthStencilState: MetalDepthStencilStateContainer?
     public var passStencilAttachment: StencilAttachment?
     public var passDepthAttachment: DepthAttachment?
@@ -33,6 +35,7 @@ public struct RenderableData{
     public var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
     public var viewport: MetalBinding<MTLViewport>?
     public var depthBias: MetalBinding<DepthBias>?
+    public var cullMode: MetalBinding<CullMode>?
 }
 
 public extension RenderableData{
@@ -41,6 +44,9 @@ public extension RenderableData{
         self.lastPass = data.lastPass
         self.passColorAttachments = data.passColorAttachments
         self.viewport = data.viewport
+        if let cullMode = data.cullMode{
+            self.cullMode = cullMode
+        }
         if let depthBias = data.depthBias{
             self.depthBias = depthBias
         }
@@ -149,4 +155,10 @@ public struct DepthBias{
     var depthBias: Float
     var slopeScale: Float
     var clamp: Float
+}
+
+/// Structure that containg face culling information
+public struct CullMode{
+    var mtlCullMode: MTLCullMode
+    var frontFacingWinding: MTLWinding?
 }
