@@ -103,6 +103,9 @@ public func metalType(for swiftType: Any.Type)->String?{
     case is simd_float4x3.Type: return "float4x3"
     case is simd_float4x4.Type: return "float4x4"
         
+    case is MTLPackedFloat3.Type: return "packed_float3"
+    case is MTLPackedFloat4x3.Type: return "packed_float4x3"
+        
     default:
         return nil
     }
