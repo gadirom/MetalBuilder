@@ -33,14 +33,18 @@ public final class MetalBuffer<T>{
     /// the 'metalName' argument will be ignored.
     public init(count: Int? = nil,
                 metalType: String? = nil,
-                metalName: String? = nil){
-        self.wrappedValue = MTLBufferContainer<T>(count: count, metalType: metalType, metalName: metalName)
+                metalName: String? = nil,
+                options: MTLResourceOptions = .init()){
+        self.wrappedValue = MTLBufferContainer<T>(count: count,
+                                                  metalType: metalType,
+                                                  metalName: metalName,
+                                                  options: options)
     }
     public init(_ descriptor: BufferDescriptor){
         self.wrappedValue = MTLBufferContainer<T>(count: descriptor.count,
                                                   metalType: descriptor.metalType,
                                                   metalName: descriptor.metalName,
-                                                  bufferOptions: descriptor.bufferOptions)
+                                                  options: descriptor.bufferOptions)
     }
 }
 
@@ -54,12 +58,12 @@ public struct BufferDescriptor{
     public init(count: Int? = nil,
                 metalType: String? = nil,
                 metalName: String? = nil,
-                bufferOptions: MTLResourceOptions = .init()){
+                options: MTLResourceOptions = .init()){
         self.count = count
         self.metalName = metalName
         self.metalType = metalType
         
-        self.bufferOptions = bufferOptions
+        self.bufferOptions = options
     }
 }
 public extension BufferDescriptor{
@@ -129,13 +133,13 @@ public final class MTLBufferContainer<T>: BufferContainer{
     private var _count: Int?
     
     public init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil,
-                bufferOptions: MTLResourceOptions = .init()){
+                options: MTLResourceOptions = .init()){
         super.init()
         self.metalType = metalType
         self.metalName = metalName
         self._count = count
         
-        self.bufferOptions = bufferOptions
+        self.bufferOptions = options
     }
     
     /// Creates a new buffer for the container
