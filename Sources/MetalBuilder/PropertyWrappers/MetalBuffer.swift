@@ -37,7 +37,10 @@ public final class MetalBuffer<T>{
         self.wrappedValue = MTLBufferContainer<T>(count: count, metalType: metalType, metalName: metalName)
     }
     public init(_ descriptor: BufferDescriptor){
-        self.wrappedValue = MTLBufferContainer<T>(count: descriptor.count, metalType: descriptor.metalType, metalName: descriptor.metalName)
+        self.wrappedValue = MTLBufferContainer<T>(count: descriptor.count,
+                                                  metalType: descriptor.metalType,
+                                                  metalName: descriptor.metalName,
+                                                  bufferOptions: descriptor.bufferOptions)
     }
 }
 
@@ -45,13 +48,18 @@ public struct BufferDescriptor{
     var count: Int?
     var metalType: String?
     var metalName: String?
+    
+    var bufferOptions: MTLResourceOptions = .init()
 
     public init(count: Int? = nil,
                 metalType: String? = nil,
-                metalName: String? = nil){
+                metalName: String? = nil,
+                bufferOptions: MTLResourceOptions = .init()){
         self.count = count
         self.metalName = metalName
         self.metalType = metalType
+        
+        self.bufferOptions = bufferOptions
     }
 }
 public extension BufferDescriptor{
@@ -68,6 +76,11 @@ public extension BufferDescriptor{
     func metalType(_ type: String) -> BufferDescriptor {
         var d = self
         d.metalType = type
+        return d
+    }
+    func options(_ options: MTLResourceOptions) -> BufferDescriptor {
+        var d = self
+        d.bufferOptions = options
         return d
     }
 }
@@ -102,6 +115,8 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     weak var device: MTLDevice?
     
+    public var bufferOptions: MTLResourceOptions = .init()
+    
     public override var count: Int?{
         get {
             _count
@@ -113,11 +128,14 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     private var _count: Int?
     
-    public override init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil){
+    public init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil,
+                bufferOptions: MTLResourceOptions = .init()){
         super.init()
         self.metalType = metalType
         self.metalName = metalName
         self._count = count
+        
+        self.bufferOptions = bufferOptions
     }
     
     /// Creates a new buffer for the container
@@ -135,7 +153,7 @@ public final class MTLBufferContainer<T>: BufferContainer{
             self._count = count
         }
         let length = elementSize!*count!
-        buffer = device.makeBuffer(length: length)
+        buffer = device.makeBuffer(length: length, options: bufferOptions)
         if let buffer = buffer{
             pointer = buffer.contents().bindMemory(to: T.self, capacity: length)
         }else{
