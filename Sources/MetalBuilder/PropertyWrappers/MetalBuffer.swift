@@ -158,8 +158,16 @@ public final class MTLBufferContainer<T>: BufferContainer{
         }
         let length = elementSize!*count!
         buffer = device.makeBuffer(length: length, options: bufferOptions)
+        
+        let cpuAccessible = ((bufferOptions.rawValue & MTLResourceOptions.storageModeShared.rawValue) != 0) ||
+                            ((bufferOptions.rawValue & MTLResourceOptions.cpuCacheModeWriteCombined.rawValue) != 0) ||
+                            (bufferOptions == .init()) // Seems like the empty option means "shared"
+        
         if let buffer = buffer{
-            pointer = buffer.contents().bindMemory(to: T.self, capacity: length)
+            //create the pointer to the buffer only if its created with a storage mode that allows to acces it from CPU
+            if cpuAccessible{
+                pointer = buffer.contents().bindMemory(to: T.self, capacity: length)
+            }
         }else{
             throw MetalBuilderBufferError
                 .bufferNotCreated
