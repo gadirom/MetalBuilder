@@ -120,6 +120,7 @@ public struct TextureDescriptor{
     public var arrayLength: Int = 1
     public var usage: MTLTextureUsage = [.shaderRead, .shaderWrite, .renderTarget]
     
+    public var storageMode: MTLStorageMode = .private
     
     public init() {}
     
@@ -130,6 +131,7 @@ public struct TextureDescriptor{
         d.textureType = type
         d.arrayLength = arrayLength
         d.usage = usage
+        d.storageMode = storageMode
         
         //Determine size
         var s: MTLSize?
@@ -201,6 +203,11 @@ public extension TextureDescriptor{
     func sizeFromViewport(scaled: Double = 1) -> TextureDescriptor {
         var d = self
         d.size = .fromViewport(scaled)
+        return d
+    }
+    func storageMode(_ storageMode: MTLStorageMode) -> TextureDescriptor {
+        var d = self
+        d.storageMode = storageMode
         return d
     }
 }
