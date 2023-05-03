@@ -68,7 +68,7 @@ extension MetalBuilderViewSettings{
         if let depthStencilAttachmentTextureUsage = self.depthStencilAttachmentTextureUsage{
             view.depthStencilAttachmentTextureUsage = depthStencilAttachmentTextureUsage
         }
-        if #available(iOS 16.0, *) {
+        if #available(iOS 16.0, macOS 13.0, *){
             if let depthStencilStorageMode = self.depthStencilStorageMode{
                 view.depthStencilStorageMode = depthStencilStorageMode
             }
