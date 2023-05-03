@@ -8,6 +8,7 @@ public struct MetalBuilderViewSettings{
                 stencilPixelFormat: MTLPixelFormat? = nil,
                 clearStencil: UInt32? = nil,
                 depthStencilAttachmentTextureUsage: MTLTextureUsage? = nil,
+                depthStencilStorageMode: MTLStorageMode? = nil,
                 clearColor: MTLClearColor? = nil,
                 framebufferOnly: Bool? = nil,
                 preferredFramesPerSecond: Int? = nil) {
@@ -26,6 +27,7 @@ public struct MetalBuilderViewSettings{
     var clearStencil: UInt32?
     
     var depthStencilAttachmentTextureUsage: MTLTextureUsage?
+    var depthStencilStorageMode: MTLStorageMode?
     
     var clearColor: MTLClearColor?
     
@@ -64,6 +66,11 @@ extension MetalBuilderViewSettings{
         }
         if let depthStencilAttachmentTextureUsage = self.depthStencilAttachmentTextureUsage{
             view.depthStencilAttachmentTextureUsage = depthStencilAttachmentTextureUsage
+        }
+        if #available(iOS 16.0, *) {
+            if let depthStencilStorageMode = self.depthStencilStorageMode{
+                view.depthStencilStorageMode = depthStencilStorageMode
+            }
         }
     }
 }
