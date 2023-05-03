@@ -17,6 +17,7 @@ public struct MetalBuilderViewSettings{
         self.clearDepth = clearDepth
         self.clearStencil = clearStencil
         self.depthStencilAttachmentTextureUsage = depthStencilAttachmentTextureUsage
+        self.depthStencilStorageMode = depthStencilStorageMode
         self.clearColor = clearColor
         self.framebufferOnly = framebufferOnly
         self.preferredFramesPerSecond = preferredFramesPerSecond
