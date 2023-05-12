@@ -273,6 +273,11 @@ public extension Compute{
         c.gridFit = .fitTexture(fitTexture)
         return c
     }
+    func gridFitDrawable()->Compute{
+        var c = self
+        c.gridFit = .drawable
+        return c
+    }
     func threadsFromBuffer(_ index: Int)->Compute{
         var c = self
         c.gridFit = .buffer(index)
