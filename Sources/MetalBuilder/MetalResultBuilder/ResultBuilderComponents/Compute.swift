@@ -236,18 +236,21 @@ public extension Compute{
     /// Passes a drawable texture to the compute kernel.
     /// - Parameters:
     ///   - argument: The texture argument describing the declaration that should be added to the kernel.
+    ///   - fitThreads: Indicates whether the threads for the kernel should be dispatched to fit the drawable texture.
     ///
     /// This method adds a drawable texture to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func drawableTexture(argument: MetalTextureArgument)->Compute{
+    func drawableTexture(argument: MetalTextureArgument, fitThreads: Bool = true)->Compute{
         var c = self
         var argument = argument
         argument.index = checkTextureIndex(c: &c, index: argument.index)
         argument.textureType = .type2D
         c.kernelArguments.append(.texture(argument))
         c.drawableTextureIndex = argument.index
-        c.gridFit = .drawable
+        if fitThreads{
+            c.gridFit = .drawable
+        }
         return c
     }
     func grid(size: MetalBinding<Int>)->Compute{
