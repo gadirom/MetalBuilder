@@ -12,13 +12,13 @@ public protocol MetalBuildingBlock: MetalBuilderComponent{
     var compileOptions: MetalBuilderCompileOptions? { get }
     @MetalResultBuilder var metalContent: MetalContent{ get }
     func setup()
-    func startup()
+    func startup(device: MTLDevice)
 }
 
 public extension MetalBuildingBlock{
     func setup(){
     }
-    func startup(){
+    func startup(device: MTLDevice){
     }
 }
 

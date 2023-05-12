@@ -59,7 +59,7 @@ public extension MetalBuilderRenderer{
                      options: MetalBuilderCompileOptions = .default,
                      renderingContent: MetalBuilderContent,
                      setupFunction: (()->())?,
-                     startupFunction: (()->())?) throws{
+                     startupFunction: ((MTLDevice)->())?) throws{
         
         self.init()
         

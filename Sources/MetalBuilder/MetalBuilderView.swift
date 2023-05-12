@@ -15,7 +15,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     
     var onResizeCode: ((CGSize)->())?
     var setupFunction: (()->())?
-    var startupFunction: (()->())?
+    var startupFunction: ((MTLDevice)->())?
     
     /// The wrapper for MTKView that takes `MetalBuilderContent` to dispatch
     /// - Parameters:
@@ -110,7 +110,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         var isDrawing = false
         var onResizeCode: ((CGSize)->())?
         var setupFunction: (()->())?
-        var startupFunction: (()->())?
+        var startupFunction: ((MTLDevice)->())?
         
         var viewSettings = MetalBuilderViewSettings()
         

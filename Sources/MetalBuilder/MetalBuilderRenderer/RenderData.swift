@@ -34,7 +34,7 @@ struct RenderData{
     var setupFunctions: [()->()] = []
     //functions that run after textures and buffers are created but before rendering
     //(actually, when rendering is already started since some textures cannot be created before you get a drawable)
-    var startupFunctions: [()->()] = []
+    var startupFunctions: [(MTLDevice)->()] = []
     
     //hold hashes for librarySources of BuildingBlocks and Render components to eliminate dublicates
     static var librarySourceHashes: [Int] = []
@@ -50,7 +50,7 @@ struct RenderData{
          context: MetalBuilderRenderingContext,
          renderInfo: GlobalRenderInfo,
          setupFunction: (()->())?,
-         startupFunction: (()->())?) throws{
+         startupFunction: ((MTLDevice)->())?) throws{
         
         self.context = context
         //self.device = device
@@ -350,7 +350,7 @@ struct RenderData{
                 
                 for sf in startupFunctions{
                     DispatchQueue.main.async{
-                        sf()
+                        sf(device)
                     }
                 }
                 

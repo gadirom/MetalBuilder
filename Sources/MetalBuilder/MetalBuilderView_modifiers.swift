@@ -17,7 +17,7 @@ public extension MetalBuilderView{
         v.setupFunction = perform
         return v
     }
-    func onStartup(perform: @escaping ()->())->MetalBuilderView{
+    func onStartup(perform: @escaping (MTLDevice)->())->MetalBuilderView{
         var v = self
         v.startupFunction = perform
         return v
