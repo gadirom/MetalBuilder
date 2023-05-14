@@ -9,6 +9,9 @@ enum GridFit{
          drawable,
          buffer(Int)
 }
+
+public typealias AdditionalEncodeClosureForCompute = (MTLComputeCommandEncoder)->()
+
 /// The component for dispatching compute kernels.
 public struct Compute: MetalBuilderComponent{
     
@@ -28,6 +31,8 @@ public struct Compute: MetalBuilderComponent{
     var uniforms: [UniformsContainer] = []
     
     var librarySource: String = ""
+    
+    var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForCompute>?
     
     public init(_ kernel: String, source: String = ""){
         self.kernel = kernel
@@ -286,6 +291,28 @@ public extension Compute{
     func source(_ source: String)->Compute{
         var c = self
         c.librarySource = source
+        return c
+    }
+    /// Modifier for setting additional encode closure for Render component.
+    /// - Parameter closureBinding: MetalBinding to a closure for additional encode logic.
+    /// - Returns: Render component with the added additional encode logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal encoding is performed
+    /// right before the dispatch or before encoding of the next component.
+    func additionalEncode(_ closureBinding: MetalBinding<AdditionalEncodeClosureForCompute>)->Compute{
+        var c = self
+        c.additionalEncodeClosure = closureBinding
+        return c
+    }
+    /// Modifier for setting additional encode closure for Render component.
+    /// - Parameter closure: Closure for additional encode logic.
+    /// - Returns: Render component with the added additional encode logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal encoding is performed
+    /// right before the dispatch or before encoding of the next component.
+    func additionalEncode(_ closure: @escaping AdditionalEncodeClosureForCompute)->Compute{
+        var c = self
+        c.additionalEncodeClosure = MetalBinding<AdditionalEncodeClosureForCompute>.constant(closure)
         return c
     }
 }

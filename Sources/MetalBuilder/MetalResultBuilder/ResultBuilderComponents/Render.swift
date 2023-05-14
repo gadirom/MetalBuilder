@@ -5,6 +5,8 @@ enum MetalDSPRenderSetupError: Error{
     //case noGridFit(String)
 }
 
+public typealias AdditionalEncodeClosureForRender = (MTLRenderCommandEncoder)->()
+
 /// The component for rendering primitives.
 ///
 /// With this component you render points, triangles and lines on the screen.
@@ -61,6 +63,8 @@ public struct Render: MetalBuilderComponent, Renderable{
     var indexCount: MetalBinding<Int> = MetalBinding<Int>.constant(0)
     var indexBufferOffset: Int = 0
     var indexedPrimitives = false
+    
+    var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForRender>?
     
     var instanceCount: MetalBinding<Int>?{
         didSet {
@@ -451,6 +455,7 @@ public extension Render{
 public extension Render{
     /// The modifier for passing the source code of vertex and fragment shaders to a Render component
     /// - Parameter source: The String containing the code
+    /// - Returns: The Render component with the added source code.
     ///
     /// The source code should obey the following structure:
     /// - 1. declaration of the vertex shader's output C-structure
@@ -468,6 +473,28 @@ public extension Render{
     func instanceCount(_ count: MetalBinding<Int>)->Render{
         var r = self
         r.instanceCount = count
+        return r
+    }
+    /// Modifier for setting additional encode closure for Render component.
+    /// - Parameter closureBinding: MetalBinding to a closure for additional encode logic.
+    /// - Returns: Render component with the added additional encode logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal encoding is performed
+    /// right before the dispatch or before encoding of the next component.
+    func additionalEncode(_ closureBinding: MetalBinding<AdditionalEncodeClosureForRender>)->Render{
+        var r = self
+        r.additionalEncodeClosure = closureBinding
+        return r
+    }
+    /// Modifier for setting additional encode closure for Render component.
+    /// - Parameter closure: Closure for additional encode logic.
+    /// - Returns: Render component with the added additional encode logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal encoding is performed
+    /// right before the dispatch or before encoding of the next component.
+    func additionalEncode(_ closure: @escaping AdditionalEncodeClosureForRender)->Render{
+        var r = self
+        r.additionalEncodeClosure = MetalBinding<AdditionalEncodeClosureForRender>.constant(closure)
         return r
     }
 }

@@ -96,6 +96,11 @@ final class ComputePass: MetalPass{
         if let index = component.drawableTextureIndex{
             computeCommandEncoder.setTexture(passInfo.drawable?.texture, index: index)
         }
+        
+        if let additionalEncodeClosure = component.additionalEncodeClosure?.wrappedValue{
+            additionalEncodeClosure(computeCommandEncoder)
+        }
+        
         //Set threads configuration
         try setGrid(passInfo.drawable)
         //Dispatch
