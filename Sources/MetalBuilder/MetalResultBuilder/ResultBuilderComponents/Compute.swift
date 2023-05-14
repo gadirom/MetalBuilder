@@ -293,9 +293,9 @@ public extension Compute{
         c.librarySource = source
         return c
     }
-    /// Modifier for setting additional encode closure for Render component.
+    /// Modifier for setting additional encode closure for Compute component.
     /// - Parameter closureBinding: MetalBinding to a closure for additional encode logic.
-    /// - Returns: Render component with the added additional encode logic.
+    /// - Returns: Compute component with the added additional encode logic.
     ///
     /// The closure provided in this modifier will run after all the internal encoding is performed
     /// right before the dispatch or before encoding of the next component.
@@ -304,9 +304,9 @@ public extension Compute{
         c.additionalEncodeClosure = closureBinding
         return c
     }
-    /// Modifier for setting additional encode closure for Render component.
+    /// Modifier for setting additional encode closure for Compute component.
     /// - Parameter closure: Closure for additional encode logic.
-    /// - Returns: Render component with the added additional encode logic.
+    /// - Returns: Compute component with the added additional encode logic.
     ///
     /// The closure provided in this modifier will run after all the internal encoding is performed
     /// right before the dispatch or before encoding of the next component.
