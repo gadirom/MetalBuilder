@@ -11,6 +11,7 @@ enum GridFit{
 }
 
 public typealias AdditionalEncodeClosureForCompute = (MTLComputeCommandEncoder)->()
+public typealias AdditionalPiplineSetupClosureForCompute = (MTLComputePipelineState)->()
 
 /// The component for dispatching compute kernels.
 public struct Compute: MetalBuilderComponent{
@@ -33,6 +34,7 @@ public struct Compute: MetalBuilderComponent{
     var librarySource: String = ""
     
     var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForCompute>?
+    var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForCompute>?
     
     public init(_ kernel: String, source: String = ""){
         self.kernel = kernel
@@ -293,6 +295,24 @@ public extension Compute{
         c.librarySource = source
         return c
     }
+    /// Modifier for setting a closure for additional pipeline setup for Compute component.
+    /// - Parameter closureBinding: MetalBinding to a closure for additional pipeline setup logic.
+    /// - Returns: Compute component with the added additional pipeline setup logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal pipeline setup logic is performed.
+    func additionalPipelineSetup(_ closureBinding: MetalBinding<AdditionalPiplineSetupClosureForCompute>)->Compute{
+        var c = self
+        c.additionalPiplineSetupClosure = closureBinding
+        return c
+    }
+    /// Modifier for setting a closure for additional pipeline setup for Compute component.
+    /// - Parameter closure: closure for additional pipeline setup logic.
+    /// - Returns: Compute component with the added additional pipeline setup logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal pipeline setup logic is performed.
+    func additionalPipelineSetup(_ closure: @escaping AdditionalPiplineSetupClosureForCompute)->Compute{
+        self.additionalPipelineSetup( MetalBinding<AdditionalPiplineSetupClosureForCompute>.constant(closure))
+    }
     /// Modifier for setting additional encode closure for Compute component.
     /// - Parameter closureBinding: MetalBinding to a closure for additional encode logic.
     /// - Returns: Compute component with the added additional encode logic.
@@ -311,9 +331,7 @@ public extension Compute{
     /// The closure provided in this modifier will run after all the internal encoding is performed
     /// right before the dispatch or before encoding of the next component.
     func additionalEncode(_ closure: @escaping AdditionalEncodeClosureForCompute)->Compute{
-        var c = self
-        c.additionalEncodeClosure = MetalBinding<AdditionalEncodeClosureForCompute>.constant(closure)
-        return c
+        self.additionalEncode(MetalBinding<AdditionalEncodeClosureForCompute>.constant(closure))
     }
 }
 

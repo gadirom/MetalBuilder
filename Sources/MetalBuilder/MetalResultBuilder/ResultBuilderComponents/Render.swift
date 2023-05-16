@@ -6,6 +6,7 @@ enum MetalDSPRenderSetupError: Error{
 }
 
 public typealias AdditionalEncodeClosureForRender = (MTLRenderCommandEncoder)->()
+public typealias AdditionalPiplineSetupClosureForRender = (MTLRenderPipelineState)->()
 
 /// The component for rendering primitives.
 ///
@@ -48,7 +49,7 @@ public typealias AdditionalEncodeClosureForRender = (MTLRenderCommandEncoder)->(
 ///                                          //through the Render component
 ///     }
 /// ```
-public struct Render: MetalBuilderComponent, Renderable{
+public struct Render: MetalBuilderComponent, Renderable {
     
     var vertexFunc: String
     var fragmentFunc: String
@@ -65,6 +66,7 @@ public struct Render: MetalBuilderComponent, Renderable{
     var indexedPrimitives = false
     
     var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForRender>?
+    var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForRender>?
     
     var instanceCount: MetalBinding<Int>?{
         didSet {
@@ -475,6 +477,24 @@ public extension Render{
         r.instanceCount = count
         return r
     }
+    /// Modifier for setting a closure for additional pipeline setup for Render component.
+    /// - Parameter closureBinding: MetalBinding to a closure for additional pipeline setup logic.
+    /// - Returns: Render component with the added additional pipeline setup logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal pipeline setup logic is performed.
+    func additionalPipelineSetup(_ closureBinding: MetalBinding<AdditionalPiplineSetupClosureForRender>)->Render{
+        var r = self
+        r.additionalPiplineSetupClosure = closureBinding
+        return r
+    }
+    /// Modifier for setting a closure for additional pipeline setup for Render component.
+    /// - Parameter closure: closure for additional pipeline setup logic.
+    /// - Returns: Render component with the added additional pipeline setup logic.
+    ///
+    /// The closure provided in this modifier will run after all the internal pipeline setup logic is performed.
+    func additionalPipelineSetup(_ closure: @escaping AdditionalPiplineSetupClosureForRender)->Render{
+        self.additionalPipelineSetup( MetalBinding<AdditionalPiplineSetupClosureForRender>.constant(closure))
+    }
     /// Modifier for setting additional encode closure for Render component.
     /// - Parameter closureBinding: MetalBinding to a closure for additional encode logic.
     /// - Returns: Render component with the added additional encode logic.
@@ -493,9 +513,7 @@ public extension Render{
     /// The closure provided in this modifier will run after all the internal encoding is performed
     /// right before the dispatch or before encoding of the next component.
     func additionalEncode(_ closure: @escaping AdditionalEncodeClosureForRender)->Render{
-        var r = self
-        r.additionalEncodeClosure = MetalBinding<AdditionalEncodeClosureForRender>.constant(closure)
-        return r
+        self.additionalEncode(MetalBinding<AdditionalEncodeClosureForRender>.constant(closure))
     }
 }
 // Shader modifiers for Render

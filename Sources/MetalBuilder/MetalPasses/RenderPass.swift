@@ -69,6 +69,10 @@ final class RenderPass: MetalPass{
                 throw MetalBuilderRenderError.badIndexBuffer("No index buffer was provided for '" + self.component.vertexFunc + "'!")
             }
         }
+        //Additional pipeline setup logic
+        if let additionalPiplineSetupClosure = component.additionalPiplineSetupClosure?.wrappedValue{
+            additionalPiplineSetupClosure(renderPiplineState)
+        }
     }
     
     func makeEncoder(passInfo: MetalPassInfo) throws -> MTLRenderCommandEncoder{

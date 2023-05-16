@@ -33,8 +33,12 @@ final class ComputePass: MetalPass{
         
         computePiplineState =
         try renderInfo.device.makeComputePipelineState(function: function!)
+        
+        //Additional pipeline setup logic
+        if let additionalPiplineSetupClosure = component.additionalPiplineSetupClosure?.wrappedValue{
+            additionalPiplineSetupClosure(computePiplineState)
+        }
     }
-    // depth is ignored!!
     func setGrid(_ drawable: CAMetalDrawable?) throws{
         var size: MTLSize
         switch component.gridFit!{
