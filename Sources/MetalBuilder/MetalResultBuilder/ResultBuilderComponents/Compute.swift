@@ -11,7 +11,8 @@ enum GridFit{
 }
 
 public typealias AdditionalEncodeClosureForCompute = (MTLComputeCommandEncoder)->()
-public typealias AdditionalPiplineSetupClosureForCompute = (MTLComputePipelineState, MTLLibrary)->()
+public typealias AdditionalPiplineSetupClosureForCompute = (MTLComputePipelineState)->()
+public typealias PiplineSetupClosureForCompute = (MTLDevice, MTLLibrary)->(MTLComputePipelineState)
 
 /// The component for dispatching compute kernels.
 public struct Compute: MetalBuilderComponent{
@@ -35,6 +36,7 @@ public struct Compute: MetalBuilderComponent{
     
     var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForCompute>?
     var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForCompute>?
+    var piplineSetupClosure: MetalBinding<PiplineSetupClosureForCompute>?
     
     public init(_ kernel: String, source: String = ""){
         self.kernel = kernel
@@ -294,6 +296,24 @@ public extension Compute{
         var c = self
         c.librarySource = source
         return c
+    }
+    /// Modifier for setting a closure for pipeline setup for Compute component.
+    /// - Parameter closureBinding: MetalBinding to a closure for pipeline setup logic.
+    /// - Returns: Compute component with a custom pipeline setup logic.
+    ///
+    /// Use this modifier if you want to create MTLComputePipelineState manually.
+    func pipelineSetup(_ closureBinding: MetalBinding<PiplineSetupClosureForCompute>)->Compute{
+        var c = self
+        c.piplineSetupClosure = closureBinding
+        return c
+    }
+    /// Modifier for setting a closure for pipeline setup for Compute component.
+    /// - Parameter closure: closure for pipeline setup logic.
+    /// - Returns: Compute component with a custom pipeline setup logic.
+    ///
+    /// Use this modifier if you want to create MTLComputePipelineState manually.
+    func pipelineSetup(_ closure: @escaping PiplineSetupClosureForCompute)->Compute{
+        self.pipelineSetup( MetalBinding<PiplineSetupClosureForCompute>.constant(closure))
     }
     /// Modifier for setting a closure for additional pipeline setup for Compute component.
     /// - Parameter closureBinding: MetalBinding to a closure for additional pipeline setup logic.

@@ -25,9 +25,7 @@ final class RenderPass: MetalPass{
     }
     func setup(renderInfo: GlobalRenderInfo) throws{
         try component.setup()
-        let vertexFunction = libraryContainer!.library!.makeFunction(name: component.vertexFunc)
-        let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
-        
+
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         
         //depth and stencil routine
@@ -55,10 +53,17 @@ final class RenderPass: MetalPass{
             renderPipelineDescriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
         }
         
-        renderPipelineDescriptor.vertexFunction = vertexFunction
-        renderPipelineDescriptor.fragmentFunction = fragmentFunction
-        renderPiplineState =
+        if let piplineSetupClosure = component.piplineSetupClosure?.wrappedValue{
+            renderPiplineState = piplineSetupClosure(renderInfo.device, libraryContainer!.library!)
+        }else{
+            let vertexFunction = libraryContainer!.library!.makeFunction(name: component.vertexFunc)
+            let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
+            renderPipelineDescriptor.vertexFunction = vertexFunction
+            renderPipelineDescriptor.fragmentFunction = fragmentFunction
+            renderPiplineState =
             try renderInfo.device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
+        }
+        libraryContainer = nil
         
         if component.indexedPrimitives{
             if let buf = component.indexBuf{
@@ -70,10 +75,8 @@ final class RenderPass: MetalPass{
         }
         //Additional pipeline setup logic
         if let additionalPiplineSetupClosure = component.additionalPiplineSetupClosure?.wrappedValue{
-            additionalPiplineSetupClosure(renderPiplineState, libraryContainer!.library!)
+            additionalPiplineSetupClosure(renderPiplineState)
         }
-        
-        libraryContainer = nil
     }
     
     func makeEncoder(passInfo: MetalPassInfo) throws -> MTLRenderCommandEncoder{

@@ -6,7 +6,8 @@ enum MetalDSPRenderSetupError: Error{
 }
 
 public typealias AdditionalEncodeClosureForRender = (MTLRenderCommandEncoder)->()
-public typealias AdditionalPiplineSetupClosureForRender = (MTLRenderPipelineState, MTLLibrary)->()
+public typealias AdditionalPiplineSetupClosureForRender = (MTLRenderPipelineState)->()
+public typealias PiplineSetupClosureForRender = (MTLDevice, MTLLibrary)->(MTLRenderPipelineState)
 
 /// The component for rendering primitives.
 ///
@@ -67,6 +68,7 @@ public struct Render: MetalBuilderComponent, Renderable {
     
     var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForRender>?
     var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForRender>?
+    var piplineSetupClosure: MetalBinding<PiplineSetupClosureForRender>?
     
     var instanceCount: MetalBinding<Int>?{
         didSet {
@@ -476,6 +478,24 @@ public extension Render{
         var r = self
         r.instanceCount = count
         return r
+    }
+    /// Modifier for setting a closure for pipeline setup for Render component.
+    /// - Parameter closureBinding: MetalBinding to a closure for pipeline setup logic.
+    /// - Returns: Render component with the added custom pipeline setup logic.
+    ///
+    /// Use this modifier if you want to create MTLRenderPipelineState manually.
+    func pipelineSetup(_ closureBinding: MetalBinding<PiplineSetupClosureForRender>)->Render{
+        var r = self
+        r.piplineSetupClosure = closureBinding
+        return r
+    }
+    /// Modifier for setting a closure for pipeline setup for Render component.
+    /// - Parameter closure: closure for custom pipeline setup logic.
+    /// - Returns: Render component with the added custom pipeline setup logic.
+    ///
+    /// Use this modifier if you want to create MTLRenderPipelineState manually.
+    func pipelineSetup(_ closure: @escaping PiplineSetupClosureForRender)->Render{
+        self.pipelineSetup(MetalBinding<PiplineSetupClosureForRender>.constant(closure))
     }
     /// Modifier for setting a closure for additional pipeline setup for Render component.
     /// - Parameter closureBinding: MetalBinding to a closure for additional pipeline setup logic.
