@@ -36,7 +36,7 @@ final class ComputePass: MetalPass{
         
         //Additional pipeline setup logic
         if let additionalPiplineSetupClosure = component.additionalPiplineSetupClosure?.wrappedValue{
-            additionalPiplineSetupClosure(computePiplineState)
+            additionalPiplineSetupClosure(computePiplineState, libraryContainer?.library)
         }
     }
     func setGrid(_ drawable: CAMetalDrawable?) throws{

@@ -6,7 +6,7 @@ enum MetalDSPRenderSetupError: Error{
 }
 
 public typealias AdditionalEncodeClosureForRender = (MTLRenderCommandEncoder)->()
-public typealias AdditionalPiplineSetupClosureForRender = (MTLRenderPipelineState)->()
+public typealias AdditionalPiplineSetupClosureForRender = (MTLRenderPipelineState, MTLLibrary?)->()
 
 /// The component for rendering primitives.
 ///

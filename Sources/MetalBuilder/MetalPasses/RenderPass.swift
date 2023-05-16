@@ -71,7 +71,7 @@ final class RenderPass: MetalPass{
         }
         //Additional pipeline setup logic
         if let additionalPiplineSetupClosure = component.additionalPiplineSetupClosure?.wrappedValue{
-            additionalPiplineSetupClosure(renderPiplineState)
+            additionalPiplineSetupClosure(renderPiplineState, libraryContainer?.library)
         }
     }
     
