@@ -27,7 +27,6 @@ final class RenderPass: MetalPass{
         try component.setup()
         let vertexFunction = libraryContainer!.library!.makeFunction(name: component.vertexFunc)
         let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
-        libraryContainer = nil
         
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         
@@ -71,8 +70,10 @@ final class RenderPass: MetalPass{
         }
         //Additional pipeline setup logic
         if let additionalPiplineSetupClosure = component.additionalPiplineSetupClosure?.wrappedValue{
-            additionalPiplineSetupClosure(renderPiplineState, libraryContainer?.library)
+            additionalPiplineSetupClosure(renderPiplineState, libraryContainer!.library!)
         }
+        
+        libraryContainer = nil
     }
     
     func makeEncoder(passInfo: MetalPassInfo) throws -> MTLRenderCommandEncoder{

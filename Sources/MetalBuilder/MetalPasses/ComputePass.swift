@@ -29,15 +29,16 @@ final class ComputePass: MetalPass{
     func setup(renderInfo: GlobalRenderInfo) throws{
         try component.setup()
         let function = libraryContainer!.library!.makeFunction(name: component.kernel)
-        libraryContainer = nil
         
         computePiplineState =
         try renderInfo.device.makeComputePipelineState(function: function!)
         
         //Additional pipeline setup logic
         if let additionalPiplineSetupClosure = component.additionalPiplineSetupClosure?.wrappedValue{
-            additionalPiplineSetupClosure(computePiplineState, libraryContainer?.library)
+            additionalPiplineSetupClosure(computePiplineState, libraryContainer!.library!)
         }
+        
+        libraryContainer = nil
     }
     func setGrid(_ drawable: CAMetalDrawable?) throws{
         var size: MTLSize

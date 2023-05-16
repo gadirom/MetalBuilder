@@ -11,7 +11,7 @@ enum GridFit{
 }
 
 public typealias AdditionalEncodeClosureForCompute = (MTLComputeCommandEncoder)->()
-public typealias AdditionalPiplineSetupClosureForCompute = (MTLComputePipelineState, MTLLibrary?)->()
+public typealias AdditionalPiplineSetupClosureForCompute = (MTLComputePipelineState, MTLLibrary)->()
 
 /// The component for dispatching compute kernels.
 public struct Compute: MetalBuilderComponent{
