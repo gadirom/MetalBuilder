@@ -160,13 +160,19 @@ public final class MTLBufferContainer<T>: BufferContainer{
         }else{
             self._count = count
         }
-        let length = elementSize!*count!
+        let array: [T]?
         if let fromArray{
-            buffer = device.makeBuffer(bytes: fromArray, length: length, options: bufferOptions)
-        }else if let fromArray = self.fromArray{
-            buffer = device.makeBuffer(bytes: fromArray, length: length, options: bufferOptions)
+            array = fromArray
+        }else{
+            array = self.fromArray
+        }
+        let length: Int
+        if let array{
+            length = elementSize!*array.count
+            buffer = device.makeBuffer(bytes: array, length: length, options: bufferOptions)
             self.fromArray = nil
         }else{
+            length = elementSize!*count!
             buffer = device.makeBuffer(length: length, options: bufferOptions)
         }
         
