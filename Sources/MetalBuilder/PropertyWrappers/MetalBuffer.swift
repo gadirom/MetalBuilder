@@ -31,7 +31,8 @@ public final class MetalBuffer<T>{
         self.wrappedValue = MTLBufferContainer<T>(count: count,
                                                   metalType: metalType,
                                                   metalName: metalName,
-                                                  options: options)
+                                                  options: options,
+                                                  fromArray: fromArray)
     }
     /// Creates an instance of MetalBuffer property wrapper.
     /// - Parameters:
@@ -41,7 +42,8 @@ public final class MetalBuffer<T>{
         self.wrappedValue = MTLBufferContainer<T>(count: descriptor.count,
                                                   metalType: descriptor.metalType,
                                                   metalName: descriptor.metalName,
-                                                  options: descriptor.bufferOptions)
+                                                  options: descriptor.bufferOptions,
+                                                  fromArray: fromArray)
     }
 }
 
