@@ -16,31 +16,28 @@ public final class MetalBuffer<T>{
     public init(wrappedValue: MTLBufferContainer<T>){
         self.wrappedValue = wrappedValue
     }
-    /// Initalizer of MetalBuffer property wrapper
-    ///
+    /// Creates an instance of MetalBuffer property wrapper.
     /// - Parameters:
-    ///   - count: size of the buffer, i.e. buffer elements count
-    ///   - metalType: type that will be used to address this buffer in Metal library code
-    ///   - metalName: name that will be used to address this buffer in Metal library code
-    /// DISCLAMER!
-    /// This initializer allows Swift to synthesize deferred init of the variable
-    /// Yet, as of Swift 5.6 it isn't done correctly and it isn't called for initialization of the corresponding property
-    /// Thus, any arguments of this init will be ignored if you use it like this:
-    /// struct Test{
-    ///    @MetalBuffer(metalName: "buffer") var buffer
-    /// }
-    /// If you init Test like this: test = Test(buffer: buffer)
-    /// the 'metalName' argument will be ignored.
+    ///   - count: size of the buffer, i.e. buffer elements count.
+    ///   - metalType: type that will be used to address this buffer in Metal library code.
+    ///   - metalName: name that will be used to address this buffer in Metal library code.
+    ///   - options: buffer options.
+    ///   - fromArray: an array to copy elements from it to the buffer or `nil` to init the buffer with zeroes.
     public init(count: Int? = nil,
                 metalType: String? = nil,
                 metalName: String? = nil,
-                options: MTLResourceOptions = .init()){
+                options: MTLResourceOptions = .init(),
+                fromArray: [T]? = nil){
         self.wrappedValue = MTLBufferContainer<T>(count: count,
                                                   metalType: metalType,
                                                   metalName: metalName,
                                                   options: options)
     }
-    public init(_ descriptor: BufferDescriptor){
+    /// Creates an instance of MetalBuffer property wrapper.
+    /// - Parameters:
+    ///   - descriptor: descriptor of the buffer to be created.
+    ///   - fromArray: an array to copy elements from it to the buffer or `nil` to init the buffer with zeroes.
+    public init(_ descriptor: BufferDescriptor, fromArray: [T]? = nil){
         self.wrappedValue = MTLBufferContainer<T>(count: descriptor.count,
                                                   metalType: descriptor.metalType,
                                                   metalName: descriptor.metalName,
@@ -121,6 +118,8 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     public var bufferOptions: MTLResourceOptions = .init()
     
+    var fromArray: [T]?
+    
     public override var count: Int?{
         get {
             _count
@@ -133,21 +132,26 @@ public final class MTLBufferContainer<T>: BufferContainer{
     private var _count: Int?
     
     public init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil,
-                options: MTLResourceOptions = .init()){
+                options: MTLResourceOptions = .init(),
+                fromArray: [T]? = nil){
         super.init()
         self.metalType = metalType
         self.metalName = metalName
         self._count = count
         
         self.bufferOptions = options
+        
+        self.fromArray = fromArray
     }
     
-    /// Creates a new buffer for the container
-    /// - Parameter device: The GPU device that creates the buffer
-    /// - Parameter count: Number of elements in the new buffer. Pass `nil` if you don't want it to be changed.
+    /// Creates a new buffer for the container.
+    /// - Parameters:
+    ///   - device: The GPU device that creates the buffer.
+    ///   - count: Number of elements in the new buffer. Pass `nil` if you don't want it to be changed.
+    ///   - fromArray: an array to copy elements from it to the buffer or `nil` to init the buffer with zeroes.
     ///
     /// Use this method in ManualEncode block if you need to recreate the buffer in the container
-    public func create(device: MTLDevice, count: Int? = nil) throws{
+    public func create(device: MTLDevice, count: Int? = nil, fromArray: [T]? = nil) throws{
         self.device = device
         elementSize = MemoryLayout<T>.stride
         var count = count
@@ -157,7 +161,14 @@ public final class MTLBufferContainer<T>: BufferContainer{
             self._count = count
         }
         let length = elementSize!*count!
-        buffer = device.makeBuffer(length: length, options: bufferOptions)
+        if let fromArray{
+            buffer = device.makeBuffer(bytes: fromArray, length: length, options: bufferOptions)
+        }else if let fromArray = self.fromArray{
+            buffer = device.makeBuffer(bytes: fromArray, length: length, options: bufferOptions)
+            self.fromArray = nil
+        }else{
+            buffer = device.makeBuffer(length: length, options: bufferOptions)
+        }
         
         let cpuAccessible = ((bufferOptions.rawValue & MTLResourceOptions.storageModeShared.rawValue) != 0) ||
                             ((bufferOptions.rawValue & MTLResourceOptions.cpuCacheModeWriteCombined.rawValue) != 0) ||
