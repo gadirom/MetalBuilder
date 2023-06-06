@@ -207,7 +207,7 @@ public extension Compute{
     }
     /// Passes a texture to the compute kernel.
     /// - Parameters:
-    ///   - container: The texture container.
+    ///   - container: The texture container or nil to use drawable texture.
     ///   - argument: The texture argument describing the declaration that should be added to the kernel.
     ///   - fitThreads: Indicates if the threads dispatched for the compute kernel should be calculated
     /// from the size of this texture.
@@ -216,7 +216,9 @@ public extension Compute{
     /// This method adds a texture to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func texture(_ container: MTLTextureContainer, argument: MetalTextureArgument, fitThreads: Bool=false)->Compute{
+    func texture(_ container: MTLTextureContainer?, argument: MetalTextureArgument, fitThreads: Bool=false)->Compute{
+        guard let container
+        else{ return drawableTexture(argument: argument, fitThreads: fitThreads) }
         var c = self
         var argument = argument
         argument.index = checkTextureIndex(c: &c, index: argument.index)
