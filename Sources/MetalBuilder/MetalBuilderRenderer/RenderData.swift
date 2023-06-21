@@ -36,7 +36,7 @@ struct RenderData{
     //(actually, when rendering is already started since some textures cannot be created before you get a drawable)
     var startupFunctions: [(MTLDevice)->()] = []
     
-    //hold hashes for librarySources of BuildingBlocks and Render components to eliminate dublicates
+    //hold hashes for librarySources of BuildingBlocks, Render and Compute components to eliminate dublicates
     static var librarySourceHashes: [Int] = []
     //hold hashes for helpers of BuildingBlocks to eliminate dublicates when librarySource is embedded into the components that constitute the given BuildingBlock
     static var helpersHashes: [Int] = []
@@ -131,16 +131,21 @@ struct RenderData{
                 data.addBuffers(newBuffs: computeComponent.buffers)
                 data.createUniforms(computeComponent.uniforms, device: device)
                 
-                librarySource += computeComponent.librarySource
-                
-                if librarySource != ""{
-                
-                    //arguments for functions
-                    let kernel = MetalFunction.compute(computeComponent.kernel)
-                    let funcAndArg = FunctionAndArguments(function: kernel,
-                                                          arguments: computeComponent.kernelArguments)
-                    data.functionsAndArgumentsToAddToMetal
-                        .append(funcAndArg)
+                let source = computeComponent.librarySource
+                let sourceHash = source.hashValue
+                if !Self.librarySourceHashes.contains(sourceHash){
+                    Self.librarySourceHashes.append(sourceHash)
+                    librarySource = source + librarySource
+                    
+                    if librarySource != ""{
+                        
+                        //arguments for functions
+                        let kernel = MetalFunction.compute(computeComponent.kernel)
+                        let funcAndArg = FunctionAndArguments(function: kernel,
+                                                              arguments: computeComponent.kernelArguments)
+                        data.functionsAndArgumentsToAddToMetal
+                            .append(funcAndArg)
+                    }
                 }
             }
             //Clear Render
