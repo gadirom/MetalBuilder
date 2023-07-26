@@ -60,7 +60,7 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     
     @MetalBuffer<FullScreenQuadVertex>(count: 6, metalName: "quadBuffer") var quadBuffer
     
-    public func startup(){
+    public func startup(device: MTLDevice){
         //create quad
         let p = quadBuffer.pointer!
         p[0] = .init(coord: [-1, 1], uv: [0,0])
