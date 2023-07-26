@@ -17,6 +17,10 @@ public final class MetalDepthStencilState{
     public init(_ descriptor: MetalDepthStencilDescriptor){
         self.wrappedValue = MetalDepthStencilStateContainer(descriptor: descriptor)
     }
+    public init(mtlDepthStencilDescriptor: MTLDepthStencilDescriptor){
+        let descriptor = MetalDepthStencilDescriptor(mtlDepthStencilDescriptor: mtlDepthStencilDescriptor)
+        self.wrappedValue = MetalDepthStencilStateContainer(descriptor: descriptor)
+    }
 }
 
 extension MetalDepthStencilState{
@@ -38,7 +42,12 @@ public struct MetalDepthStencilDescriptor{
     var _frontFaceStencil: MTLStencilDescriptor!
     var _backFaceStencil: MTLStencilDescriptor!
     
+    var _descriptor: MTLDepthStencilDescriptor?
+    
     var descriptor: MTLDepthStencilDescriptor{
+        if let descriptor = _descriptor{
+            return descriptor
+        }
         let dephDescriptor = MTLDepthStencilDescriptor()
         if let _depthCompareFunction{
             dephDescriptor.depthCompareFunction = _depthCompareFunction
@@ -56,6 +65,10 @@ public struct MetalDepthStencilDescriptor{
             dephDescriptor.label = _label
         }
         return dephDescriptor
+    }
+    
+    public init(mtlDepthStencilDescriptor: MTLDepthStencilDescriptor){
+        self._descriptor = descriptor
     }
 
     public init(label: String? = nil,
