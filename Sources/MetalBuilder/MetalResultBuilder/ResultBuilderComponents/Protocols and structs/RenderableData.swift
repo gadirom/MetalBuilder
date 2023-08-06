@@ -56,6 +56,9 @@ public extension RenderableData{
         if let passStencilAttachment = data.passStencilAttachment{
             self.passStencilAttachment = passStencilAttachment
         }
+        if let passDepthAttachment = data.passDepthAttachment{
+            self.passDepthAttachment = passDepthAttachment
+        }
         if let stencilReferenceValue = data.stencilReferenceValue{
             self.stencilReferenceValue = stencilReferenceValue
         }
