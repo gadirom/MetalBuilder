@@ -35,10 +35,11 @@ final class RenderPass: MetalPass{
         if let depthPixelFormat = renderInfo.depthPixelFormat{
             renderPipelineDescriptor.depthAttachmentPixelFormat = depthPixelFormat
         }
-        // if there is explicit depth attachment with texture,
-        // overwrite 'depthAttachmentPixelFormat' with pixelFormat of that texture.
-        if let depthPixelFormat = component.renderableData.passDepthAttachment?.texture?.texture?.pixelFormat{
-            renderPipelineDescriptor.depthAttachmentPixelFormat = depthPixelFormat
+        //Override global depth pixel format with the one from depth attachment texture
+        if let pixelFormat = component.renderableData.passDepthAttachment?.texture?.descriptor.pixelFormat{
+            if case let .fixed(depthPixelFormat) = pixelFormat{
+                renderPipelineDescriptor.depthAttachmentPixelFormat = depthPixelFormat
+            }
         }
         if let stencilPixelFormat = renderInfo.stencilPixelFormat{
             renderPipelineDescriptor.stencilAttachmentPixelFormat = stencilPixelFormat
