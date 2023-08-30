@@ -6,7 +6,7 @@ let pixelTextureDesc = TextureDescriptor()
 public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
     public var context: MetalBuilderRenderingContext
     public var helpers = ""
-    public var librarySource = cvPixelBufferYCbCbToTextureSource
+    public var librarySource = ""
     public var compileOptions: MetalBuilderCompileOptions? = nil
     
     @MetalBinding var buffer: CVPixelBuffer?
@@ -68,33 +68,32 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
                 .texture(textureY, argument: .init(type: "float", access: "sample", name: "textureY"))
                 .texture(textureCbCr, argument: .init(type: "float", access: "sample", name: "textureCbCr"))
                 .texture(texture, argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
+                .source("""
+                kernel void convertCVPixelBufferPlanesToTexture(uint2 gid [[thread_position_in_grid]],
+                                                                  uint2 size [[threads_per_grid]]){
+                
+                    float2 uv = float2(gid)/float2(size);
+                    
+                    constexpr sampler colorSampler(mip_filter::linear,
+                                                   mag_filter::linear,
+                                                   min_filter::linear);
+                    
+                    const float4x4 ycbcrToRGBTransform = float4x4(
+                        float4(+1.0000f, +1.0000f, +1.0000f, +0.0000f),
+                        float4(+0.0000f, -0.3441f, +1.7720f, +0.0000f),
+                        float4(+1.4020f, -0.7141f, +0.0000f, +0.0000f),
+                        float4(-0.7010f, +0.5291f, -0.8860f, +1.0000f)
+                    );
+                        
+                    // Sample Y and CbCr textures to get the YCbCr color at the given texture coordinate
+                    float4 ycbcr = float4(textureY.sample(colorSampler, uv).r,
+                                          textureCbCr.sample(colorSampler, uv).rg, 1.0);
+                        
+                    // Return converted RGB color
+                    float4 col = ycbcrToRGBTransform * ycbcr;
+                    out.write(col, gid);
+                }
+                """)
         }
     }
 }
-
-let cvPixelBufferYCbCbToTextureSource = """
-kernel void convertCVPixelBufferPlanesToTexture(uint2 gid [[thread_position_in_grid]],
-                                                      uint2 size [[threads_per_grid]]){
-    
-    float2 uv = float2(gid)/float2(size);
- 
-    constexpr sampler colorSampler(mip_filter::linear,
-                                   mag_filter::linear,
-                                   min_filter::linear);
-    
-    const float4x4 ycbcrToRGBTransform = float4x4(
-        float4(+1.0000f, +1.0000f, +1.0000f, +0.0000f),
-        float4(+0.0000f, -0.3441f, +1.7720f, +0.0000f),
-        float4(+1.4020f, -0.7141f, +0.0000f, +0.0000f),
-        float4(-0.7010f, +0.5291f, -0.8860f, +1.0000f)
-    );
-        
-    // Sample Y and CbCr textures to get the YCbCr color at the given texture coordinate
-    float4 ycbcr = float4(textureY.sample(colorSampler, uv).r,
-                          textureCbCr.sample(colorSampler, uv).rg, 1.0);
-        
-    // Return converted RGB color
-    float4 col = ycbcrToRGBTransform * ycbcr;
-    out.write(col, gid);
-}
-"""
