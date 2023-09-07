@@ -52,8 +52,8 @@ final class RenderPass: MetalPass{
         }
         
         //Pipeline Color Attachments
-        for (id, desc) in component.renderableData.pipelineColorAttachments{
-            renderPipelineDescriptor.colorAttachments[id] = desc
+        for (id, pipelinDesc) in component.renderableData.pipelineColorAttachments{
+            renderPipelineDescriptor.colorAttachments[id] = pipelinDesc
         }
         
         for (id, passDesc) in component.renderableData.passColorAttachments{
@@ -61,6 +61,7 @@ final class RenderPass: MetalPass{
                case let .fixed(pixelFormat) = passDesc.texture?.descriptor.pixelFormat{
                 let pipelinDesc = MTLRenderPipelineColorAttachmentDescriptor()
                 pipelinDesc.pixelFormat = pixelFormat
+                renderPipelineDescriptor.colorAttachments[id] = pipelinDesc
             }
         }
         
