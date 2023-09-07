@@ -32,7 +32,7 @@ public struct RenderableData{
     public var passStencilAttachment: StencilAttachment?
     public var passDepthAttachment: DepthAttachment?
     public var stencilReferenceValue: UInt32?
-    public var pipelineColorAttachment: MTLRenderPipelineColorAttachmentDescriptor?
+    public var pipelineColorAttachments: [Int: MTLRenderPipelineColorAttachmentDescriptor] = [:]
     public var viewport: MetalBinding<MTLViewport>?
     public var depthBias: MetalBinding<DepthBias>?
     public var cullMode: MetalBinding<CullMode>?
@@ -62,13 +62,11 @@ public extension RenderableData{
         if let stencilReferenceValue = data.stencilReferenceValue{
             self.stencilReferenceValue = stencilReferenceValue
         }
-        if let pipelineColorAttachment = data.pipelineColorAttachment{
-            self.pipelineColorAttachment = pipelineColorAttachment
-        }
+        pipelineColorAttachments = pipelineColorAttachments.merging(data.pipelineColorAttachments) { (current, _) in current }
     }
 }
 
-/// color attachment with bindings
+/// pass color attachment with bindings
 public struct ColorAttachment{
     public var texture: MTLTextureContainer?
     public var loadAction: Binding<MTLLoadAction>?
@@ -90,6 +88,7 @@ public struct ColorAttachment{
         return d
     }
 }
+
 /// default color attachments
 public var defaultColorAttachments =
     [0: ColorAttachment(texture: nil,

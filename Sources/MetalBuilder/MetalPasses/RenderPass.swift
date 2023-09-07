@@ -51,10 +51,19 @@ final class RenderPass: MetalPass{
             }
         }
         
-        //Pipeline Color Attachment
-        if let pipelineColorAttachment = component.renderableData.pipelineColorAttachment{
-            renderPipelineDescriptor.colorAttachments[0] = pipelineColorAttachment
+        //Pipeline Color Attachments
+        for (id, desc) in component.renderableData.pipelineColorAttachments{
+            renderPipelineDescriptor.colorAttachments[id] = desc
         }
+        
+        for (id, passDesc) in component.renderableData.passColorAttachments{
+            if renderPipelineDescriptor.colorAttachments[id] == nil,
+               case let .fixed(pixelFormat) = passDesc.texture?.descriptor.pixelFormat{
+                let pipelinDesc = MTLRenderPipelineColorAttachmentDescriptor()
+                pipelinDesc.pixelFormat = pixelFormat
+            }
+        }
+        
         if renderPipelineDescriptor.colorAttachments[0].pixelFormat.rawValue == 0{
             renderPipelineDescriptor.colorAttachments[0].pixelFormat = renderInfo.pixelFormat
         }

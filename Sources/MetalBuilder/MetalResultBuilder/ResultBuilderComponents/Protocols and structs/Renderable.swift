@@ -284,9 +284,9 @@ public extension MetalBuilderComponent where Self: Renderable{
     /// Adds the render pipeline color attachment to a Renderable component.
     /// - Parameter descriptor: The descriptor for the attachement to add.
     /// - Returns: The Render component with the added render pipeline color attachment.
-    func pipelineColorAttachment(_ descriptor: MTLRenderPipelineColorAttachmentDescriptor?) -> Self{
+    func pipelineColorAttachment(id: Int = 0, _ descriptor: MTLRenderPipelineColorAttachmentDescriptor?) -> Self{
         var r = self
-        r.renderableData.pipelineColorAttachment = descriptor
+        r.renderableData.pipelineColorAttachments[id] = descriptor
         return r
     }
     /// Adds the render pass command encoder to a Renderable component.
