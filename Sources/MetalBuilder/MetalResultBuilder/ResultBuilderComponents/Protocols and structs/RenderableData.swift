@@ -105,13 +105,13 @@ public var defaultColorAttachments =
 
 /// Stencil attachment
 public struct StencilAttachment{
-    var texture: MTLTextureContainer?
-    var loadAction: Binding<MTLLoadAction>?
-    var storeAction: Binding<MTLStoreAction>?
-    var clearStencil: Binding<UInt32>?
+    public var texture: MTLTextureContainer?
+    public var loadAction: Binding<MTLLoadAction>?
+    public var storeAction: Binding<MTLStoreAction>?
+    public var clearStencil: Binding<UInt32>?
     //var onlyStencil: Bool = false
     
-    var descriptor: MTLRenderPassStencilAttachmentDescriptor{
+    public var descriptor: MTLRenderPassStencilAttachmentDescriptor{
         let d = MTLRenderPassStencilAttachmentDescriptor()
         d.texture = texture?.texture
         if let loadAction = loadAction?.wrappedValue{
@@ -129,12 +129,12 @@ public struct StencilAttachment{
 
 /// Depth attachment
 public struct DepthAttachment{
-    var texture: MTLTextureContainer?
-    var loadAction: Binding<MTLLoadAction>?
-    var storeAction: Binding<MTLStoreAction>?
-    var clearDepth: Binding<Double>?
+    public var texture: MTLTextureContainer?
+    public var loadAction: Binding<MTLLoadAction>?
+    public var storeAction: Binding<MTLStoreAction>?
+    public var clearDepth: Binding<Double>?
     
-    var descriptor: MTLRenderPassDepthAttachmentDescriptor{
+    public var descriptor: MTLRenderPassDepthAttachmentDescriptor{
         let d = MTLRenderPassDepthAttachmentDescriptor()
         if let texture{
             d.texture = texture.texture
