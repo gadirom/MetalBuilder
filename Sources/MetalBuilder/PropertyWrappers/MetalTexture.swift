@@ -122,12 +122,15 @@ public struct TextureDescriptor{
     
     public var storageMode: MTLStorageMode = .private
     
+    public var mipmapLevelCount: Int = 1
+    
     public init() {}
     
     mutating func mtlTextureDescriptor(viewportSize: simd_uint2 = [0,0],
                                        drawablePixelFormat: MTLPixelFormat? = nil)->MTLTextureDescriptor?{
         
         let d = MTLTextureDescriptor()
+        d.mipmapLevelCount = mipmapLevelCount
         d.textureType = type
         d.arrayLength = arrayLength
         d.usage = usage
@@ -208,6 +211,11 @@ public extension TextureDescriptor{
     func storageMode(_ storageMode: MTLStorageMode) -> TextureDescriptor {
         var d = self
         d.storageMode = storageMode
+        return d
+    }
+    func mipmaps(_ mipmapLevelCount: Int) -> TextureDescriptor {
+        var d = self
+        d.mipmapLevelCount = mipmapLevelCount
         return d
     }
 }
