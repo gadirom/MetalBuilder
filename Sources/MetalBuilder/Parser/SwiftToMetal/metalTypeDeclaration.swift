@@ -35,20 +35,10 @@ public struct MetalTypeDeclaration{
     let declaration: String
 }
 
-public typealias Atomic_Bool  = Bool
-public typealias Atomic_UInt  = UInt32
-public typealias Atomic_Int   = Int32
-public typealias Atomic_Float = Float
-
 /// Returns a string with the Metal type corresponding to the given Swift type.
 public func metalType(for swiftType: Any.Type)->String?{
     
     switch swiftType {
-        
-    case is Atomic_Bool.Type : return "atomic_bool"
-    case is Atomic_UInt.Type : return "atomic_uint"
-    case is Atomic_Int.Type  : return "atomic_int"
-    case is Atomic_Float.Type: return "atomic_float"
         
     case is Bool.Type: return "bool"
         
