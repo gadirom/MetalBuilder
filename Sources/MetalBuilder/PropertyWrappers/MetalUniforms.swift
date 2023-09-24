@@ -21,17 +21,17 @@ public final class MetalUniforms{
     /// with the ``MetalUniforms`` attribute, and provide a configured UniformsDescriptor struct:
     ///
     ///     @MetalUniforms(UniformsDescriptor(packed: false)
-    ///                         .float4("someColor")
-    ///                         .float4("someValue"),
-    ///                         type("Uniforms"),
-    ///                         name("u")
+    ///                         .float3("someColor")
+    ///                         .float("someValue"),
+    ///                         type: "Uniforms",
+    ///                         name: "u"
     ///     ) private var uniforms
     ///
     /// The above exaple will tell MetalBuilder to create the following struct in Metal library code:
     ///
     ///     struct Uniforms{
-    ///         float4 someColor;
-    ///         float4 someValue;
+    ///         float3 someColor;
+    ///         float someValue;
     ///     };
     ///
     /// It will then adds the following line to the declaration of whatever shaders you want the uniforms to be received by:
@@ -40,7 +40,7 @@ public final class MetalUniforms{
     ///
     /// Then you will be able to access the uniforms properties in the shader code:
     ///
-    ///     float4 color = u.someColor;
+    ///     float3 color = u.someColor;
     ///     float value = u.someValue.x;
     ///
     /// To use unforms you pass the uniforms container to the MetalBuilder component with the chaining modifier:
