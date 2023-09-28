@@ -46,6 +46,15 @@ public final class MTLTextureContainer{
                pixelFormat: drawable.texture.pixelFormat)
     }
     
+    //
+    public func create(device: MTLDevice, mtlSize: MTLSize, pixelFormat: MTLPixelFormat) throws{
+        self.descriptor.size = .fixed(mtlSize)
+        self.descriptor.pixelFormat = .fixed(pixelFormat)
+        try create(device: device,
+                   viewportSize: [0,0],
+                   pixelFormat: .invalid)
+    }
+    
     func create(device: MTLDevice,
                 viewportSize: simd_uint2,
                 pixelFormat: MTLPixelFormat?) throws{
