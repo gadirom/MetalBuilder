@@ -48,7 +48,7 @@ public final class MTLTextureContainer{
     }
     
     //pixel format should not be from drawable
-    public func create(device: MTLDevice, mtlSize: MTLSize, pixelFormat: MTLPixelFormat?) throws{
+    public func create(device: MTLDevice, mtlSize: MTLSize, pixelFormat: MTLPixelFormat?=nil) throws{
         self.descriptor.size = .fixed(mtlSize)
         if let pixelFormat{
             self.descriptor.pixelFormat = .fixed(pixelFormat)
