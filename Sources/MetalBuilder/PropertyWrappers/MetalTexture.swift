@@ -20,7 +20,8 @@ public final class MetalTexture{
 }
 
 enum MetalBuilderTextureError: Error {
-case textureNotCreated, noDescriptor, descriptorSizeContainsZero
+case textureNotCreated, noDescriptor, descriptorSizeContainsZero,
+    pixelFormatFromDrawable
 }
 
 public final class MTLTextureContainer{
@@ -46,10 +47,17 @@ public final class MTLTextureContainer{
                pixelFormat: drawable.texture.pixelFormat)
     }
     
-    //
-    public func create(device: MTLDevice, mtlSize: MTLSize, pixelFormat: MTLPixelFormat) throws{
+    //pixel format should not be from drawable
+    public func create(device: MTLDevice, mtlSize: MTLSize, pixelFormat: MTLPixelFormat?) throws{
         self.descriptor.size = .fixed(mtlSize)
-        self.descriptor.pixelFormat = .fixed(pixelFormat)
+        if let pixelFormat{
+            self.descriptor.pixelFormat = .fixed(pixelFormat)
+        }else{
+            if case .fromDrawable = self.descriptor.pixelFormat{
+                throw MetalBuilderTextureError
+                    .pixelFormatFromDrawable
+            }
+        }
         try create(device: device,
                    viewportSize: [0,0],
                    pixelFormat: .invalid)
