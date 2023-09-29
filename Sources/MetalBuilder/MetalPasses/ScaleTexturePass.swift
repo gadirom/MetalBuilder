@@ -41,7 +41,7 @@ class ScaleTexturePass: MetalPass{
             let outWidth = Double(outTexture.width)
             let outHeight = Double(outTexture.height)
             
-            var zooming = component.zoom.wrappedValue
+            var zooming: Double
             
             switch component.type{
             case .fill: zooming = max(outWidth/inWidth,
@@ -51,7 +51,7 @@ class ScaleTexturePass: MetalPass{
             case .`default`: zooming = 1
             }
             
-            let zoom: Double = 1
+            let zoom = component.zoom.wrappedValue
             zooming *= zoom
             
             let scaleX: Double = zooming
