@@ -68,7 +68,7 @@ public struct MetalDepthStencilDescriptor{
     }
     
     public init(mtlDepthStencilDescriptor: MTLDepthStencilDescriptor){
-        self._descriptor = descriptor
+        self._descriptor = mtlDepthStencilDescriptor
     }
 
     public init(label: String? = nil,
