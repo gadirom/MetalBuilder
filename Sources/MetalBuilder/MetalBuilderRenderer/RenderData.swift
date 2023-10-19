@@ -368,13 +368,9 @@ struct RenderData{
     func createTextures(context: MetalBuilderRenderingContext, device: MTLDevice) throws{
         //create textures
         for tex in textures{
-            do{
-                try tex.create(device: device,
+            try tex.initialize(device: device,
                                viewportSize: context.viewportSize,
                                pixelFormat: renderInfo.pixelFormat)
-            }catch{
-                print(error)
-            }
         }
     }
 
@@ -387,13 +383,9 @@ struct RenderData{
     func updateTextures(device: MTLDevice) throws{
         for tex in textures{
             if case .fromViewport = tex.descriptor.size{
-                do{
-                    try tex.create(device: device,
-                                   viewportSize: context.viewportSize,
-                                   pixelFormat: renderInfo.pixelFormat)
-                }catch{
-                    print(error)
-                }
+                try tex.create(device: device,
+                               viewportSize: context.viewportSize,
+                               pixelFormat: renderInfo.pixelFormat)
             }
         }
     }

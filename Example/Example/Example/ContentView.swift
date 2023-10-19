@@ -23,10 +23,26 @@ struct ContentView: View {
     @MetalUniforms(
         UniformsDescriptor(packed: true)
             .float3("color")
-            .float("speed", range: 0...10, value: 1),
+            .float("speed", range: 0...10, value: 1)
+            .float("mix", range: 0...1, value: 0.5),
         type: "Uniform",
         name: "u"
     ) var uniforms
+    
+    @MetalTexture(
+        TextureDescriptor()
+            .usage([.shaderRead]),
+        fromImage: .init(url: Bundle.main.url(forResource: "testImage", withExtension: "png")!,
+                         origin: .flippedVertically)
+    ) var imageTexture
+    
+    @MetalTexture(
+        TextureDescriptor()
+            .type(.type2D)
+            .pixelFormatFromDrawable()
+            .usage([.shaderRead, .shaderWrite])
+            .sizeFromViewport(scaled: 1)
+    ) var scaledTexture
     
     @MetalTexture(
         TextureDescriptor()
@@ -170,8 +186,29 @@ struct ContentView: View {
                         .source(targetTexture)
                         //.toDrawable()
                 }.repeating($n)
-                BlitTexture()
-                    .source(targetTexture)
+//                BlitTexture()
+//                    .source(targetTexture)
+                ScaleTexture(type: .fit, method: .bilinear)
+                    .source(imageTexture)
+                    .destination(scaledTexture)
+                Compute("postprocessKernel")
+                    .texture(targetTexture, argument: .init(type: "float", access: "read", name: "in"))
+                    .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
+                    .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
+                    .uniforms(uniforms)
+                    .source("""
+                        kernel void postprocessKernel(uint2 id [[ thread_position_in_grid ]]){
+                            uint2 count = uint2(out.get_width(), out.get_height());
+                            if(id.x>=count.x||id.y>=count.y){ return; }
+                            float3 inColor = in.read(id).rgb;
+                            float2 uv = float2(id)/float2(count);
+                            //constexpr sampler s(address::clamp_to_edge, filter::linear);
+                            float3 imageColor = image.read(id).rgb;
+                            float3 color = mix(inColor, imageColor, u.mix);
+                            out.write(float4(color, 1), id);
+                        }
+                    
+                    """)
                 //let _ = print("compile")
             }
             .onResize{ size in

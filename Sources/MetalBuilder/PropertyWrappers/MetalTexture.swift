@@ -14,8 +14,8 @@ public final class MetalTexture{
         self.wrappedValue = wrappedValue
     }
     
-    public init(_ descriptor: TextureDescriptor){
-        self.wrappedValue = MTLTextureContainer(descriptor)
+    public init(_ descriptor: TextureDescriptor, fromImage: ImageForTexture? = nil){
+        self.wrappedValue = MTLTextureContainer(descriptor, fromImage: fromImage)
     }
 }
 
@@ -26,15 +26,32 @@ case textureNotCreated, noDescriptor, descriptorSizeContainsZero,
 
 public final class MTLTextureContainer{
     public var descriptor: TextureDescriptor
-    weak var device: MTLDevice?
     public var texture: MTLTexture?
+    var image: ImageForTexture?
+    weak var device: MTLDevice?
+    
     
     init(){
         descriptor = TextureDescriptor()
     }
     
-    public init(_ descriptor: TextureDescriptor){
+    public init(_ descriptor: TextureDescriptor, fromImage: ImageForTexture? = nil){
         self.descriptor = descriptor
+        self.image = fromImage
+    }
+    
+    //creates or loads the texture
+    public func initialize(device: MTLDevice,
+                           viewportSize: simd_uint2,
+                           pixelFormat: MTLPixelFormat?) throws{
+        if let image{
+            self.device = device
+            try loadImage(image)
+        }else{
+            try create(device: device,
+                       viewportSize: viewportSize,
+                       pixelFormat: pixelFormat)
+        }
     }
     
     public func create(device: MTLDevice, drawable: CAMetalDrawable, newDescriptor: TextureDescriptor?=nil) throws{
@@ -66,7 +83,7 @@ public final class MTLTextureContainer{
     func create(device: MTLDevice,
                 viewportSize: simd_uint2,
                 pixelFormat: MTLPixelFormat?) throws{
-        self.device = device
+        //self.device = device
         guard let mtlDescriptor = descriptor.mtlTextureDescriptor(viewportSize: viewportSize, drawablePixelFormat: pixelFormat)
         else{
             throw MetalBuilderTextureError
@@ -85,6 +102,17 @@ public final class MTLTextureContainer{
         self.texture = texture
     }
 }
+
+//load image
+public extension MTLTextureContainer{
+    func loadImage(_ image: ImageForTexture, newDescriptor: TextureDescriptor? = nil) throws{
+        if let newDescriptor{
+            self.descriptor = newDescriptor
+        }
+        try image.loadInto(texture: self)
+    }
+}
+
 //load and store data
 public extension MTLTextureContainer{
     func getData<T:SIMD >(type: T.Type, region: MTLRegion?=nil)->Data{
