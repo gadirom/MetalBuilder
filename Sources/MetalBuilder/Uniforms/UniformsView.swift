@@ -36,9 +36,8 @@ public struct UniformsView: View {
                     //let value = values[id]!
                     let property = uniforms.dict[name]!
                     var name = name
-                    if #available(iOS 16.0, macOS 13.0, *){
-                        let _ = if let prefix{ name.trimPrefix(prefix) } else { () }
-                    }
+                    
+                    let _ = if let prefix{ name.trimPref(prefix) } else { () }
                     if property.show{
                         switch property.type{
                         case .float: SingleSlider(label: name,
@@ -173,4 +172,17 @@ struct SingleSlider: View {
     }
 }
 
+
+
+extension String{
+    mutating func trimPref(_ prefix: String){
+        if #available(iOS 16.0, macOS 13.0, *){
+            self.trimPrefix(prefix)
+        }else{
+            if self.hasPrefix(prefix){
+                self = String(self.dropFirst(prefix.count))
+            }
+        }
+    }
+}
 
