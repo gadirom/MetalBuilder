@@ -5,14 +5,19 @@ import OrderedCollections
 public struct UniformsView: View {
     
     /// Creates a uniforms view.
-    /// - Parameter uniforms: The uniforms container.
-    public init(_ uniforms: UniformsContainer){
+    /// - Parameters:
+    ///   - uniforms: uniforms container.
+    ///   - prefix: only uniforms with this prefix will be shown in the view
+    public init(_ uniforms: UniformsContainer, prefix: String?=nil){
         self.uniforms = uniforms
+        self.prefix = prefix
     }
+    
+    let prefix: String?
     
     @ObservedObject public var uniforms: UniformsContainer
     
-    @State var values: [[Float]] = []
+    @State var values: OrderedDictionary<String, [Float]> = [:]
     
     public var body: some View {
         ScrollView{
@@ -27,9 +32,13 @@ public struct UniformsView: View {
                         }
                     }
                 }
-                ForEach(values.indices, id:\.self){ id in
-                    let value = values[id]
-                    let (name, property) = uniforms.dict.elements[id]
+                ForEach(values.elements, id: \.key){ name, value in
+                    //let value = values[id]!
+                    let property = uniforms.dict[name]!
+                    var name = name
+                    if #available(iOS 16.0, macOS 13.0, *){
+                        let _ = if let prefix{ name.trimPrefix(prefix) } else { () }
+                    }
                     if property.show{
                         switch property.type{
                         case .float: SingleSlider(label: name,
@@ -71,13 +80,23 @@ extension UniformsView{
     }
     func loadValues(){
         print("Reading Uniforms by Uniforms View")
-        values = uniforms.dict.keys.map{
-            self.uniforms.getArray($0)!
+        var predicate: (String)->Bool = {_ in true}
+        if let prefix{
+            predicate = { $0.hasPrefix(prefix) }
         }
+        
+        values = OrderedDictionary.init(uniqueKeysWithValues:
+            uniforms.dict
+                .filter{ predicate($0.key) }
+                .map{
+                    ($0.key, self.uniforms.getArray($0.key)!)
+                }
+        )
+        
     }
     func clearDefaults(){
         uniforms.loadInitialValues()
-        values = []
+        values = [:]
         DispatchQueue.main.asyncAfter(deadline: .now()+0.05){
             loadValues()
         }

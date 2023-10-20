@@ -22,9 +22,9 @@ struct ContentView: View {
     
     @MetalUniforms(
         UniformsDescriptor(packed: true)
-            .float3("color")
-            .float("speed", range: 0...10, value: 1)
-            .float("mix", range: 0...1, value: 0.5),
+            .float3("Prefix1_color")
+            .float("Prefix1_speed", range: 0...10, value: 1)
+            .float("Prefix2_mix", range: 0...1, value: 0.5),
         type: "Uniform",
         name: "u"
     ) var uniforms
@@ -119,8 +119,8 @@ struct ContentView: View {
                         
                         switch(vertex_id){
                         case 0: color = float4(color.rgb, 0.5); break;
-                        case 1: color = float4((color.rgb + u.color)/2., 0.5); break;
-                        case 2: color = float4(u.color, 1);
+                        case 1: color = float4((color.rgb + u.Prefix1_color)/2., 0.5); break;
+                        case 2: color = float4(u.Prefix1_color, 1);
                         }
 
                         float pi = 3.14;
@@ -204,7 +204,7 @@ struct ContentView: View {
                             float2 uv = float2(id)/float2(count);
                             //constexpr sampler s(address::clamp_to_edge, filter::linear);
                             float3 imageColor = image.read(id).rgb;
-                            float3 color = mix(inColor, imageColor, u.mix);
+                            float3 color = mix(inColor, imageColor, u.Prefix2_mix);
                             out.write(float4(color, 1), id);
                         }
                     
@@ -217,7 +217,8 @@ struct ContentView: View {
                 createIndices(indexBuffer, count: vertexCount)
             }
             if showUniforms{
-                UniformsView(uniforms)
+                UniformsView(uniforms, prefix: "Prefix1_")
+                UniformsView(uniforms, prefix: "Prefix2_")
             }
             HStack{
                 Button {

@@ -327,31 +327,30 @@ public extension UniformsContainer{
         }
         var selfDict = self.dict
         for d in dict{
-            if var property = selfDict[d.key]{
-                switch property.type{
-                case .float:
-                    if let value = d.value as? Float{
-                        setFloat(value, for: d.key)
-                        property.initValue = [value]
-                    }
-                case .float2:
-                    if let value = d.value as? [Float]{
-                        setFloat2(value, for: d.key)
-                        property.initValue = value
-                    }
-                case .float3:
-                    if let value = d.value as? [Float]{
-                        setFloat3(value, for: d.key)
-                        property.initValue = value
-                    }
-                case .float4:
-                    if let value = d.value as? [Float]{
-                        setFloat4(value, for: d.key)
-                        property.initValue = value
-                    }
+            let property = selfDict[d.key]!
+            switch property.type{
+            case .float:
+                if let value = d.value as? Float{
+                    setFloat(value, for: d.key)
+                    //property.initValue = [value]
                 }
-                selfDict[d.key] = property
+            case .float2:
+                if let value = d.value as? [Float]{
+                    setFloat2(value, for: d.key)
+                    //property.initValue = value
+                }
+            case .float3:
+                if let value = d.value as? [Float]{
+                    setFloat3(value, for: d.key)
+                    //property.initValue = value
+                }
+            case .float4:
+                if let value = d.value as? [Float]{
+                    setFloat4(value, for: d.key)
+                    //property.initValue = value
+                }
             }
+            selfDict[d.key] = property
         }
         self.dict = selfDict
     }
