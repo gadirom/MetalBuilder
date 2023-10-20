@@ -7,13 +7,16 @@ public struct UniformsView: View {
     /// Creates a uniforms view.
     /// - Parameters:
     ///   - uniforms: uniforms container.
-    ///   - prefix: only uniforms with this prefix will be shown in the view
-    public init(_ uniforms: UniformsContainer, prefix: String?=nil){
+    ///   - prefix: only uniforms with this prefix will be shown in the view.
+    ///   - trimPrefix: indicates if you want to trim prefix from the shown labels.
+    public init(_ uniforms: UniformsContainer, prefix: String?=nil, trimPrefix: Bool = true){
         self.uniforms = uniforms
         self.prefix = prefix
+        self.trimPrefix = trimPrefix
     }
     
     let prefix: String?
+    let trimPrefix: Bool
     
     @ObservedObject public var uniforms: UniformsContainer
     
@@ -35,18 +38,17 @@ public struct UniformsView: View {
                 ForEach(values.elements, id: \.key){ name, value in
                     //let value = values[id]!
                     let property = uniforms.dict[name]!
-                    var name = name
                     
-                    let _ = if let prefix{ name.trimPref(prefix) } else { () }
+                    let nameWithoutPrefix = if let prefix, trimPrefix{ name.trimmedPrefix(prefix) } else { name }
                     if property.show{
                         switch property.type{
-                        case .float: SingleSlider(label: name,
+                        case .float: SingleSlider(label: nameWithoutPrefix,
                                                   range: property.range ?? (0...1),
                                                   initialValue: value[0]){
                             uniforms.setFloat($0, for: name)
                             //saveToDefaults(value: [$0], name: name)
                         }
-                        default: MultiSlider(label: name,
+                        default: MultiSlider(label: nameWithoutPrefix,
                                              range: property.range ?? (0...1),
                                              initialValue: value) { value in
                                 //saveToDefaults(value: value, name: name)
@@ -91,7 +93,6 @@ extension UniformsView{
                     ($0.key, self.uniforms.getArray($0.key)!)
                 }
         )
-        
     }
     func clearDefaults(){
         uniforms.loadInitialValues()
@@ -172,17 +173,9 @@ struct SingleSlider: View {
     }
 }
 
-
-
 extension String{
-    mutating func trimPref(_ prefix: String){
-        if #available(iOS 16.0, macOS 13.0, *){
-            self.trimPrefix(prefix)
-        }else{
-            if self.hasPrefix(prefix){
-                self = String(self.dropFirst(prefix.count))
-            }
-        }
+    func trimmedPrefix(_ prefix: String) -> String{
+        String(self.dropFirst(prefix.count))
     }
 }
 
