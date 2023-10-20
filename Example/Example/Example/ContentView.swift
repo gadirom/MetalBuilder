@@ -21,10 +21,12 @@ public let isLaplacian = true
 struct ContentView: View {
     
     @MetalUniforms(
-        UniformsDescriptor(packed: true)
-            .float3("Prefix1_color")
-            .float("Prefix1_speed", range: 0...10, value: 1)
-            .float("Prefix2_mix", range: 0...1, value: 0.5),
+        UniformsDescriptor()
+            .prefix("Prefix1_")
+            .float3("color")
+            .float("speed", range: 0...10, value: 1)
+            .prefix("Prefix2_")
+            .float("mix", range: 0...1, value: 0.5),
         type: "Uniform",
         name: "u"
     ) var uniforms
