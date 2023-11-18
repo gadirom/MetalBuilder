@@ -29,6 +29,8 @@ public final class MTLTextureContainer{
     public var texture: MTLTexture?
     var image: ImageForTexture?
     weak var device: MTLDevice?
+    internal var argBufferInfo = ArgBufferInfo()
+    internal var dataType: MTLDataType = .texture
     
     init(){
         descriptor = TextureDescriptor()

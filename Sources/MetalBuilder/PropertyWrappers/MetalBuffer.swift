@@ -117,6 +117,8 @@ public final class MTLBufferContainer<T>: BufferContainer{
     public var pointer: UnsafeMutablePointer<T>?
     
     weak var device: MTLDevice?
+    internal var argBufferInfo = ArgBufferInfo()
+    internal var dataType: MTLDataType = .pointer
     
     public var bufferOptions: MTLResourceOptions = .init()
     
