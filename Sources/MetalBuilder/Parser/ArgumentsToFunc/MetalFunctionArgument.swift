@@ -6,7 +6,7 @@ enum MetalBuilderFunctionArgumentsError: Error {
 case bufferArgumentError(String), textureArgumentError(String)
 }
 
-public enum MetalFunctionArgument{
+enum MetalFunctionArgument{
     case texture(MetalTextureArgument),
          buffer(MetalBufferArgument),
          bytes(MetalBytesArgument),

@@ -196,18 +196,16 @@ struct ContentView: View {
                     .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
                     .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
                     .uniforms(uniforms)
-                    .source("""
-                        kernel void postprocessKernel(uint2 id [[ thread_position_in_grid ]]){
-                            uint2 count = uint2(out.get_width(), out.get_height());
-                            if(id.x>=count.x||id.y>=count.y){ return; }
-                            float3 inColor = in.read(id).rgb;
-                            float2 uv = float2(id)/float2(count);
-                            //constexpr sampler s(address::clamp_to_edge, filter::linear);
-                            float3 imageColor = image.read(id).rgb;
-                            float3 color = mix(inColor, imageColor, u.mix);
-                            out.write(float4(color, 1), id);
-                        }
-                    
+                    //.gidIndexType(.uint)
+                    .body("""
+                        //uint2 count = uint2(out.get_width(), out.get_height());
+                        //if(gid.x>=count.x||id.y>=count.y){ return; }
+                        float3 inColor = in.read(gid).rgb;
+                        //float2 uv = float2(gid)/float2(gidCount);
+                        //constexpr sampler s(address::clamp_to_edge, filter::linear);
+                        float3 imageColor = image.read(gid).rgb;
+                        float3 color = mix(inColor, imageColor, u.mix);
+                        out.write(float4(color, 1), gid);
                     """)
                 //let _ = print("compile")
             }

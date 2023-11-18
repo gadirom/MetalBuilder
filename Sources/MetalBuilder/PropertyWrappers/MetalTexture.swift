@@ -30,7 +30,6 @@ public final class MTLTextureContainer{
     var image: ImageForTexture?
     weak var device: MTLDevice?
     
-    
     init(){
         descriptor = TextureDescriptor()
     }

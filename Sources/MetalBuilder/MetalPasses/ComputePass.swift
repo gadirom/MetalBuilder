@@ -5,10 +5,36 @@ import SwiftUI
 public enum MetalBuilderComputeError: Error{
     case noGridFit(String),
          gridFitTextureIsNil(String),
+         gridFitTextureIsUnknown(String),
          gridFitNoBuffer(String),
          
          noComputeEncoder(String),
          textureIsNil(String)
+}
+
+func encodeGIDCount(encoder: MTLComputeCommandEncoder,
+                    size: MTLSize,
+                    indexType: IndexType,
+                    bufferIndex: Int,
+                    dim: Int){
+    
+    func encodeSize<T>(bytes: SIMD3<T>){
+        var bytes = bytes
+        encoder.setBytes(&bytes, length: MemoryLayout<T>.stride*dim, index: bufferIndex)
+    }
+    
+    switch indexType{
+    case .uint:
+        let bytes = SIMD3<UInt32>(x: UInt32(size.width),
+                                  y: UInt32(size.height),
+                                  z: UInt32(size.depth))
+        encodeSize(bytes: bytes)
+    case .ushort:
+        let bytes = SIMD3<UInt16>(x: UInt16(size.width),
+                                  y: UInt16(size.height),
+                                  z: UInt16(size.depth))
+        encodeSize(bytes: bytes)
+    }
 }
 
 //Compute Pass
@@ -19,15 +45,20 @@ final class ComputePass: MetalPass{
     var component: Compute
     
     var computePiplineState: MTLComputePipelineState!
-    var threadsPerThreadGroup: MTLSize!
-    var threadGroupsPerGrid: MTLSize!
+    
+    var supportsFamily4: Bool! //for non-uniform threads dispatching
+    
+    var gidCountDim: Int!
     
     init(_ component: Compute, libraryContainer: LibraryContainer){
         self.component = component
         self.libraryContainer = libraryContainer
     }
     func setup(renderInfo: GlobalRenderInfo) throws{
-        try component.setup()
+        
+        self.gidCountDim = try component.gridFit!.threadPositionInGridDim
+        
+        supportsFamily4 = renderInfo.supportsFamily4
         
         if let piplineSetupClosure = component.piplineSetupClosure?.wrappedValue{
             computePiplineState = piplineSetupClosure(renderInfo.device, libraryContainer!.library!)
@@ -44,36 +75,73 @@ final class ComputePass: MetalPass{
         
         libraryContainer = nil
     }
-    func setGrid(_ drawable: CAMetalDrawable?) throws{
+    func setGrid(_ drawable: CAMetalDrawable?) throws -> MTLSize{
         var size: MTLSize
+        var gridScale: MBGridScale = (1,1,1)
         switch component.gridFit!{
-        case .fitTexture(let container):
+        case .fitTexture(let container, _, let gScale):
             guard let texture = container.texture
             else{
                 throw MetalBuilderComputeError
                     .gridFitTextureIsNil("fitTextrure for threads dispatching for the kernel: "+component.kernel+" is nil!")
             }
             size = MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
-        case .size(let s):
+            gridScale = gScale
+        case .size3D(let s):
             size = s.wrappedValue
-        case .drawable: size = MTLSize(width: drawable!.texture.width, height: drawable!.texture.height, depth: 1)
-        case .buffer(let index):
-            guard let buf = component.buffers.first(where: { $0.index == index })
-            else{
-                throw MetalBuilderComputeError
-                    .gridFitNoBuffer("buffer \(index) for threads dispatching for the kernel: '"+component.kernel+"' is not found!")
-            }
-            size = MTLSize(width: buf.count, height: 1, depth: 1)
+        case .size2D(let bs):
+            let s = bs.wrappedValue
+            size = MTLSize(width: s.0, height: s.1, depth: 1)
         case .size1D(let s):
             size = MTLSize(width: s.wrappedValue, height: 1, depth: 1)
+        case .drawable: size = MTLSize(width: drawable!.texture.width, height: drawable!.texture.height, depth: 1)
+        case .buffer(let buf, _, let gScale):
+            guard let count = buf.count
+            else{
+                throw MetalBuilderComputeError
+                    .gridFitNoBuffer("buffer \(String(describing: buf.metalName)) for threads dispatching for the kernel: '"+component.kernel+"' has no count!")
+            }
+            size = MTLSize(width: count, height: 1, depth: 1)
+            gridScale = gScale
+       
         }
+        
+        size.scale(gridScale)
+        
+        return size
+    }
+    func dispatch(size: MTLSize, commandEncoder: MTLComputeCommandEncoder){
+        
+        encodeGIDCount(encoder: commandEncoder,
+                       size: size,
+                       indexType: component.indexType,
+                       bufferIndex: component.bufferIndexCounter,
+                       dim: gidCountDim)
+        
         let w = computePiplineState.threadExecutionWidth
         let h = min(size.height, computePiplineState.maxTotalThreadsPerThreadgroup / w)
         
-        threadsPerThreadGroup = MTLSize(width: w, height: h, depth: 1)
-        threadGroupsPerGrid = MTLSize(
-            width: Int(ceil(Double(size.width)/Double(w))),
-            height: Int(ceil(Double(size.height)/Double(h))), depth: size.depth)
+        //threads per threadgroup
+        var threadsPerThreadgroup: MTLSize
+        if let t = component.threadsPerThreadgroup{
+            threadsPerThreadgroup = t.wrappedValue
+        }else{
+            threadsPerThreadgroup = MTLSize(width: w, height: h, depth: 1)
+        }
+        
+        if supportsFamily4{
+            commandEncoder.dispatchThreads(size,
+                            threadsPerThreadgroup: threadsPerThreadgroup)
+        }else{
+            
+            let threadgroupsPerGrid = MTLSize(
+                width: Int(ceil(Double(size.width)/Double(w))),
+                height: Int(ceil(Double(size.height)/Double(h))), depth: size.depth)
+            
+            commandEncoder.dispatchThreadgroups(threadgroupsPerGrid,
+                                                threadsPerThreadgroup: threadsPerThreadgroup)
+        }
+    
     }
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()
@@ -110,10 +178,10 @@ final class ComputePass: MetalPass{
             additionalEncodeClosure(computeCommandEncoder)
         }
         
-        //Set threads configuration
-        try setGrid(passInfo.drawable)
+        let size = try setGrid(passInfo.drawable)
         //Dispatch
-        computeCommandEncoder.dispatchThreadgroups(threadGroupsPerGrid, threadsPerThreadgroup: threadsPerThreadGroup)
+        dispatch(size: size, commandEncoder: computeCommandEncoder)
+        
         computeCommandEncoder.endEncoding()
     }
 }

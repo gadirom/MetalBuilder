@@ -48,51 +48,29 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
                 .bytes(context.$viewportSize)
                 //.bytes($particleScale, name: "scale")
                 .uniforms(u)
+                .body("""
+                Particle particle = particles[gid];
+                float2 position = particle.position;
+                   float pi = 3.14;
+
+                float2 viewport = float2(viewportSize);
+
+                position += particle.velocity*u.speed;
+                particles[gid].position = position;
+
+                if (position.x < -viewport.x/2 || position.x > viewport.x/2) particles[gid].velocity.x *= -1.0;
+                if (position.y < -viewport.y/2  || position.y > viewport.y/2) particles[gid].velocity.y *= -1.0;
+
+                particles[gid].angle += particle.angvelo;
+
+                if (particles[gid].angle > pi) { particles[gid].angle -= 2*pi; };
+                if (particles[gid].angle < -pi) { particles[gid].angle += 2*pi; };
+
+                """)
         }
    
     let helpers: String = sincos2
     
-    let librarySource = """
+    let librarySource = ""
 
-    kernel void particleFunction(uint id [[ thread_position_in_grid ]],
-                                 uint count [[ threads_per_grid ]]){
-    if(id>=count) return;
-    Particle particle = particles[id];
-    //    float size = particle.size*scale;
-    //    float angle = particle.angle;
-        float2 position = particle.position;
-    //    float4 color = particle.color;
-    //
-    //    int j = id * 3;
-    //
-    //    vertices[j].color = float4(color.rgb, 0.5);
-    //    vertices[j+1].color = float4((color.rgb + u.color)/2., 0.5);
-    //    vertices[j+2].color = float4(u.color, 1);
-    //
-       float pi = 3.14;
-    //
-    //    float2 scA = sincos2(angle);
-    //    float2 scA23 = sincos2(angle+pi*2/3);
-    //    float2 scA43 = sincos2(angle+pi*4/3);
-    //
-    //    vertices[j].position = position + size*scA;
-    //    vertices[j+1].position = position + size*scA23;
-    //    vertices[j+2].position = position + size*scA43;
-
-    float2 viewport = float2(viewportSize);
-
-    position += particle.velocity*u.speed;
-    particles[id].position = position;
-
-    if (position.x < -viewport.x/2 || position.x > viewport.x/2) particles[id].velocity.x *= -1.0;
-    if (position.y < -viewport.y/2  || position.y > viewport.y/2) particles[id].velocity.y *= -1.0;
-
-    particles[id].angle += particle.angvelo;
-
-    if (particles[id].angle > pi) { particles[id].angle -= 2*pi; };
-    if (particles[id].angle < -pi) { particles[id].angle += 2*pi; };
-
-    }
-
-    """
 }

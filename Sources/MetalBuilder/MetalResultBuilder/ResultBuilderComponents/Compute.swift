@@ -2,14 +2,6 @@
 import MetalKit
 import SwiftUI
 
-enum GridFit{
-    case fitTexture(MTLTextureContainer),
-         size(Binding<MTLSize>),
-         size1D(MetalBinding<Int>),
-         drawable,
-         buffer(Int)
-}
-
 public typealias AdditionalEncodeClosureForCompute = (MTLComputeCommandEncoder)->()
 public typealias AdditionalPiplineSetupClosureForCompute = (MTLComputePipelineState, MTLLibrary)->()
 public typealias PiplineSetupClosureForCompute = (MTLDevice, MTLLibrary)->(MTLComputePipelineState)
@@ -24,6 +16,8 @@ public struct Compute: MetalBuilderComponent{
     
     var drawableTextureIndex: Int?
     var gridFit: GridFit?
+    var indexType: IndexType = .ushort
+    var threadsPerThreadgroup: MetalBinding<MTLSize>?
     
     var kernelArguments: [MetalFunctionArgument] = []
     
@@ -33,6 +27,7 @@ public struct Compute: MetalBuilderComponent{
     var uniforms: [UniformsContainer] = []
     
     var librarySource: String = ""
+    var bodySource: String = ""
     
     var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForCompute>?
     var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForCompute>?
@@ -42,18 +37,30 @@ public struct Compute: MetalBuilderComponent{
         self.kernel = kernel
     }
     
-    mutating func setup() throws{
+    mutating func setup(supportFamily4: Bool) throws{
+        try setupGrid()
+        try setupLibrarySource(addGridCheck: !supportFamily4)
+    }
+    mutating func setupLibrarySource(addGridCheck: Bool) throws{
+        guard bodySource != ""
+        else { return }
+            
+        var gridCheck = ""
+        if addGridCheck{
+            gridCheck = try gridFit!.gridCheck
+        }
+        
+        let arg = try gridFit!
+            .computeKernelArguments(bodyCode: bodySource,
+                                    indexType: indexType, 
+                                    gidCountBufferIndex: bufferIndexCounter)
+        let kernelDecl = "void kernel \(kernel) (\(arg)){"
+        librarySource = librarySource + kernelDecl + gridCheck + bodySource + "}"
+    }
+    mutating func setupGrid() throws{
         if gridFit == nil{
-            if let texture = textures.first{
-                gridFit = .fitTexture(texture.container)
-            }else{
-                if drawableTextureIndex != nil{
-                    gridFit = .drawable
-                }else{
-                    throw MetalBuilderComputeError
-                    .noGridFit("No information for threads dispatching was set for the kernel: "+kernel+"\nUse 'grid' modifier or set index for drawable!")
-                }
-            }
+            throw MetalBuilderComputeError
+            .noGridFit("No information for threads dispatching was set for the kernel: "+kernel+"\nUse 'grid' modifier or set index for drawable!")
         }
     }
 }
@@ -87,15 +94,19 @@ public extension Compute{
     /// This method adds a buffer to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument, fitThreads: Bool=false)->Compute{
+    func buffer<T>(_ container: MTLBufferContainer<T>, 
+                   offset: Int = 0,
+                   argument: MetalBufferArgument,
+                   fitThreads: Bool=false,
+                   gridScale: MBGridScale?=nil)->Compute{
         var c = self
         var argument = argument
         argument.index = checkBufferIndex(c: &c, index: argument.index)
         c.kernelArguments.append(.buffer(argument))
         let buf = Buffer(container: container, offset: offset, index: argument.index!)
         c.buffers.append(buf)
-        if fitThreads{
-            c.gridFit = .buffer(argument.index!)
+        if fitThreads || gridScale != nil{
+            c.gridFit = .buffer(container, argument.name, gridScale ?? (1,1,1))
         }
         return c
     }
@@ -216,7 +227,10 @@ public extension Compute{
     /// This method adds a texture to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func texture(_ container: MTLTextureContainer?, argument: MetalTextureArgument, fitThreads: Bool=false)->Compute{
+    func texture(_ container: MTLTextureContainer?,
+                 argument: MetalTextureArgument,
+                 fitThreads: Bool=false,
+                 gridScale: MBGridScale?=nil)->Compute{
         guard let container
         else{ return drawableTexture(argument: argument, fitThreads: fitThreads) }
         var c = self
@@ -226,8 +240,8 @@ public extension Compute{
         c.kernelArguments.append(.texture(argument))
         let tex = Texture(container: container, index: argument.index!)
         c.textures.append(tex)
-        if fitThreads{
-            c.gridFit = .fitTexture(container)
+        if fitThreads || gridScale != nil{
+            c.gridFit = .fitTexture(container, argument.name, gridScale ?? (1,1,1))
         }
         return c
     }
@@ -238,12 +252,12 @@ public extension Compute{
     ///
     /// This method adds a drawable texture to the compute function and doesn't change Metal library code.
     /// Use it if you want to declare the kernel's argument manually.
-    func drawableTexture(index: Int)->Compute{
-        var c = self
-        c.drawableTextureIndex = index
-        c.gridFit = .drawable
-        return c
-    }
+//    func drawableTexture(index: Int, gridScale: MBGridScale?=nil)->Compute{
+//        var c = self
+//        c.drawableTextureIndex = index
+//        c.gridFit = .drawable(gridScale ?? (1,1,1))
+//        return c
+//    }
     /// Passes a drawable texture to the compute kernel.
     /// - Parameters:
     ///   - argument: The texture argument describing the declaration that should be added to the kernel.
@@ -252,15 +266,17 @@ public extension Compute{
     /// This method adds a drawable texture to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func drawableTexture(argument: MetalTextureArgument, fitThreads: Bool = true)->Compute{
+    func drawableTexture(argument: MetalTextureArgument,
+                         fitThreads: Bool = true,
+                         gridScale: MBGridScale?=nil)->Compute{
         var c = self
         var argument = argument
         argument.index = checkTextureIndex(c: &c, index: argument.index)
         argument.textureType = .type2D
         c.kernelArguments.append(.texture(argument))
         c.drawableTextureIndex = argument.index
-        if fitThreads{
-            c.gridFit = .drawable
+        if fitThreads || gridScale != nil{
+            c.gridFit = .drawable(argument.name, gridScale ?? (1,1,1))
         }
         return c
     }
@@ -274,29 +290,39 @@ public extension Compute{
         c.gridFit = .size1D(MetalBinding<Int>.constant(size))
         return c
     }
-    func grid(size: Binding<MTLSize>)->Compute{
+    func grid(size2D: MetalBinding<(Int, Int)>)->Compute{
         var c = self
-        c.gridFit = .size(size)
+        c.gridFit = .size2D(size2D)
         return c
     }
-    func grid(fitTexture: MTLTextureContainer)->Compute{
+    func grid(size3D: MetalBinding<MTLSize>)->Compute{
         var c = self
-        c.gridFit = .fitTexture(fitTexture)
+        c.gridFit = .size3D(size3D)
         return c
     }
-    func gridFitDrawable()->Compute{
+//    func grid(fitTexture: MTLTextureContainer, gridScale: MBGridScale?=nil)->Compute{
+//        var c = self
+//        c.gridFit = .fitTexture(fitTexture, gridScale ?? (1,1,1))
+//        return c
+//    }
+//    func gridFitDrawable(gridScale: MBGridScale?=nil)->Compute{
+//        var c = self
+//        c.gridFit = .drawable(gridScale ?? (1,1,1))
+//        return c
+//    }
+//    func threadsFromBuffer(_ index: Int)->Compute{
+//        var c = self
+//        c.gridFit = .buffer(index)
+//        return c
+//    }
+    func body(_ metalCode: String)->Compute{
         var c = self
-        c.gridFit = .drawable
+        c.bodySource = metalCode
         return c
     }
-    func threadsFromBuffer(_ index: Int)->Compute{
+    func source(_ metalCode: String)->Compute{
         var c = self
-        c.gridFit = .buffer(index)
-        return c
-    }
-    func source(_ source: String)->Compute{
-        var c = self
-        c.librarySource = source
+        c.librarySource = metalCode
         return c
     }
     /// Modifier for setting a closure for pipeline setup for Compute component.
@@ -354,6 +380,19 @@ public extension Compute{
     /// right before the dispatch or before encoding of the next component.
     func additionalEncode(_ closure: @escaping AdditionalEncodeClosureForCompute)->Compute{
         self.additionalEncode(MetalBinding<AdditionalEncodeClosureForCompute>.constant(closure))
+    }
+    func threadsPerThreadgroup(_ sizeBinding: MetalBinding<MTLSize>)->Compute{
+        var c = self
+        c.threadsPerThreadgroup = sizeBinding
+        return c
+    }
+    func threadsPerThreadgroup(_ size: MTLSize)->Compute{
+        self.threadsPerThreadgroup(MetalBinding<MTLSize>.constant(size))
+    }
+    func gidIndexType(_ type: IndexType) -> Compute{
+        var c = self
+        c.indexType = indexType
+        return c
     }
 }
 

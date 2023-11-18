@@ -59,8 +59,7 @@ struct RenderData{
         let content = renderingContent(context)
         //var libraryContainer = LibraryContainer()
         
-        let data = try Self.compile(device: renderInfo.device,
-                                    pixelFormat: renderInfo.pixelFormat,
+        let data = try Self.compile(renderInfo: renderInfo,
                                     content: content,
                                     librarySource: librarySource,
                                     helpers: helpers,
@@ -87,8 +86,7 @@ struct RenderData{
         try data.setupPasses(renderInfo: renderInfo)
     }
     
-    static func compile(device: MTLDevice,
-                        pixelFormat: MTLPixelFormat,
+    static func compile(renderInfo: GlobalRenderInfo,
                         content: MetalContent,
                         librarySource: String,
                         helpers: String,
@@ -99,8 +97,7 @@ struct RenderData{
         var helpers = helpers
         let libraryContainer = LibraryContainer()
         
-        return try compile(device: device,
-                           pixelFormat: pixelFormat,
+        return try compile(renderInfo: renderInfo,
                            content: content,
                            librarySource: &librarySource,
                            helpers: &helpers,
@@ -110,8 +107,7 @@ struct RenderData{
                            level: 0)
     }
     
-    static func compile(device: MTLDevice,
-                        pixelFormat: MTLPixelFormat,
+    static func compile(renderInfo: GlobalRenderInfo,
                         content: MetalContent,
                         librarySource: inout String,
                         helpers: inout String,
@@ -122,10 +118,14 @@ struct RenderData{
         
         var data = RenderData()
         
+        let device = renderInfo.device
+        
         //init passes
         for component in content{
             //Compute
-            if let computeComponent = component as? Compute{
+            if var computeComponent = component as? Compute{
+                
+                try computeComponent.setup(supportFamily4: renderInfo.supportsFamily4)
                 data.passes.append(ComputePass(computeComponent, libraryContainer: libraryContainer))
                 data.addTextures(newTexs: computeComponent.textures.map{ $0.container })
                 data.addBuffers(newBuffs: computeComponent.buffers)
@@ -223,8 +223,7 @@ struct RenderData{
             //EncodeGroup
             if let encodeGroupComponent = component as? EncodeGroup{
                 let groupData = try compile(
-                    device: device,
-                    pixelFormat: pixelFormat,
+                    renderInfo: renderInfo,
                     content: encodeGroupComponent.metalContent,
                     librarySource: &librarySource,
                     helpers: &helpers,
@@ -253,8 +252,7 @@ struct RenderData{
                 if let options = buildingBlockComponent.compileOptions{
                     //compile to it's own library
                     blockData = try compile(
-                        device: device,
-                        pixelFormat: pixelFormat,
+                        renderInfo: renderInfo,
                         content: buildingBlockComponent.metalContent,
                         librarySource: buildingBlockComponent.librarySource,
                         helpers: buildingBlockComponent.helpers,
@@ -277,8 +275,7 @@ struct RenderData{
                     }
                     
                     blockData = try compile(
-                        device: device,
-                        pixelFormat: pixelFormat,
+                        renderInfo: renderInfo,
                         content: buildingBlockComponent.metalContent,
                         librarySource: &librarySource,
                         helpers: &helpers,
