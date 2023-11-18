@@ -6,17 +6,24 @@ enum MetalBuilderFunctionArgumentsError: Error {
 case bufferArgumentError(String), textureArgumentError(String)
 }
 
-enum MetalFunctionArgument{
+public enum MetalFunctionArgument{
     case texture(MetalTextureArgument),
          buffer(MetalBufferArgument),
          bytes(MetalBytesArgument),
          instanceID
     
-    func string() throws -> String{
+    func string(forArgumentsBuffer: Bool = false,
+                argumentIndex: Int = -1) throws -> String{
         switch self{
-        case .texture(let arg): return try arg.string()
-        case .buffer(let arg): return arg.string
-        case .bytes(let arg): return arg.string
+        case .texture(let arg):
+            return try arg.string(forArgumentsBuffer: forArgumentsBuffer,
+                                  argumentIndex: argumentIndex)
+        case .buffer(let arg):
+            return arg.string(forArgumentsBuffer: forArgumentsBuffer,
+                              argumentIndex: argumentIndex)
+        case .bytes(let arg):
+            return arg.string(forArgumentsBuffer: forArgumentsBuffer,
+                              argumentIndex: argumentIndex)
         case .instanceID: return "uint instance_id [[instance_id]]"
         }
     }
@@ -46,7 +53,7 @@ public struct MetalTextureArgument{
     let access: String
     let name: String
     var index: Int?
-    func string() throws -> String{
+    func string(forArgumentsBuffer: Bool = false, argumentIndex: Int = -1) throws -> String{
         var prefix = ""
         switch textureType!{
         case .type2D: prefix = "texture2d"
@@ -64,7 +71,11 @@ public struct MetalTextureArgument{
         default: throw MetalBuilderFunctionArgumentsError
                 .textureArgumentError("Unsupported texture type: "+String(describing: textureType))
         }
-        var h = prefix+"<_TYPE_, access::_ACCESS_> _NAME_ [[texture(_INDEX_)]]"
+        let index = argumentIndex >= 0 ? argumentIndex : index
+        var h = prefix +
+            (forArgumentsBuffer ?
+            "<_TYPE_, access::_ACCESS_> _NAME_ [[id(_INDEX_)]]" :
+            "<_TYPE_, access::_ACCESS_> _NAME_ [[texture(_INDEX_)]]")
         h = h.replacingOccurrences(of: "_TYPE_", with: type)
         h = h.replacingOccurrences(of: "_ACCESS_", with: access)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
@@ -98,8 +109,11 @@ public struct MetalBufferArgument{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
     }
-    var string: String{
-        var h = "_NAMESPACE_ _TYPE_* _NAME_ [[buffer(_INDEX_)]]"
+    func string(forArgumentsBuffer: Bool = false, argumentIndex: Int = -1) -> String{
+        let index = argumentIndex >= 0 ? argumentIndex : index
+        var h =  forArgumentsBuffer ?
+            "_NAMESPACE_ _TYPE_* _NAME_ [[id(_INDEX_)]]" :
+            "_NAMESPACE_ _TYPE_* _NAME_ [[buffer(_INDEX_)]]"
         h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)
         h = h.replacingOccurrences(of: "_TYPE_", with: type!)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
@@ -161,8 +175,11 @@ public struct MetalBytesArgument{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
     }
-    var string: String{
-        var h = "_NAMESPACE_ _TYPE_& _NAME_ [[buffer(_INDEX_)]]"
+    func string(forArgumentsBuffer: Bool = false, argumentIndex: Int = -1) -> String{
+        let index = argumentIndex >= 0 ? argumentIndex : index
+        var h = forArgumentsBuffer ?
+            "_NAMESPACE_ _TYPE_& _NAME_ [[id(_INDEX_)]]" :
+            "_NAMESPACE_ _TYPE_& _NAME_ [[buffer(_INDEX_)]]"
         h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)
         h = h.replacingOccurrences(of: "_TYPE_", with: type!)
         h = h.replacingOccurrences(of: "_NAME_", with: name)
