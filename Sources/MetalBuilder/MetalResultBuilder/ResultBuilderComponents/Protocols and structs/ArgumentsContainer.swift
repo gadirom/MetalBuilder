@@ -2,171 +2,161 @@
 import MetalKit
 import SwiftUI
 
-struct ArgumentsContainer{
-    
-    var arguments: [MetalFunctionArgument] = []
-    
-    var bufferIndexCounter = 0
-    var textureIndexCounter = 0
-    var argumentsCounter = 0
-    
-    var uniforms: [UniformsContainer] = []
-    
-    var argumentBuffer = ArgumentBuffer()
-    
-    let shaderName: String
+public var defaultTexturesSeparatePlacement = false
+public var defaultBytesSeparatePlacement = true // for now the bytes are always separate
+public var defaultBuffersSeparatePlacement = false
+
+protocol ContainerOfResources{
+    var indexCounter: Int{ get set }
+}
+extension ContainerOfResources{
+    mutating func checkIndex(index: Int?) -> Int{
+        if index == nil {
+            let index = indexCounter
+            indexCounter += 1
+            return index
+        }else{
+            return index!
+        }
+    }
+}
+
+struct ContainerOfBuffersBytesAndUniforms: ContainerOfResources{
+    var indexCounter: Int = 0
     var buffers: [BufferProtocol] = []
     var bytes: [BytesProtocol] = []
+    
+    mutating func addBuffer(_ buf: BufferProtocol,
+                               offset: MetalBinding<Int>,
+                               argument: MetalBufferArgument) -> MetalFunctionArgument{
+        var argument = argument
+        var buf = buf
+        argument.index = checkIndex(index: argument.index)
+        buf.index = argument.index!
+        self.buffers.append(buf)
+        return .buffer(argument)
+    }
+    mutating func addBytes(_ bytes: BytesProtocol,
+                           argument: MetalBytesArgument)->MetalFunctionArgument{
+        var argument = argument
+        argument.index = checkIndex(index: argument.index)
+        self.bytes.append(bytes)
+        return .bytes(argument)
+    }
+}
+
+struct ContainerOfTextures: ContainerOfResources{
+    var indexCounter: Int = 0
     var textures: [Texture] = []
+    
+    mutating func add(_ tex: Texture?,//if drawable the tex is nil
+                      argument: MetalTextureArgument) -> MetalFunctionArgument{
+        var argument = argument
+        argument.index = checkIndex(index: argument.index)
+        if let tex{
+            self.textures.append(tex)
+        }
+        return .texture(argument)
+    }
+}
+
+struct ArgumentsContainer{
+    
+    var separateShaderArguments: [MetalFunctionArgument] = []
+    
+    var argumentsBuffer: ArgumentsBuffer
+    
+    let shaderName: String
+    var uniforms: [UniformsContainer] = []
+    var buffersAndBytesContainer = ContainerOfBuffersBytesAndUniforms()
+    var texturesContainer = ContainerOfTextures()
+    init(shaderName: String){
+        self.shaderName = shaderName
+        argumentsBuffer = ArgumentsBuffer(functionName: shaderName)
+    }
 }
 
 extension ArgumentsContainer{
-    func buffer<T>(_ container: MTLBufferContainer<T>,
-                   offset: Int,
-                   index: Int)->Self{
-        var c = self
-        let buf = Buffer(separate: true, container: container, offset: offset, index: index)
-        c.buffers.append(buf)
-        return c
+    func setup() throws -> String{
+        try argumentsBuffer.typeDeclaration
     }
-    func buffer<T>(_ container: MTLBufferContainer<T>,
-                   offset: Int, argument: MetalBufferArgument,
-                   separate: Bool)->Self{
-        var c = self
-        var argument = argument
+    func getBuffersAndTextures() -> ([BufferProtocol], [MTLTextureContainer]){
+        var (bufs, texs) =
+        (buffersAndBytesContainer.buffers,
+         texturesContainer.textures)
+        let (bufsA, texsA) = argumentsBuffer.buffersAndTextures
+        bufs.append(contentsOf: bufsA)
+        texs.append(contentsOf: texsA)
+        return (bufs, texs.map{ $0.container })
+    }
+}
+
+extension ArgumentsContainer{
+    mutating func buffer<T>(_ container: MTLBufferContainer<T>,
+                   offset: MetalBinding<Int>,
+                   index: Int){
+        let buff = Buffer(container: container, offset: offset, index: index)
+        self.buffersAndBytesContainer.buffers.append(buff)
+    }
+    mutating func buffer<T>(_ container: MTLBufferContainer<T>,
+                   offset: MetalBinding<Int>,
+                   argument: MetalBufferArgument,
+                   separate: Bool){
+        let buf = Buffer(container: container, offset: offset, index: 0)
         if separate{
-            argument.index = checkBufferIndex(c: &c, index: argument.index)
+            let arg = self.buffersAndBytesContainer.addBuffer(buf,
+                                                                   offset: offset,
+                                                                   argument: argument)
+            self.separateShaderArguments.append(arg)
         }else{
-            argument.index = argumentsCounter
-            c.argumentsCounter += 1
+            self.argumentsBuffer.addBuffer(buf, bufArgument: argument)
         }
-        c.arguments.append(.buffer(argument))
-        let buf = Buffer(separate: separate, container: container, offset: offset, index: argument.index!)
-        c.buffers.append(buf)
-        return c
     }
-    func buffer<T>(_ container: MTLBufferContainer<T>,
-                   offset: Int,
-                   space: String,
-                   type: String,
-                   name: String,
-                   separate: Bool) -> Self{
-        
-        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
-        return self.buffer(container, offset: offset, argument: argument, separate: separate)
+    mutating func bytes<T>(_ binding: Binding<T>, index: Int){
+        let bytes = Bytes(binding: binding, index: index)
+        self.buffersAndBytesContainer.bytes.append(bytes)
     }
-    func bytes<T>(_ binding: Binding<T>, index: Int)->Self{
-        var c = self
-        let bytes = Bytes(separate: true, binding: binding, index: index)
-        c.bytes.append(bytes)
-        return c
-    }
-    func bytes<T>(_ binding: Binding<T>,
-                  argument: MetalBytesArgument, separate: Bool)->Self{
-        var c = self
-        var argument = argument
+    mutating func bytes<T>(_ binding: Binding<T>,
+                  argument: MetalBytesArgument, separate: Bool){
+        let bytes = Bytes(binding: binding, index: 0)
         if separate{
-            argument.index = checkBufferIndex(c: &c, index: argument.index)
+            let arg = self.buffersAndBytesContainer.addBytes(bytes, argument: argument)
+            self.separateShaderArguments.append(arg)
         }else{
-            argument.index = argumentsCounter
-            c.argumentsCounter += 1
+            //argumentsBuffer.addBytes(bytes, buffArgument: argument)
         }
-        c.arguments.append(.bytes(argument))
-        let bytes = Bytes(separate: separate, binding: binding, index: argument.index!)
-        c.bytes.append(bytes)
-        return c
     }
-    func bytes<T>(_ binding: MetalBinding<T>,
-                  argument: MetalBytesArgument,
-                  separate: Bool)->Self{
-        return self.bytes(binding.binding, argument: argument, separate: separate)
-    }
-    func bytes<T>(_ binding: MetalBinding<T>,
-                  space: String,
-                  type: String,
-                  name: String,
-                  index: Int,
-                  separate: Bool)->Self{
-        let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name, index: index)
-        return self.bytes(binding, argument: argument, separate: separate)
-    }
-    func bytes<T>(_ binding: Binding<T>,
-                  space: String,
-                  type: String,
-                  name: String,
-                  index: Int,
-                  separate: Bool)->Self{
-        let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
-        let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name, index: index)
-        return self.bytes(binding, argument: argument, separate: separate)
-    }
-    func uniforms(_ uniforms: UniformsContainer, name: String) -> Self{
-        var c = self
-        c.uniforms.append(uniforms)
-        var argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
-        argument.index = checkBufferIndex(c: &c, index: nil)
-        c.arguments.append(.bytes(argument))
-        let bytes = RawBytes(separate: true, binding: uniforms.pointerBinding,
+    mutating func uniforms(_ uniforms: UniformsContainer, name: String?){
+        self.uniforms.append(uniforms)
+        let argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
+        let bytes = RawBytes(binding: uniforms.pointerBinding,
                              length: uniforms.length,
                              index: argument.index!)
-        c.bytes.append(bytes)
-        return c
+        let arg = self.buffersAndBytesContainer.addBytes(bytes, argument: argument)
+        self.separateShaderArguments.append(arg)
     }
-    func texture(_ container: MTLTextureContainer, index: Int)->Self{
-        var c = self
-        let tex = Texture(separate: true, container: container, index: index)
-        c.textures.append(tex)
-        return c
+    mutating func texture(_ container: MTLTextureContainer, index: Int){
+        let tex = Texture(container: container, index: index)
+        self.texturesContainer.textures.append(tex)
     }
-    func texture(_ container: MTLTextureContainer,
+    mutating func texture(_ container: MTLTextureContainer,
                  argument: MetalTextureArgument,
-                 separate: Bool)->Self{
-        var c = self
+                 separate: Bool){
         var argument = argument
-        if separate{
-            argument.index = checkTextureIndex(c: &c, index: argument.index)
-        }else{
-            argument.index = argumentsCounter
-            c.argumentsCounter += 1
-        }
         argument.textureType = container.descriptor.type
-        c.arguments.append(.texture(argument))
-        let tex = Texture(separate: separate, container: container, index: argument.index!)
-        c.textures.append(tex)
-        return c
-    }
-}
-
-extension ArgumentsContainer{
-    func checkBufferIndex(c: inout ArgumentsContainer, index: Int?) -> Int{
-        if index == nil {
-            let index = bufferIndexCounter
-            c.bufferIndexCounter += 1
-            return index
+        let tex = Texture(container: container, index: 0)
+        if separate{
+            let arg = self.texturesContainer.add(tex, argument: argument)
+            self.separateShaderArguments.append(arg)
         }else{
-            return index!
+            argumentsBuffer.addTexture(tex, texArgument: argument)
         }
     }
-    func checkTextureIndex(c: inout ArgumentsContainer, index: Int?) -> Int{
-        if index == nil {
-            let index = textureIndexCounter
-            c.textureIndexCounter += 1
-            return index
-        }else{
-            return index!
-        }
-    }
-}
-
-//work with argument buffer
-extension ArgumentsContainer{
-    var argumentBufferTypeDecl: String{
-        get throws{
-            try argumentBufferTypeDeclaration(shaderFunctionName: shaderName,
-                                              arguments: arguments)
-        }
-    }
-    func createArgumentBuffer(){
-        argumentBuffer.typeName = shaderName
+    mutating func drawable(argument: MetalTextureArgument)->Int{
+        var argument = argument
+        argument.textureType = .type2D
+        let arg = self.texturesContainer.add(nil, argument: argument)
+        self.separateShaderArguments.append(arg)
+        return arg.index
     }
 }

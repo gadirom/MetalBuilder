@@ -1,9 +1,9 @@
 import MetalKit
 import SwiftUI
 
-protocol BufferProtocol{
+protocol BufferProtocol: TextureOrBuffer{
     var mtlBuffer: MTLBuffer? { get }
-    var offset: Int { get }
+    var offset: MetalBinding<Int> { get }
     var index: Int { get set }
     
     var elementSize: Int { get }
@@ -31,7 +31,7 @@ struct Buffer<T>: BufferProtocol{
     }
     
     let container: MTLBufferContainer<T>
-    let offset: Int
+    let offset: MetalBinding<Int>
     var index: Int
     
     var mtlBuffer: MTLBuffer?{
@@ -55,7 +55,7 @@ struct Buffer<T>: BufferProtocol{
           Unmanaged.passUnretained(container).toOpaque()
     }
 }
-struct Texture{
+struct Texture: TextureOrBuffer{
     let container: MTLTextureContainer
     var index: Int
 }

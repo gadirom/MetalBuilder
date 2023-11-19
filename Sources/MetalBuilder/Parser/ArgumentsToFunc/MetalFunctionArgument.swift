@@ -16,14 +16,11 @@ public enum MetalFunctionArgument{
                 argumentIndex: Int = -1) throws -> String{
         switch self{
         case .texture(let arg):
-            return try arg.string(forArgumentsBuffer: forArgumentsBuffer,
-                                  argumentIndex: argumentIndex)
+            return try arg.string(argumentIndex: argumentIndex)
         case .buffer(let arg):
-            return arg.string(forArgumentsBuffer: forArgumentsBuffer,
-                              argumentIndex: argumentIndex)
+            return arg.string(argumentIndex: argumentIndex)
         case .bytes(let arg):
-            return arg.string(forArgumentsBuffer: forArgumentsBuffer,
-                              argumentIndex: argumentIndex)
+            return arg.string(argumentIndex: argumentIndex)
         case .instanceID: return "uint instance_id [[instance_id]]"
         }
     }
@@ -53,7 +50,7 @@ public struct MetalTextureArgument{
     let access: String
     let name: String
     var index: Int?
-    func string(forArgumentsBuffer: Bool = false, argumentIndex: Int = -1) throws -> String{
+    func string(argumentIndex: Int = -1) throws -> String{
         var prefix = ""
         switch textureType!{
         case .type2D: prefix = "texture2d"
@@ -73,7 +70,7 @@ public struct MetalTextureArgument{
         }
         let index = argumentIndex >= 0 ? argumentIndex : index
         var h = prefix +
-            (forArgumentsBuffer ?
+            (argumentIndex >= 0 ?
             "<_TYPE_, access::_ACCESS_> _NAME_ [[id(_INDEX_)]]" :
             "<_TYPE_, access::_ACCESS_> _NAME_ [[texture(_INDEX_)]]")
         h = h.replacingOccurrences(of: "_TYPE_", with: type)
@@ -109,9 +106,9 @@ public struct MetalBufferArgument{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
     }
-    func string(forArgumentsBuffer: Bool = false, argumentIndex: Int = -1) -> String{
+    func string(argumentIndex: Int = -1) -> String{
         let index = argumentIndex >= 0 ? argumentIndex : index
-        var h =  forArgumentsBuffer ?
+        var h =  argumentIndex >= 0 ?
             "_NAMESPACE_ _TYPE_* _NAME_ [[id(_INDEX_)]]" :
             "_NAMESPACE_ _TYPE_* _NAME_ [[buffer(_INDEX_)]]"
         h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)

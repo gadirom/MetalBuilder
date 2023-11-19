@@ -27,7 +27,7 @@ func parse(library: inout String,
             case .buffer(let buf):
                 let type = buf.swiftTypeToMetal
                 if let metalDeclaration = metalTypeDeclaration(from: type.swiftType,
-                                                            name: type.metalType){
+                                                               name: type.metalType){
                     if !metalTypeNames.contains(metalDeclaration.typeName) {
                         metalTypeNames.append(metalDeclaration.typeName)
                         library = metalDeclaration.declaration + library

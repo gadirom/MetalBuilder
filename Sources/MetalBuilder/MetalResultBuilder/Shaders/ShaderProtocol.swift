@@ -18,7 +18,8 @@ protocol InternalShaderProtocol: ShaderProtocol{
 //Implementation of public modifiers for ShaderProtocol
 //They are to be called by wrappers of the respective shaders
 extension InternalShaderProtocol{
-    func _buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> ShaderProtocol{
+    func _buffer<T>(_ container: MTLBufferContainer<T>,
+                    offset: MetalBinding<Int> = .constant(0), argument: MetalBufferArgument) -> ShaderProtocol{
         var sh = self
         let buf = Buffer(container: container, offset: offset, index: 0)
         sh.bufsAndArgs.append((buf, argument))

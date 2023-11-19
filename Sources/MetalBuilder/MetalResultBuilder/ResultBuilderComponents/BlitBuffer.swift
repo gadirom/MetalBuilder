@@ -23,13 +23,13 @@ public struct BlitBuffer: MetalBuilderComponent{
 public extension BlitBuffer{
     func source<T>(_ container: MTLBufferContainer<T>)->BlitBuffer{
         var b = self
-        let buffer = Buffer(container: container, offset: 0, index: 0)
+        let buffer = Buffer(container: container, offset: .constant(0), index: 0)
         b.inBuffer = buffer
         return b
     }
     func destination<T>(_ container: MTLBufferContainer<T>)->BlitBuffer{
         var b = self
-        let buffer = Buffer(container: container, offset: 0, index: 0)
+        let buffer = Buffer(container: container, offset: .constant(0), index: 0)
         b.outBuffer = buffer
         return b
     }

@@ -115,7 +115,7 @@ final class ComputePass: MetalPass{
         encodeGIDCount(encoder: commandEncoder,
                        size: size,
                        indexType: component.indexType,
-                       bufferIndex: component.bufferIndexCounter,
+                       bufferIndex: component.argumentsContainer.buffersAndBytesContainer.indexCounter,
                        dim: gidCountDim)
         
         let w = computePiplineState.threadExecutionWidth
@@ -153,7 +153,9 @@ final class ComputePass: MetalPass{
         //Set Buffers
         computeCommandEncoder.setComputePipelineState(computePiplineState)
         for buffer in component.buffers{
-            computeCommandEncoder.setBuffer(buffer.mtlBuffer, offset: buffer.offset, index: buffer.index)
+            computeCommandEncoder.setBuffer(buffer.mtlBuffer, 
+                                            offset: buffer.offset.wrappedValue,
+                                            index: buffer.index)
         }
         //Set Bytes
         for bytes in component.bytes{

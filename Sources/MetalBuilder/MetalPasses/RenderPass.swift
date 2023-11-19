@@ -131,10 +131,14 @@ final class RenderPass: MetalPass{
         
         //Set Buffers
         for buffer in component.vertexBufs{
-            renderPassEncoder.setVertexBuffer(buffer.mtlBuffer, offset: buffer.offset, index: buffer.index)
+            renderPassEncoder.setVertexBuffer(buffer.mtlBuffer, 
+                                              offset: buffer.offset.wrappedValue,
+                                              index: buffer.index)
         }
         for buffer in component.fragBufs{
-            renderPassEncoder.setFragmentBuffer(buffer.mtlBuffer, offset: buffer.offset, index: buffer.index)
+            renderPassEncoder.setFragmentBuffer(buffer.mtlBuffer, 
+                                                offset: buffer.offset.wrappedValue,
+                                                index: buffer.index)
         }
         //Set Bytes
         for bytes in component.vertexBytes{

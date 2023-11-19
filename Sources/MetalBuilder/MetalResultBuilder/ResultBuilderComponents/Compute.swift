@@ -9,22 +9,16 @@ public typealias PiplineSetupClosureForCompute = (MTLDevice, MTLLibrary)->(MTLCo
 /// The component for dispatching compute kernels.
 public struct Compute: MetalBuilderComponent{
     
-    let kernel: String
-    var buffers: [BufferProtocol] = []
-    var bytes: [BytesProtocol] = []
-    var textures: [Texture] = []
+    var kernel: String{
+        argumentsContainer.shaderName
+    }
     
     var drawableTextureIndex: Int?
     var gridFit: GridFit?
     var indexType: IndexType = .ushort
     var threadsPerThreadgroup: MetalBinding<MTLSize>?
     
-    var kernelArguments: [MetalFunctionArgument] = []
-    
-    var bufferIndexCounter = 0
-    var textureIndexCounter = 0
-    
-    var uniforms: [UniformsContainer] = []
+    var argumentsContainer: ArgumentsContainer
     
     var librarySource: String = ""
     var bodySource: String = ""
@@ -34,14 +28,20 @@ public struct Compute: MetalBuilderComponent{
     var piplineSetupClosure: MetalBinding<PiplineSetupClosureForCompute>?
     
     public init(_ kernel: String, source: String = ""){
-        self.kernel = kernel
+        self.argumentsContainer = ArgumentsContainer(shaderName: kernel)
     }
     
-    mutating func setup(supportFamily4: Bool) throws{
+    mutating func setup(supportFamily4: Bool) throws -> ([BufferProtocol], [MTLTextureContainer]){
+        try addArgumentBufferStructDecl()
         try setupGrid()
-        try setupLibrarySource(addGridCheck: !supportFamily4)
+        try addComputeKernelArguments(addGridCheck: !supportFamily4)
+        return self.argumentsContainer.getBuffersAndTextures()
     }
-    mutating func setupLibrarySource(addGridCheck: Bool) throws{
+    mutating func addArgumentBufferStructDecl() throws{
+        let argDecl = try argumentsContainer.setup()
+        librarySource = argDecl + librarySource
+    }
+    mutating func addComputeKernelArguments(addGridCheck: Bool) throws{
         guard bodySource != ""
         else { return }
             
@@ -53,14 +53,16 @@ public struct Compute: MetalBuilderComponent{
         let arg = try gridFit!
             .computeKernelArguments(bodyCode: bodySource,
                                     indexType: indexType, 
-                                    gidCountBufferIndex: bufferIndexCounter)
-        let kernelDecl = "void kernel \(kernel) (\(arg)){"
+                                    gidCountBufferIndex: argumentsContainer.buffersAndBytesContainer.indexCounter)
+        let kernelDecl = "void kernel \(argumentsContainer.shaderName) (\(arg)){"
         librarySource = librarySource + kernelDecl + gridCheck + bodySource + "}"
     }
     mutating func setupGrid() throws{
         if gridFit == nil{
             throw MetalBuilderComputeError
-            .noGridFit("No information for threads dispatching was set for the kernel: "+kernel+"\nUse 'grid' modifier or set index for drawable!")
+            .noGridFit("No information for threads dispatching was set for the kernel: " +
+                       argumentsContainer.shaderName +
+                       "\nUse 'grid' modifier or set index for drawable!")
         }
     }
 }
@@ -76,10 +78,10 @@ public extension Compute{
     ///
     /// This method adds a buffer to the compute function and doesn't change the Metal library code.
     /// Use it if you want to declare the kernel's argument manually.
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Compute{
+    func buffer<T>(_ container: MTLBufferContainer<T>,
+                   offset: MetalBinding<Int> = .constant(0), index: Int)->Compute{
         var c = self
-        let buf = Buffer(container: container, offset: offset, index: index)
-        c.buffers.append(buf)
+        c.argumentsContainer.buffer(container, offset: offset, index: index)
         return c
     }
     /// Passes a buffer to the compute kernel.
@@ -95,16 +97,13 @@ public extension Compute{
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
     func buffer<T>(_ container: MTLBufferContainer<T>, 
-                   offset: Int = 0,
+                   offset: MetalBinding<Int> = .constant(0),
                    argument: MetalBufferArgument,
                    fitThreads: Bool=false,
-                   gridScale: MBGridScale?=nil)->Compute{
+                   gridScale: MBGridScale?=nil,
+                   separate: Bool = defaultBuffersSeparatePlacement)->Compute{
         var c = self
-        var argument = argument
-        argument.index = checkBufferIndex(c: &c, index: argument.index)
-        c.kernelArguments.append(.buffer(argument))
-        let buf = Buffer(container: container, offset: offset, index: argument.index!)
-        c.buffers.append(buf)
+        c.argumentsContainer.buffer(container, offset: offset, argument: argument, separate: separate)
         if fitThreads || gridScale != nil{
             c.gridFit = .buffer(container, argument.name, gridScale ?? (1,1,1))
         }
@@ -125,34 +124,29 @@ public extension Compute{
     /// This method adds a buffer to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
-                   space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false) -> Compute{
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
+                   space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false,
+                   separate: Bool = defaultBuffersSeparatePlacement) -> Compute{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
-        return self.buffer(container, offset: offset, argument: argument, fitThreads: fitThreads)
+        return self.buffer(container, offset: offset, argument: argument, fitThreads: fitThreads,
+                           separate: separate)
     }
     func bytes<T>(_ binding: Binding<T>, index: Int)->Compute{
         var c = self
-        let bytes = Bytes(binding: binding, index: index)
-        c.bytes.append(bytes)
+        c.argumentsContainer.bytes(binding, index: index)
         return c
     }
-    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument)->Compute{
+    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument,
+                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
         var c = self
-        var argument = argument
-        argument.index = checkBufferIndex(c: &c, index: argument.index)
-        c.kernelArguments.append(.bytes(argument))
-        let bytes = Bytes(binding: binding, index: argument.index!)
-        c.bytes.append(bytes)
+        c.argumentsContainer.bytes(binding, argument: argument, separate: separate)
         return c
     }
-    func bytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Compute{
+    func bytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument,
+                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
         var c = self
-        var argument = argument
-        argument.index = checkBufferIndex(c: &c, index: argument.index)
-        c.kernelArguments.append(.bytes(argument))
-        let bytes = Bytes(binding: binding.binding, index: argument.index!)
-        c.bytes.append(bytes)
+        c.argumentsContainer.bytes(binding.binding, argument: argument, separate: separate)
         return c
     }
     /// Passes a value to the compute kernel of a Compute component.
@@ -168,7 +162,9 @@ public extension Compute{
     /// This method adds a value to the  compute kernel of a Compute component and parses the Metal library code,
     /// automatically adding an argument declaration to the  compute kernel.
     /// Use this modifier if you do not want to declare the function's argument manually.
-    func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil, name: String?=nil, index: Int?=nil)->Compute{
+    func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil,
+                  name: String?=nil, index: Int?=nil,
+                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name, index: index)
         return bytes(binding, argument: argument)
     }
@@ -185,21 +181,16 @@ public extension Compute{
     /// This method adds a value to the compute kernel of a Compute component and parses the Metal library code,
     /// automatically adding an argument declaration to the compute kernel.
     /// Use this modifier if you do not want to declare the function's argument manually.
-    func bytes<T>(_ binding: Binding<T>, space: String = "constant", type: String?=nil, name: String, index: Int?=nil)->Compute{
+    func bytes<T>(_ binding: Binding<T>, space: String = "constant", 
+                  type: String?=nil, name: String, index: Int?=nil,
+                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
         let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
         let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name, index: index)
         return bytes(binding, argument: argument)
     }
     func uniforms(_ uniforms: UniformsContainer, name: String?=nil) -> Compute{
         var c = self
-        c.uniforms.append(uniforms)
-        var argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
-        argument.index = checkBufferIndex(c: &c, index: nil)
-        c.kernelArguments.append(.bytes(argument))
-        let bytes = RawBytes(binding: uniforms.pointerBinding,
-                             length: uniforms.length,
-                             index: argument.index!)
-        c.bytes.append(bytes)
+        c.argumentsContainer.uniforms(uniforms, name: name)
         return c
     }
     /// Passes a texture to the compute kernel.
@@ -212,8 +203,7 @@ public extension Compute{
     /// Use it if you want to declare the kernel's argument manually.
     func texture(_ container: MTLTextureContainer, index: Int)->Compute{
         var c = self
-        let tex = Texture(container: container, index: index)
-        c.textures.append(tex)
+        c.argumentsContainer.texture(container, index: index)
         return c
     }
     /// Passes a texture to the compute kernel.
@@ -230,16 +220,12 @@ public extension Compute{
     func texture(_ container: MTLTextureContainer?,
                  argument: MetalTextureArgument,
                  fitThreads: Bool=false,
-                 gridScale: MBGridScale?=nil)->Compute{
+                 gridScale: MBGridScale?=nil,
+                 separate: Bool = defaultTexturesSeparatePlacement)->Compute{
         guard let container
         else{ return drawableTexture(argument: argument, fitThreads: fitThreads) }
         var c = self
-        var argument = argument
-        argument.index = checkTextureIndex(c: &c, index: argument.index)
-        argument.textureType = container.descriptor.type
-        c.kernelArguments.append(.texture(argument))
-        let tex = Texture(container: container, index: argument.index!)
-        c.textures.append(tex)
+        c.argumentsContainer.texture(container, argument: argument, separate: separate)
         if fitThreads || gridScale != nil{
             c.gridFit = .fitTexture(container, argument.name, gridScale ?? (1,1,1))
         }
@@ -270,11 +256,7 @@ public extension Compute{
                          fitThreads: Bool = true,
                          gridScale: MBGridScale?=nil)->Compute{
         var c = self
-        var argument = argument
-        argument.index = checkTextureIndex(c: &c, index: argument.index)
-        argument.textureType = .type2D
-        c.kernelArguments.append(.texture(argument))
-        c.drawableTextureIndex = argument.index
+        c.drawableTextureIndex = c.argumentsContainer.drawable(argument: argument)
         if fitThreads || gridScale != nil{
             c.gridFit = .drawable(argument.name, gridScale ?? (1,1,1))
         }
@@ -393,26 +375,5 @@ public extension Compute{
         var c = self
         c.indexType = indexType
         return c
-    }
-}
-
-extension Compute{
-    func checkBufferIndex(c: inout Compute, index: Int?) -> Int{
-        if index == nil {
-            let index = bufferIndexCounter
-            c.bufferIndexCounter += 1
-            return index
-        }else{
-            return index!
-        }
-    }
-    func checkTextureIndex(c: inout Compute, index: Int?) -> Int{
-        if index == nil {
-            let index = textureIndexCounter
-            c.textureIndexCounter += 1
-            return index
-        }else{
-            return index!
-        }
     }
 }

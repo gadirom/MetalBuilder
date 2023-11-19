@@ -125,11 +125,13 @@ struct RenderData{
             //Compute
             if var computeComponent = component as? Compute{
                 
-                try computeComponent.setup(supportFamily4: renderInfo.supportsFamily4)
+                let (bufs, texs) = try computeComponent.setup(supportFamily4: renderInfo.supportsFamily4)
+                data.addTextures(newTexs: texs)
+                data.addBuffers(newBuffs: bufs)
+                
                 data.passes.append(ComputePass(computeComponent, libraryContainer: libraryContainer))
-                data.addTextures(newTexs: computeComponent.textures.map{ $0.container })
-                data.addBuffers(newBuffs: computeComponent.buffers)
-                data.createUniforms(computeComponent.uniforms, device: device)
+                
+                data.createUniforms(computeComponent.argumentsContainer.uniforms, device: device)
                 
                 let source = computeComponent.librarySource
                 let sourceHash = source.hashValue
@@ -142,7 +144,7 @@ struct RenderData{
                         //arguments for functions
                         let kernel = MetalFunction.compute(computeComponent.kernel)
                         let funcAndArg = FunctionAndArguments(function: kernel,
-                                                              arguments: computeComponent.kernelArguments)
+                                                              arguments: computeComponent.argumentsContainer.separateShaderArguments)
                         data.functionsAndArgumentsToAddToMetal
                             .append(funcAndArg)
                     }

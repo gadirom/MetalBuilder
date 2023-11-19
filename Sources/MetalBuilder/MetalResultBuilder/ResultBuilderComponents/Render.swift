@@ -125,7 +125,7 @@ public struct Render: MetalBuilderComponent, Renderable {
                    indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String="",
                    instanceCount: MetalBinding<Int>? = nil,
                    renderableData: RenderableData = RenderableData()){
-        self.indexBuf = Buffer(container: indexBuffer, offset: 0, index: 0)
+        self.indexBuf = Buffer(container: indexBuffer, offset: .constant(0), index: 0)
         
         self.vertexFunc = vertex
         self.fragmentFunc = fragment
@@ -216,13 +216,17 @@ extension Render{
 }
 // Buffer modifiers for Render
 public extension Render{
-    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, index: Int)->Render{
+    func vertexBuf<T>(_ container: MTLBufferContainer<T>,
+                      offset: MetalBinding<Int> = .constant(0),
+                      index: Int)->Render{
         var r = self
         let buf = Buffer(container: container, offset: offset, index: index)
         r.vertexBufs.append(buf)
         return r
     }
-    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0, argument: MetalBufferArgument)->Render{
+    func vertexBuf<T>(_ container: MTLBufferContainer<T>,
+                      offset: MetalBinding<Int> = .constant(0),
+                      argument: MetalBufferArgument)->Render{
         let buf = Buffer(container: container, offset: offset, index: 0)
         return self.vertexBuf(buf, argument: argument)
     }
@@ -239,7 +243,7 @@ public extension Render{
     /// This method adds a buffer to the vertex shader of a Render component and parses the Metal library code,
     /// automatically adding an argument declaration to the vertex function.
     /// Use this modifier if you do not want to declare the function's argument manually.
-    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
+    func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
                       space: String = "constant", type: String?=nil, name: String?=nil) -> Render{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
@@ -247,13 +251,15 @@ public extension Render{
         return self.vertexBuf(container, offset: offset, argument: argument)
     }
     
-    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, index: Int)->Render{
+    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
+                    index: Int)->Render{
         var r = self
         let buf = Buffer(container: container, offset: offset, index: index)
         r.fragBufs.append(buf)
         return r
     }
-    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument)->Render{
+    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
+                    argument: MetalBufferArgument)->Render{
         let buf = Buffer(container: container, offset: offset, index: 0)
         return self.fragBuf(buf, argument: argument)
     }
@@ -270,7 +276,7 @@ public extension Render{
     /// This method adds a buffer to the fragment shader of a Render component and parses the Metal library code,
     /// automatically adding an argument declaration to the fragment function.
     /// Use this modifier if you do not want to declare the function's argument manually.
-    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: Int = 0,
+    func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
                     space: String="constant", type: String?=nil, name: String?=nil) -> Render{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)

@@ -114,7 +114,7 @@ public struct FragmentShader: InternalShaderProtocol{
 }
 //FragmentShader's wrappers for ShaderProtocol modifiers
 public extension FragmentShader{
-    func buffer<T>(_ container: MTLBufferContainer<T>, offset: Int, argument: MetalBufferArgument) -> FragmentShader{
+    func buffer<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int>, argument: MetalBufferArgument) -> FragmentShader{
         return _buffer(container, offset: offset, argument: argument) as! FragmentShader
     }
     func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument) -> FragmentShader{
