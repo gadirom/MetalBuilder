@@ -152,19 +152,19 @@ final class ComputePass: MetalPass{
         }
         //Set Buffers
         computeCommandEncoder.setComputePipelineState(computePiplineState)
-        for buffer in component.buffers{
-            computeCommandEncoder.setBuffer(buffer.mtlBuffer, 
+        for buffer in component.argumentsContainer.buffersAndBytesContainer.buffers{
+            computeCommandEncoder.setBuffer(buffer.mtlBuffer,
                                             offset: buffer.offset.wrappedValue,
                                             index: buffer.index)
         }
         //Set Bytes
-        for bytes in component.bytes{
+        for bytes in component.argumentsContainer.buffersAndBytesContainer.bytes{
             bytes.encode{ pointer, length, index in
                 computeCommandEncoder.setBytes(pointer, length: length, index: index)
             }
         }
         //Set Textures
-        for tex in component.textures{
+        for tex in component.argumentsContainer.texturesContainer.textures{
             guard let texture = tex.container.texture
             else{
                 throw MetalBuilderComputeError

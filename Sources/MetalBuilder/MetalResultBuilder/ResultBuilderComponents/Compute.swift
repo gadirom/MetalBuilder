@@ -100,10 +100,9 @@ public extension Compute{
                    offset: MetalBinding<Int> = .constant(0),
                    argument: MetalBufferArgument,
                    fitThreads: Bool=false,
-                   gridScale: MBGridScale?=nil,
-                   separate: Bool = defaultBuffersSeparatePlacement)->Compute{
+                   gridScale: MBGridScale?=nil)->Compute{
         var c = self
-        c.argumentsContainer.buffer(container, offset: offset, argument: argument, separate: separate)
+        c.argumentsContainer.buffer(container, offset: offset, argument: argument)
         if fitThreads || gridScale != nil{
             c.gridFit = .buffer(container, argument.name, gridScale ?? (1,1,1))
         }
@@ -125,28 +124,24 @@ public extension Compute{
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
-                   space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false,
-                   separate: Bool = defaultBuffersSeparatePlacement) -> Compute{
+                   space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false) -> Compute{
         
         let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
-        return self.buffer(container, offset: offset, argument: argument, fitThreads: fitThreads,
-                           separate: separate)
+        return self.buffer(container, offset: offset, argument: argument, fitThreads: fitThreads)
     }
     func bytes<T>(_ binding: Binding<T>, index: Int)->Compute{
         var c = self
         c.argumentsContainer.bytes(binding, index: index)
         return c
     }
-    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument,
-                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
+    func bytes<T>(_ binding: Binding<T>, argument: MetalBytesArgument)->Compute{
         var c = self
-        c.argumentsContainer.bytes(binding, argument: argument, separate: separate)
+        c.argumentsContainer.bytes(binding, argument: argument)
         return c
     }
-    func bytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument,
-                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
+    func bytes<T>(_ binding: MetalBinding<T>, argument: MetalBytesArgument)->Compute{
         var c = self
-        c.argumentsContainer.bytes(binding.binding, argument: argument, separate: separate)
+        c.argumentsContainer.bytes(binding.binding, argument: argument)
         return c
     }
     /// Passes a value to the compute kernel of a Compute component.
@@ -163,8 +158,7 @@ public extension Compute{
     /// automatically adding an argument declaration to the  compute kernel.
     /// Use this modifier if you do not want to declare the function's argument manually.
     func bytes<T>(_ binding: MetalBinding<T>, space: String = "constant", type: String?=nil,
-                  name: String?=nil, index: Int?=nil,
-                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
+                  name: String?=nil, index: Int?=nil)->Compute{
         let argument = MetalBytesArgument(binding: binding, space: space, type: type, name: name, index: index)
         return bytes(binding, argument: argument)
     }
@@ -182,8 +176,7 @@ public extension Compute{
     /// automatically adding an argument declaration to the compute kernel.
     /// Use this modifier if you do not want to declare the function's argument manually.
     func bytes<T>(_ binding: Binding<T>, space: String = "constant", 
-                  type: String?=nil, name: String, index: Int?=nil,
-                  separate: Bool = defaultBytesSeparatePlacement)->Compute{
+                  type: String?=nil, name: String, index: Int?=nil)->Compute{
         let metalBinding = MetalBinding(binding: binding, metalType: type, metalName: name)
         let argument = MetalBytesArgument(binding: metalBinding, space: space, type: type, name: name, index: index)
         return bytes(binding, argument: argument)
@@ -220,12 +213,11 @@ public extension Compute{
     func texture(_ container: MTLTextureContainer?,
                  argument: MetalTextureArgument,
                  fitThreads: Bool=false,
-                 gridScale: MBGridScale?=nil,
-                 separate: Bool = defaultTexturesSeparatePlacement)->Compute{
+                 gridScale: MBGridScale?=nil)->Compute{
         guard let container
         else{ return drawableTexture(argument: argument, fitThreads: fitThreads) }
         var c = self
-        c.argumentsContainer.texture(container, argument: argument, separate: separate)
+        c.argumentsContainer.texture(container, argument: argument)
         if fitThreads || gridScale != nil{
             c.gridFit = .fitTexture(container, argument.name, gridScale ?? (1,1,1))
         }

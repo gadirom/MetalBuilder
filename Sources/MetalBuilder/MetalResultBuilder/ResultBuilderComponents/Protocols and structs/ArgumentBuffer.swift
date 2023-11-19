@@ -6,7 +6,7 @@ import OrderedCollections
 //array of references to argument buffer
 
 struct ArgBufferInfo{
-    var argBuffers: [(ArgumentsBuffer, Int)] = [] // arg buffer and id in that buffer
+    var argBuffers: [(ArgumentBuffer, Int)] = [] // arg buffer and id in that buffer
 }
 
 protocol MBResource: AnyObject{
@@ -16,7 +16,7 @@ protocol MBResource: AnyObject{
     //func updateResource(encoder: MTLArgumentEncoder, offset: Int, id: Int)
 }
 extension MBResource{
-    func addToArgumentBuffer<T: ArgumentsBuffer>(_ argBuffer: T, id: Int){
+    func addToArgumentBuffer<T: ArgumentBuffer>(_ argBuffer: T, id: Int){
         argBufferInfo.argBuffers.append((argBuffer, id))
     }
     func updateResourceInArgumentBuffers(){
@@ -48,7 +48,7 @@ extension Texture{
     }
 }
 
-class ArgumentsBuffer{
+class ArgumentBuffer{
     var typeName: String
     var arguments: [MetalFunctionArgument] = []
     var argumentsCounter = 0
@@ -62,7 +62,7 @@ class ArgumentsBuffer{
         typeName = functionName.uppercased()+"Arguments"
     }
 }
-extension ArgumentsBuffer{
+extension ArgumentBuffer{
     func addBuffer<T>(_ buf: Buffer<T>, bufArgument: MetalBufferArgument){
         var buf = buf
         //buf.index = argumentsCounter
@@ -87,7 +87,7 @@ extension ArgumentsBuffer{
         //argumentsCounter += 1
     }
 }
-extension ArgumentsBuffer{
+extension ArgumentBuffer{
     var typeDeclaration: String{
         get throws{
             "struct" + typeName + "{"
