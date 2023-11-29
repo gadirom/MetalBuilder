@@ -1,7 +1,7 @@
 import MetalKit
 import SwiftUI
 
-protocol BufferProtocol: TextureOrBuffer{
+protocol BufferProtocol{
     var mtlBuffer: MTLBuffer? { get }
     var offset: MetalBinding<Int> { get }
     var index: Int { get set }
@@ -14,13 +14,28 @@ protocol BufferProtocol: TextureOrBuffer{
     func create(device: MTLDevice) throws
     
     var id: UnsafeMutableRawPointer { get }
+    
+    var bContainer: BufferContainer{ get }
 }
 
-func ===(lhr: BufferProtocol, rhr: BufferProtocol)->Bool{
+//extension BufferProtocol{
+//    static func ==(lhr: any BufferProtocol, rhr: any BufferProtocol)->Bool{
+//        lhr.id == rhr.id
+//    }
+//}
+
+func ===(lhr: any BufferProtocol, rhr: any BufferProtocol)->Bool{
     lhr.id == rhr.id
 }
 
 struct Buffer<T>: BufferProtocol{
+    static func == (lhs: Buffer<T>, rhs: Buffer<T>) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    let container: MTLBufferContainer<T>
+    let offset: MetalBinding<Int>
+    var index: Int
     
     var elementType: Any.Type{
         T.self
@@ -30,9 +45,9 @@ struct Buffer<T>: BufferProtocol{
         try container.create(device: device)
     }
     
-    let container: MTLBufferContainer<T>
-    let offset: MetalBinding<Int>
-    var index: Int
+    var bContainer: BufferContainer{
+        container
+    }
     
     var mtlBuffer: MTLBuffer?{
         container.buffer
@@ -52,10 +67,11 @@ struct Buffer<T>: BufferProtocol{
         }
     }
     var id: UnsafeMutableRawPointer{
-          Unmanaged.passUnretained(container).toOpaque()
+        container.id
     }
 }
-struct Texture: TextureOrBuffer{
+
+struct Texture{
     let container: MTLTextureContainer
     var index: Int
 }

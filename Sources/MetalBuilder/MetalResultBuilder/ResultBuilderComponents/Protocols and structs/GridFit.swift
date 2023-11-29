@@ -20,11 +20,11 @@ public enum IndexType: String{
 }
 enum GridFit{
     case fitTexture(MTLTextureContainer, ThreadsSourceName, MBGridScale),
+         fitBuffer(BufferContainer, ThreadsSourceName, MBGridScale),
          size2D(MetalBinding<(Int, Int)>),
          size3D(MetalBinding<(MTLSize)>),
          size1D(MetalBinding<Int>),
-         drawable(ThreadsSourceName, MBGridScale),
-         buffer(BufferContainer, ThreadsSourceName, MBGridScale)
+         drawable(ThreadsSourceName, MBGridScale)
 }
 extension GridFit{
     var gridCheck: String{
@@ -118,7 +118,7 @@ extension GridFit{
                 }else{
                     2
                 }
-            case .buffer(_, _, let mbGridScale):
+            case .fitBuffer(_, _, let mbGridScale):
                 if mbGridScale.2 > 1{
                     3
                 }else{

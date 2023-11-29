@@ -22,6 +22,7 @@ public struct Compute: MetalBuilderComponent{
     
     var librarySource: String = ""
     var bodySource: String = ""
+    var argumentBuffersDeclarations: String = ""
     
     var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForCompute>?
     var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForCompute>?
@@ -31,15 +32,10 @@ public struct Compute: MetalBuilderComponent{
         self.argumentsContainer = ArgumentsContainer(shaderName: kernel)
     }
     
-    mutating func setup(supportFamily4: Bool) throws -> ([BufferProtocol], [MTLTextureContainer]){
-        try addArgumentBufferStructDecl()
+    mutating func setup(supportFamily4: Bool) throws -> ([BufferProtocol], [MTLTextureContainer], [FunctionAndArguments], String){
         try setupGrid()
         try addComputeKernelArguments(addGridCheck: !supportFamily4)
-        return self.argumentsContainer.getBuffersAndTextures()
-    }
-    mutating func addArgumentBufferStructDecl() throws{
-        let argDecl = try argumentsContainer.setup()
-        librarySource = argDecl + librarySource
+        return try self.argumentsContainer.getBuffersAndTexturesAndArgBufDecl()
     }
     mutating func addComputeKernelArguments(addGridCheck: Bool) throws{
         guard bodySource != ""
@@ -69,6 +65,11 @@ public struct Compute: MetalBuilderComponent{
 
 // chaining functions for result builder
 public extension Compute{
+    func argBuffer(_ argBuffer: ArgumentBuffer, name: String?=nil, _ useResources: UseResources) -> Compute{
+        var c = self
+        c.gridFit = c.argumentsContainer.argumentBufferToKernel(argBuffer, name: name, useResources)
+        return c
+    }
     /// Passes a buffer to the compute kernel.
     /// - Parameters:
     ///   - container: The buffer container.
@@ -104,7 +105,7 @@ public extension Compute{
         var c = self
         c.argumentsContainer.buffer(container, offset: offset, argument: argument)
         if fitThreads || gridScale != nil{
-            c.gridFit = .buffer(container, argument.name, gridScale ?? (1,1,1))
+            c.gridFit = .fitBuffer(container, argument.name, gridScale ?? (1,1,1))
         }
         return c
     }
@@ -124,10 +125,12 @@ public extension Compute{
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
-                   space: String="constant", type: String?=nil, name: String?=nil, fitThreads: Bool=false) -> Compute{
+                   space: String="constant", type: String?=nil, name: String?=nil, 
+                   fitThreads: Bool=false, gridScale: MBGridScale?=nil) -> Compute{
         
-        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
-        return self.buffer(container, offset: offset, argument: argument, fitThreads: fitThreads)
+        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name, index: nil)
+        return self.buffer(container, offset: offset, argument: argument,
+                           fitThreads: fitThreads, gridScale: gridScale)
     }
     func bytes<T>(_ binding: Binding<T>, index: Int)->Compute{
         var c = self
@@ -210,12 +213,10 @@ public extension Compute{
     /// This method adds a texture to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func texture(_ container: MTLTextureContainer?,
+    func texture(_ container: MTLTextureContainer,
                  argument: MetalTextureArgument,
                  fitThreads: Bool=false,
                  gridScale: MBGridScale?=nil)->Compute{
-        guard let container
-        else{ return drawableTexture(argument: argument, fitThreads: fitThreads) }
         var c = self
         c.argumentsContainer.texture(container, argument: argument)
         if fitThreads || gridScale != nil{
@@ -365,7 +366,7 @@ public extension Compute{
     }
     func gidIndexType(_ type: IndexType) -> Compute{
         var c = self
-        c.indexType = indexType
+        c.indexType = type
         return c
     }
 }

@@ -175,14 +175,14 @@ final class RenderPass: MetalPass{
                                                         indexCount: component.indexCount.wrappedValue,
                                                         indexType: indexType,
                                                         indexBuffer: component.indexBuf!.mtlBuffer!,
-                                                        indexBufferOffset: component.indexBufferOffset,
+                                                        indexBufferOffset: component.indexBufferOffset.wrappedValue,
                                                         instanceCount: instanceCount.wrappedValue)
             }else{
                 renderPassEncoder.drawIndexedPrimitives(type: component.type,
                                                         indexCount: component.indexCount.wrappedValue,
                                                         indexType: indexType,
                                                         indexBuffer: component.indexBuf!.mtlBuffer!,
-                                                        indexBufferOffset: component.indexBufferOffset)
+                                                        indexBufferOffset: component.indexBufferOffset.wrappedValue)
             }
         }else{
             if let instanceCount = component.instanceCount{

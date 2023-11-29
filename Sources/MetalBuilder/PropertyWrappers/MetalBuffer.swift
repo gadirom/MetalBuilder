@@ -2,6 +2,47 @@
 import SwiftUI
 import MetalKit
 
+public enum PassBufferToMetal{
+    case pointer,
+         structReference(String), // type name
+         singleReference
+    var prefix: String{
+        switch self {
+        case .pointer:
+            "*"
+        case .structReference:
+            "&"
+        case .singleReference:
+            "&"
+        }
+    }
+    var isStructReference: Bool{
+        if case .structReference = self {
+            true
+        }else{
+            false
+        }
+    }
+    var structName: String{
+        if case let .structReference(structName) = self {
+            structName
+        }else{
+            ""
+        }
+    }
+    func referenceStructDecl(type: String, count: Int) -> String{
+        if case let .structReference(structName) = self {
+            """
+            struct \(structName){
+                \(type) array[\(count)];
+            };
+            """
+        }else{
+            ""
+        }
+    }
+}
+
 /// Declares a state for a MTLBuffer object
 ///
 /// metalType and metalName - supposed type and name for the buffer in MSL code
@@ -27,12 +68,14 @@ public final class MetalBuffer<T>{
                 metalType: String? = nil,
                 metalName: String? = nil,
                 options: MTLResourceOptions = .init(),
-                fromArray: [T]? = nil){
+                fromArray: [T]? = nil,
+                passAs: PassBufferToMetal = .pointer){
         self.wrappedValue = MTLBufferContainer<T>(count: count,
                                                   metalType: metalType,
                                                   metalName: metalName,
                                                   options: options,
-                                                  fromArray: fromArray)
+                                                  fromArray: fromArray,
+                                                  passAs: passAs)
     }
     /// Creates an instance of MetalBuffer property wrapper.
     /// - Parameters:
@@ -43,7 +86,8 @@ public final class MetalBuffer<T>{
                                                   metalType: descriptor.metalType,
                                                   metalName: descriptor.metalName,
                                                   options: descriptor.bufferOptions,
-                                                  fromArray: fromArray)
+                                                  fromArray: fromArray,
+                                                  passAs: descriptor.passAs)
     }
 }
 
@@ -52,20 +96,29 @@ public struct BufferDescriptor{
     var metalType: String?
     var metalName: String?
     
+    var passAs: PassBufferToMetal = .pointer
+    
     var bufferOptions: MTLResourceOptions = .init()
 
     public init(count: Int? = nil,
                 metalType: String? = nil,
                 metalName: String? = nil,
-                options: MTLResourceOptions = .init()){
+                options: MTLResourceOptions = .init(),
+                passAs: PassBufferToMetal = .pointer){
         self.count = count
         self.metalName = metalName
         self.metalType = metalType
         
         self.bufferOptions = options
+        self.passAs = passAs
     }
 }
 public extension BufferDescriptor{
+    func passAs(_ p: PassBufferToMetal) -> BufferDescriptor {
+        var d = self
+        d.passAs = p
+        return d
+    }
     func count(_ n: Int) -> BufferDescriptor {
         var d = self
         d.count = n
@@ -92,9 +145,14 @@ enum MetalBuilderBufferError: Error {
 case bufferNotCreated
 }
 
-public class BufferContainer{
+public class BufferContainer: MTLResourceContainer{
     
-    public var buffer: MTLBuffer?
+    internal var argBufferInfo = ArgBufferInfo()
+    internal var dataType: MTLDataType = .pointer
+    
+    public var buffer: MTLBuffer?{
+        didSet { updateResourceInArgumentBuffers() }
+    }
     
     public var count: Int? { 0 }
     
@@ -107,6 +165,19 @@ public class BufferContainer{
         self.metalType = metalType
         self.metalName = metalName
     }
+    
+    func createBufferProtocolConformingBuffer() -> BufferProtocol!{
+        nil
+    }
+}
+
+extension BufferContainer{
+    var mtlResource: MTLResource{
+        buffer!
+    }
+    func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int){
+        argBuffer.encoder!.setBuffer(self.buffer, offset: offset, index: id)
+    }
 }
 
 /// Container class for MTLBuffer
@@ -117,12 +188,12 @@ public final class MTLBufferContainer<T>: BufferContainer{
     public var pointer: UnsafeMutablePointer<T>?
     
     weak var device: MTLDevice?
-    internal var argBufferInfo = ArgBufferInfo()
-    internal var dataType: MTLDataType = .pointer
     
     public var bufferOptions: MTLResourceOptions = .init()
     
     var fromArray: [T]?
+    
+    var passAs: PassBufferToMetal!
     
     public override var count: Int?{
         get {
@@ -137,7 +208,8 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     public init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil,
                 options: MTLResourceOptions = .init(),
-                fromArray: [T]? = nil){
+                fromArray: [T]? = nil,
+                passAs: PassBufferToMetal = .pointer){
         super.init()
         self.metalType = metalType
         self.metalName = metalName
@@ -146,6 +218,7 @@ public final class MTLBufferContainer<T>: BufferContainer{
         self.bufferOptions = options
         
         self.fromArray = fromArray
+        self.passAs = passAs
     }
     
     /// Creates a new buffer for the container.
@@ -189,10 +262,14 @@ public final class MTLBufferContainer<T>: BufferContainer{
             if cpuAccessible{
                 pointer = buffer.contents().bindMemory(to: T.self, capacity: length)
             }
+            if let metalName{ buffer.label = metalName }
         }else{
             throw MetalBuilderBufferError
                 .bufferNotCreated
         }
+    }
+    override func createBufferProtocolConformingBuffer() -> BufferProtocol{
+        Buffer(container: self, offset: .constant(0), index: 0)
     }
 }
 //load and store data

@@ -2,7 +2,19 @@ import MetalKit
 import SwiftUI
 
 enum MetalBuilderRendererError: Error{
-    case drawError(String)
+    case noCommandBuffer
+    case indexBufferElementType(String) // shader name
+}
+
+extension MetalBuilderRendererError: LocalizedError{
+    public var errorDescription: String?{
+        switch self {
+        case .noCommandBuffer:
+            "No Command Buffer for!"
+        case .indexBufferElementType(let string):
+            "Index buffer's element type for \(string) should be UInt32 of UInt16!"
+        }
+    }
 }
 
 public final class MetalBuilderRenderer{
@@ -30,7 +42,7 @@ extension MetalBuilderRenderer{
         guard let commandBuffer = commandQueue.makeCommandBuffer()
         else{
             throw MetalBuilderRendererError
-                .drawError("No command Buffer!")
+                .noCommandBuffer
         }
         return commandBuffer
     }
@@ -81,7 +93,7 @@ public extension MetalBuilderRenderer{
                                         startupFunction: startupFunction)
             
         }catch{
-            print(error)
+            fatalError(error.localizedDescription) 
         }
     }
     func draw(drawable: CAMetalDrawable,

@@ -1,26 +1,24 @@
 
 import Foundation
 
-func addDeclaration(of arguments: [MetalFunctionArgument],
-                    toHeaderOf function: MetalFunction,
-                    in source: inout String) throws{
-    for argument in arguments{
-        try addDeclaration(of: argument, toHeaderOf: function, in: &source)
-    }
-}
-
-func addDeclaration(of argument: MetalFunctionArgument,
-                    toHeaderOf function: MetalFunction,
-                    in source: inout String) throws{
+func addArgumentsDeclaration(of arguments: [MetalFunctionArgument],
+                             toHeaderOf function: MetalFunction,
+                             in source: inout String) throws{
     let bracketId = try findFunction(function, in: source)
     
     let comma: String
     
-    if source[source.index(bracketId.lowerBound, offsetBy: 1)]==")"{
-        comma = ""
+    if source[source.index(bracketId.lowerBound, offsetBy: 1)] == function.closeBrace{
+        comma = function.ending
     }else{
-        comma = ", "
+        comma = function.divisor
     }
-    let string = try argument.string()
-    source.replaceSubrange(bracketId, with: "(" + string + comma)
+    var string = ""
+    for argument in arguments{
+        if string != ""{
+            string += function.divisor
+        }
+        string += try argument.string()
+    }
+    source.replaceSubrange(bracketId, with: function.openBrace.lowercased() + string + comma)
 }

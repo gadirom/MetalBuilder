@@ -1,10 +1,6 @@
 import MetalKit
 import SwiftUI
 
-enum MetalDSPRenderSetupError: Error{
-    //case noGridFit(String)
-}
-
 public typealias AdditionalEncodeClosureForRender = (MTLRenderCommandEncoder)->()
 public typealias AdditionalPiplineSetupClosureForRender = (MTLRenderPipelineState)->()
 public typealias PiplineSetupClosureForRender = (MTLDevice, MTLLibrary)->(MTLRenderPipelineState)
@@ -62,21 +58,18 @@ public struct Render: MetalBuilderComponent, Renderable {
     var vertexOffset: Int = 0
     var vertexCount: Int = 0
     
+    var vertex_id: IndexType = .ushort
+    var instance_id: IndexType = .ushort
+    
     var indexCount: MetalBinding<Int> = MetalBinding<Int>.constant(0)
-    var indexBufferOffset: Int = 0
+    var indexBufferOffset: MetalBinding<Int> = .constant(0)
     var indexedPrimitives = false
     
     var additionalEncodeClosure: MetalBinding<AdditionalEncodeClosureForRender>?
     var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForRender>?
     var piplineSetupClosure: MetalBinding<PiplineSetupClosureForRender>?
     
-    var instanceCount: MetalBinding<Int>?{
-        didSet {
-            if instanceCount != nil{
-                self.vertexArguments.append(MetalFunctionArgument.instanceID)
-            }
-        }
-    }
+    var instanceCount: MetalBinding<Int>?
     
     var indexBuf: BufferProtocol?
     
@@ -100,6 +93,48 @@ public struct Render: MetalBuilderComponent, Renderable {
     
     var uniforms: [UniformsContainer] = []
     
+    mutating func setup() throws{
+        //vertex_id type based on index buffer type
+        if let indexBuf{
+            switch indexBuf.elementType{
+            case is UInt32.Type: vertex_id = .uint
+            case is UInt16.Type: vertex_id = .ushort
+            default:
+                throw MetalBuilderRendererError.indexBufferElementType(vertexFunc)
+            }
+        }
+        addVertexArguments()
+        addFragmentArguments()
+    }
+    
+    mutating func addVertexArguments(){
+        
+        let vertexArgumentsDict: [String: MetalFunctionArgument] =
+        [
+            "instance_id"   : .custom("\(instance_id) instance_id [[instance_id]]"),
+            "vertex_id"     : .custom("\(vertex_id) vertex_id [[vertex_id]]"),
+        ]
+        for arg in vertexArgumentsDict{
+            if isThereIdentifierInCode(code: librarySource,
+                                       identifier: arg.key){
+                self.vertexArguments.append(arg.value)
+            }
+        }
+    }
+    mutating func addFragmentArguments(){
+        
+        let fragmentArgumentsDict: [String: MetalFunctionArgument] =
+        [
+            "primitive_id"   : .custom("uint primitive_id [[primitive_id]]"),
+        ]
+        for arg in fragmentArgumentsDict{
+            if isThereIdentifierInCode(code: librarySource,
+                                       identifier: arg.key){
+                self.fragmentArguments.append(arg.value)
+            }
+        }
+    }
+    
     public init(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                 offset: Int = 0, count: Int = 3, source: String="",
                 instanceCount: MetalBinding<Int>? = nil,
@@ -122,7 +157,8 @@ public struct Render: MetalBuilderComponent, Renderable {
     
     public init<T>(vertex: String="", fragment: String="", type: MTLPrimitiveType = .triangle,
                    indexBuffer: MTLBufferContainer<T>,
-                   indexOffset: Int = 0, indexCount: MetalBinding<Int>, source: String="",
+                   indexOffset: MetalBinding<Int> = .constant(0),
+                   indexCount: MetalBinding<Int>, source: String="",
                    instanceCount: MetalBinding<Int>? = nil,
                    renderableData: RenderableData = RenderableData()){
         self.indexBuf = Buffer(container: indexBuffer, offset: .constant(0), index: 0)
@@ -139,13 +175,11 @@ public struct Render: MetalBuilderComponent, Renderable {
         self.indexedPrimitives = true
         self.renderableData = renderableData
         
+        self.instanceCount = instanceCount
+        
         //Properties with didSet logic
         defer {
-            self.instanceCount = instanceCount
         }
-    }
-    
-    mutating func setup() throws{
     }
 }
 
@@ -246,7 +280,7 @@ public extension Render{
     func vertexBuf<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
                       space: String = "constant", type: String?=nil, name: String?=nil) -> Render{
         
-        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
+        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name, index: nil)
         
         return self.vertexBuf(container, offset: offset, argument: argument)
     }
@@ -279,7 +313,7 @@ public extension Render{
     func fragBuf<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int> = .constant(0),
                     space: String="constant", type: String?=nil, name: String?=nil) -> Render{
         
-        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name)
+        let argument = try! MetalBufferArgument(container, space: space, type: type, name: name, index: nil)
         
         return self.fragBuf(container, offset: offset, argument: argument)
         
@@ -540,6 +574,14 @@ public extension Render{
     /// right before the dispatch or before encoding of the next component.
     func additionalEncode(_ closure: @escaping AdditionalEncodeClosureForRender)->Render{
         self.additionalEncode(MetalBinding<AdditionalEncodeClosureForRender>.constant(closure))
+    }
+    func indexTypes(instance:  IndexType = .ushort,
+                    vertex:    IndexType = .ushort//ignored with indexed render
+                    )->Render{
+        var r = self
+        r.instance_id = instance
+        r.vertex_id = vertex
+        return r
     }
 }
 // Shader modifiers for Render

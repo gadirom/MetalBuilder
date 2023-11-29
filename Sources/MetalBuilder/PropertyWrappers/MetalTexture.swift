@@ -14,8 +14,8 @@ public final class MetalTexture{
         self.wrappedValue = wrappedValue
     }
     
-    public init(_ descriptor: TextureDescriptor, fromImage: ImageForTexture? = nil){
-        self.wrappedValue = MTLTextureContainer(descriptor, fromImage: fromImage)
+    public init(_ descriptor: TextureDescriptor, label: String?=nil, fromImage: ImageForTexture? = nil){
+        self.wrappedValue = MTLTextureContainer(descriptor, label: label, fromImage: fromImage)
     }
 }
 
@@ -26,7 +26,12 @@ case textureNotCreated, noDescriptor, descriptorSizeContainsZero,
 
 public final class MTLTextureContainer{
     public var descriptor: TextureDescriptor
-    public var texture: MTLTexture?
+    public var label: String?
+    public var texture: MTLTexture?{
+        didSet{
+            updateResourceInArgumentBuffers()
+        }
+    }
     var image: ImageForTexture?
     weak var device: MTLDevice?
     internal var argBufferInfo = ArgBufferInfo()
@@ -36,9 +41,10 @@ public final class MTLTextureContainer{
         descriptor = TextureDescriptor()
     }
     
-    public init(_ descriptor: TextureDescriptor, fromImage: ImageForTexture? = nil){
+    public init(_ descriptor: TextureDescriptor, label: String?=nil, fromImage: ImageForTexture? = nil){
         self.descriptor = descriptor
         self.image = fromImage
+        self.label = label
     }
     
     //creates or loads the texture
@@ -95,12 +101,31 @@ public final class MTLTextureContainer{
             throw MetalBuilderTextureError
                 .descriptorSizeContainsZero
         }
+        mtlDescriptor.allowGPUOptimizedContents = true
+        
         guard let texture = device.makeTexture(descriptor: mtlDescriptor)
         else{
             throw MetalBuilderTextureError
                 .textureNotCreated
         }
+        if let label{ texture.label = label }
         self.texture = texture
+    }
+}
+
+extension MTLTextureContainer: Equatable{
+    public static func == (lhs: MTLTextureContainer, rhs: MTLTextureContainer) -> Bool {
+        lhs === rhs
+    }
+}
+
+extension MTLTextureContainer: MTLResourceContainer{
+    var mtlResource: MTLResource{
+        texture!
+    }
+    func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int){
+        argBuffer.encoder!.setTexture(self.texture, index: id)
+        print("created texture")
     }
 }
 

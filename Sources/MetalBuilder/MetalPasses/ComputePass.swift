@@ -63,9 +63,16 @@ final class ComputePass: MetalPass{
         if let piplineSetupClosure = component.piplineSetupClosure?.wrappedValue{
             computePiplineState = piplineSetupClosure(renderInfo.device, libraryContainer!.library!)
         }else{
-            let function = libraryContainer!.library!.makeFunction(name: component.kernel)
+            let function = libraryContainer!.library!.makeFunction(name: component.kernel)!
             computePiplineState =
-            try renderInfo.device.makeComputePipelineState(function: function!)
+            try renderInfo.device.makeComputePipelineState(function: function)
+            
+            for argBuf in component.argumentsContainer.addedArgumentBuffers{
+                try argBuf.0.create(device: renderInfo.device,
+                                    mtlFunction: function,
+                                    index: argBuf.1)
+            }
+            
         }
         
         //Additional pipeline setup logic
@@ -95,7 +102,7 @@ final class ComputePass: MetalPass{
         case .size1D(let s):
             size = MTLSize(width: s.wrappedValue, height: 1, depth: 1)
         case .drawable: size = MTLSize(width: drawable!.texture.width, height: drawable!.texture.height, depth: 1)
-        case .buffer(let buf, _, let gScale):
+        case .fitBuffer(let buf, _, let gScale):
             guard let count = buf.count
             else{
                 throw MetalBuilderComputeError
@@ -143,6 +150,11 @@ final class ComputePass: MetalPass{
         }
     
     }
+    func prerun(renderInfo: GlobalRenderInfo) throws {
+        for argBuf in component.argumentsContainer.addedArgumentBuffers{
+            argBuf.0.setEncoder()
+        }
+    }
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()
         guard let computeCommandEncoder = commandBuffer.makeComputeCommandEncoder()
@@ -150,8 +162,12 @@ final class ComputePass: MetalPass{
             throw MetalBuilderComputeError
                 .noComputeEncoder("Wasn't able to create computeEncoder for the kernel: "+component.kernel)
         }
-        //Set Buffers
+        #if DEBUG
+        computeCommandEncoder.label = component.kernel
+        #endif
         computeCommandEncoder.setComputePipelineState(computePiplineState)
+        
+        //Set Buffers
         for buffer in component.argumentsContainer.buffersAndBytesContainer.buffers{
             computeCommandEncoder.setBuffer(buffer.mtlBuffer,
                                             offset: buffer.offset.wrappedValue,
@@ -174,6 +190,12 @@ final class ComputePass: MetalPass{
         }
         if let index = component.drawableTextureIndex{
             computeCommandEncoder.setTexture(passInfo.drawable?.texture, index: index)
+        }
+        
+        //Use Resources
+        for resourceUsage in component.argumentsContainer.resourcesUsages.allResourcesUsages{
+            computeCommandEncoder.useResource(resourceUsage.resource.mtlResource,
+                                              usage: resourceUsage.usage)
         }
         
         if let additionalEncodeClosure = component.additionalEncodeClosure?.wrappedValue{

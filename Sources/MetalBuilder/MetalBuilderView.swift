@@ -135,7 +135,7 @@ public struct MetalBuilderView: UIViewRepresentable {
                                          setupFunction: setupFunction,
                                          startupFunction: startupFunction)
                 renderer?.setScaleFactor(scaleFactor)
-            }catch{ print(error) }
+            }catch{ fatalError(error.localizedDescription) }
         }
         
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
@@ -167,7 +167,7 @@ public struct MetalBuilderView: UIViewRepresentable {
             do {
                 try renderer?.draw(drawable: drawable,
                                    renderPassDescriptor: renderPassDescriptor)
-            } catch { print(error) }
+            } catch { fatalError(error.localizedDescription)  }
         }
         
         public func enterBackground(){

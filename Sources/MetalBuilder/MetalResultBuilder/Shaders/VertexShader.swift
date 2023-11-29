@@ -87,7 +87,10 @@ public struct VertexShader: InternalShaderProtocol{
         }
         if let body = body, let vertexOut = vertexOut,
            let vertexOutDeclaration = vertexOutDeclaration{
-            return vertexOutDeclaration+"vertex "+vertexOut+" "+vertexFunc+"(uint vertex_id [[vertex_id]]){"+body+"}"
+            return vertexOutDeclaration+"vertex "+vertexOut+" "+vertexFunc
+            + "("
+            //+ "ushort vertex_id [[vertex_id]]"
+            + "){"+body+"}"
         }
         print("Couldn't get the source code for ", vertexFunc, " vertex shader!")
         return ""

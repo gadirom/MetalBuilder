@@ -3,7 +3,12 @@ import MetalKit
 protocol MetalPass{
     var libraryContainer: LibraryContainer? { get set }
     func setup(renderInfo: GlobalRenderInfo) throws
+    func prerun(renderInfo: GlobalRenderInfo) throws
     func encode(passInfo: MetalPassInfo) throws
+}
+extension MetalPass{
+    func prerun(renderInfo: GlobalRenderInfo) throws{
+    }
 }
 
 struct MetalPassInfo {

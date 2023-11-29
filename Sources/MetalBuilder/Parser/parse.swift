@@ -3,6 +3,11 @@ struct FunctionAndArguments{
     let function: MetalFunction
     var arguments: [MetalFunctionArgument]
 }
+extension FunctionAndArguments: Equatable{
+    static func == (lhs: FunctionAndArguments, rhs: FunctionAndArguments) -> Bool {
+        lhs.function == rhs.function
+    }
+}
 
 public struct SwiftTypeToMetal{
     let swiftType: Any.Type
@@ -16,45 +21,57 @@ enum MetalBuilderParserError: Error{
 func parse(library: inout String,
            funcArguments: [FunctionAndArguments]) throws{
     
-    var funcArguments = funcArguments
-    deleteDublicateFuncs(&funcArguments)
+    var funcArguments = funcArguments.noDublicates()
     var metalTypeNames: [String] = []
+    var structDeclarations: String = ""
+    var referenceStructsDecls: String = ""
 
     for funcAndArgID in funcArguments.indices{
         for argID in funcArguments[funcAndArgID].arguments.indices{
             let arg = funcArguments[funcAndArgID].arguments[argID]
             switch arg{
             case .buffer(let buf):
-                let type = buf.swiftTypeToMetal
-                if let metalDeclaration = metalTypeDeclaration(from: type.swiftType,
-                                                               name: type.metalType){
+                if let metalDeclaration = buf.metalDeclaration{
                     if !metalTypeNames.contains(metalDeclaration.typeName) {
                         metalTypeNames.append(metalDeclaration.typeName)
-                        library = metalDeclaration.declaration + library
+                        structDeclarations += metalDeclaration.declaration
                     }
                     
-                    if buf.type == nil{// add type name to function declaration if there was no type set in the component
+                    if buf.passAs.isStructReference{
+                        //add struct decl
+                        let structName = buf.passAs.structName
+                        if !metalTypeNames.contains(structName) {
+                            metalTypeNames.append(structName)
+                            referenceStructsDecls += buf.passAs
+                                .referenceStructDecl(type: metalDeclaration.typeName,
+                                                     count: buf.count)
+                        }
+                        
+                        //change argument to struct
                         var bufArg = buf
-                        bufArg.type = metalDeclaration.typeName
+                        bufArg.type = structName
                         let argNew: MetalFunctionArgument =
                             .buffer(bufArg)
                         funcArguments[funcAndArgID]
                            .arguments[argID] = argNew
+                    }else{
+                        
+                        if buf.type == nil{// add type name to function declaration if there was no type set in the component
+                            var bufArg = buf
+                            bufArg.type = metalDeclaration.typeName
+                            let argNew: MetalFunctionArgument =
+                                .buffer(bufArg)
+                            funcArguments[funcAndArgID]
+                                .arguments[argID] = argNew
+                        }
                     }
                 }
             case .bytes(let bytes):
-                let metalDeclaration: MetalTypeDeclaration?
-                let type = bytes.swiftTypeToMetal
-                if let decl = bytes.metalDeclaration{
-                    metalDeclaration = decl
-                }else{
-                    metalDeclaration = metalTypeDeclaration(from: type.swiftType,
-                                                            name: type.metalType)
-                }
-                if let metalDeclaration = metalDeclaration{
+                
+                if let metalDeclaration = bytes.metalDeclaration{
                     if !metalTypeNames.contains(metalDeclaration.typeName) {
                         metalTypeNames.append(metalDeclaration.typeName)
-                        library = metalDeclaration.declaration + library
+                        structDeclarations += metalDeclaration.declaration
                     }
                     
                     if bytes.type == nil{// add type name to function declaration if there was no type set in the component
@@ -67,7 +84,7 @@ func parse(library: inout String,
                     }
                 }else{
                     if bytes.type == nil{// if no type provided trying to assess an ordinary type (float, int, ect.)
-                        let swiftType = type.swiftType
+                        let swiftType = bytes.swiftType
                         
                         guard let metalType = metalType(for: swiftType) else {
                             throw MetalBuilderParserError
@@ -91,19 +108,39 @@ func parse(library: inout String,
        
         }
     }
+    library = structDeclarations + referenceStructsDecls + library
     for funcAndArg in funcArguments {
-        try addDeclaration(of: funcAndArg.arguments,
+        try addArgumentsDeclaration(of: funcAndArg.arguments,
                            toHeaderOf: funcAndArg.function, in: &library)
     }
     print(library)
 }
 
-func deleteDublicateFuncs(_ fa: inout [FunctionAndArguments]){
-    var faOut: [FunctionAndArguments] = []
-    for f in fa{
-        if !faOut.contains(where: { $0.function == f.function }){
-            faOut.append(f)
+extension Array where Element: Equatable{
+    func noDublicates()->[Element]{
+        var out: [Element] = []
+        for f in self{
+            if !out.contains(where: { $0 == f }){
+                out.append(f)
+            }
+        }
+        return out
+    }
+    mutating func appendUnique(_ element: Element){
+        if !self.contains(where: { $0 == element}){
+            self.append(element)
         }
     }
-    fa = faOut
+}
+
+extension Array where Element == BufferProtocol{
+    func noDublicates()->[Element]{
+        var out: [Element] = []
+        for f in self{
+            if !out.contains(where: { $0 === f }){
+                out.append(f)
+            }
+        }
+        return out
+    }
 }

@@ -41,30 +41,52 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
     
     let u: UniformsContainer
     
+    var argBuffer: ArgumentBuffer{
+        .new("argBuffer", desc:
+            ArgumentBufferDescriptor("MyArgBuffer")
+                .buffer(particlesBuffer, name: "particles", space: "device")
+                .buffer(vertexBuffer, name: "vertices", space: "device")
+        )
+    }
+    
+    var argBuffer1: ArgumentBuffer{
+        .new("argBuffer1", desc:
+            ArgumentBufferDescriptor("MyArgBuffer1")
+                .buffer(particlesBuffer, name: "particles", space: "device")
+                .buffer(vertexBuffer, name: "vertices", space: "device")
+        )
+    }
+    
     var metalContent: MetalContent{
             Compute("particleFunction")
-                .buffer(particlesBuffer, space: "device", fitThreads: true)
-                .buffer(vertexBuffer, space: "device")
+                .argBuffer(argBuffer, name: "arg", UseResources()
+                    .buffer("particles", usage: [.read, .write], fitThreads: true)
+                )
+                .gidIndexType(.uint)
+                //.buffer(particlesBuffer, space: "device", fitThreads: true)
                 .bytes(context.$viewportSize)
                 //.bytes($particleScale, name: "scale")
                 .uniforms(u)
                 .body("""
-                Particle particle = particles[gid];
+                //int gidi = int(gid);
+                Particle particle = arg.particles.array[gid];
                 float2 position = particle.position;
-                   float pi = 3.14;
+                float pi = 3.14;
 
                 float2 viewport = float2(viewportSize);
 
                 position += particle.velocity*u.speed;
-                particles[gid].position = position;
+                particle.position = position;
 
-                if (position.x < -viewport.x/2 || position.x > viewport.x/2) particles[gid].velocity.x *= -1.0;
-                if (position.y < -viewport.y/2  || position.y > viewport.y/2) particles[gid].velocity.y *= -1.0;
+                if (position.x < -viewport.x/2 || position.x > viewport.x/2) particle.velocity.x *= -1.0;
+                if (position.y < -viewport.y/2  || position.y > viewport.y/2) particle.velocity.y *= -1.0;
 
-                particles[gid].angle += particle.angvelo;
+                particle.angle += particle.angvelo;
 
-                if (particles[gid].angle > pi) { particles[gid].angle -= 2*pi; };
-                if (particles[gid].angle < -pi) { particles[gid].angle += 2*pi; };
+                if (particle.angle >  pi) { particle.angle -= 2*pi; };
+                if (particle.angle < -pi) { particle.angle += 2*pi; };
+                
+                arg.particles.array[gid] = particle;
 
                 """)
         }

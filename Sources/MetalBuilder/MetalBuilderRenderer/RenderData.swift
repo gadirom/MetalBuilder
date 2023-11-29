@@ -16,9 +16,11 @@ struct RenderData{
     //that's why I keep track on them
     var textures: [MTLTextureContainer] = []
     
-    //Byffers a stored here and created after setupFunction of all the building blocks are done,
+    //Buffers a stored here and created after setupFunction of all the building blocks are done,
     //since there some properties of containers might be changed in a setupFunction.
     var buffers: [BufferProtocol] = []
+    
+    var argumentBuffersDeclarations = ""
     
     var texturesCreated = false
     
@@ -81,9 +83,14 @@ struct RenderData{
             sf()
         }
         
-        try createBuffers(device: renderInfo.device)
-        
         try data.setupPasses(renderInfo: renderInfo)
+        
+        try createBuffers(device: renderInfo.device, withNoArgBufInfo: true)
+        
+        try data.prerunPasses(renderInfo: renderInfo)
+        
+        try createBuffers(device: renderInfo.device, withNoArgBufInfo: false)
+        
     }
     
     static func compile(renderInfo: GlobalRenderInfo,
@@ -125,10 +132,11 @@ struct RenderData{
             //Compute
             if var computeComponent = component as? Compute{
                 
-                let (bufs, texs) = try computeComponent.setup(supportFamily4: renderInfo.supportsFamily4)
+                let (bufs, texs, funcsAndArgs, argBuffsDecl) = try computeComponent.setup(supportFamily4: renderInfo.supportsFamily4)
                 data.addTextures(newTexs: texs)
                 data.addBuffers(newBuffs: bufs)
-                
+                data.argumentBuffersDeclarations += argBuffsDecl
+            
                 data.passes.append(ComputePass(computeComponent, libraryContainer: libraryContainer))
                 
                 data.createUniforms(computeComponent.argumentsContainer.uniforms, device: device)
@@ -142,11 +150,8 @@ struct RenderData{
                     if librarySource != ""{
                         
                         //arguments for functions
-                        let kernel = MetalFunction.compute(computeComponent.kernel)
-                        let funcAndArg = FunctionAndArguments(function: kernel,
-                                                              arguments: computeComponent.argumentsContainer.separateShaderArguments)
                         data.functionsAndArgumentsToAddToMetal
-                            .append(funcAndArg)
+                            .append(contentsOf: funcsAndArgs)
                     }
                 }
             }
@@ -155,7 +160,8 @@ struct RenderData{
                 data.passes.append(ClearRenderPass(clearRenderComponent))
             }
             //Render
-            if let renderComponent = component as? Render{
+            if var renderComponent = component as? Render{
+                try renderComponent.setup()
                 data.passes.append(RenderPass(renderComponent, libraryContainer: libraryContainer))
                 data.addTextures(newTexs: renderComponent.vertexTextures.map{ $0.container })
                 data.addTextures(newTexs: renderComponent.fragTextures.map{ $0.container })
@@ -300,7 +306,9 @@ struct RenderData{
             if librarySource == ""{
                 libraryContainer.library = device.makeDefaultLibrary()
             }else{
+                librarySource = data.argumentBuffersDeclarations + librarySource
                 librarySource = helpers + librarySource
+                
                 try parse(library: &librarySource,
                           funcArguments: data.functionsAndArgumentsToAddToMetal)
                 
@@ -323,7 +331,7 @@ struct RenderData{
                 !textures.contains{ oldTexture in
                     newTexture === oldTexture
                 }
-            }
+            }.noDublicates()
         textures.append(contentsOf: newTextures)
     }
     
@@ -334,7 +342,7 @@ struct RenderData{
                 !buffers.contains{ oldBuffer in
                     newBuffer === oldBuffer
                 }
-            }
+            }.noDublicates()
         buffers.append(contentsOf: newBuffers)
     }
     
@@ -361,7 +369,7 @@ struct RenderData{
             }else{
                 try updateTextures(device: device)
             }
-        }catch{ print(error) }
+        }catch{ fatalError(error.localizedDescription) }
     }
     
     func createTextures(context: MetalBuilderRenderingContext, device: MTLDevice) throws{
@@ -373,9 +381,11 @@ struct RenderData{
         }
     }
 
-    func createBuffers(device: MTLDevice) throws{
+    func createBuffers(device: MTLDevice, withNoArgBufInfo: Bool) throws{
         for buf in buffers{
-            try buf.create(device: device)
+            if buf.bContainer.argBufferInfo.argBuffers.isEmpty == withNoArgBufInfo{
+                try buf.create(device: device)
+            }
         }
     }
     
@@ -395,6 +405,12 @@ struct RenderData{
             try pass.setup(renderInfo: renderInfo)
         }
     }
+    func prerunPasses(renderInfo: GlobalRenderInfo) throws{
+        //prerun passes
+        for pass in passes{
+            try pass.prerun(renderInfo: renderInfo)
+        }
+    }
     
     static func addSwiftTypes(from buffers: [BufferProtocol], to swiftTypes: inout [SwiftTypeToMetal]){
         for buf in buffers {
@@ -411,6 +427,8 @@ struct RenderData{
         
         addTextures(newTexs: data.textures)
         addBuffers(newBuffs: data.buffers)
+        
+        argumentBuffersDeclarations += data.argumentBuffersDeclarations
         
         functionsAndArgumentsToAddToMetal
             .append(contentsOf: data.functionsAndArgumentsToAddToMetal)

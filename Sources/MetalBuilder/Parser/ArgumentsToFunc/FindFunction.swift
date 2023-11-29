@@ -39,10 +39,10 @@ func findFunction(_ function: MetalFunction, in source: String) throws -> Range<
         throw MetalBuilderParserError
         .syntaxError("no "+prefix+" "+name+" function in source!")
     }
-    guard let bracketRange = source[nameId...].range(of: "(")
+    guard let bracketRange = source[nameId...].range(of: function.openBrace.lowercased())
     else {
         throw MetalBuilderParserError
-        .syntaxError("expected '(' after '"+function.name+"'!")
+            .syntaxError("expected "+function.openBrace.lowercased()+" after '"+function.name+"'!")
     }
     return bracketRange
 }

@@ -3,14 +3,15 @@ import Foundation
 import Metal
 
 enum MetalBuilderFunctionArgumentsError: Error {
-case bufferArgumentError(String), textureArgumentError(String)
+case bufferArgumentError(String), 
+     textureArgumentError(String)
 }
 
 public enum MetalFunctionArgument{
     case texture(MetalTextureArgument),
          buffer(MetalBufferArgument),
          bytes(MetalBytesArgument),
-         instanceID
+         custom(String)
     
     func string(forArgumentsBuffer: Bool = false,
                 argumentIndex: Int = -1) throws -> String{
@@ -21,7 +22,7 @@ public enum MetalFunctionArgument{
             return arg.string(argumentIndex: argumentIndex)
         case .bytes(let arg):
             return arg.string(argumentIndex: argumentIndex)
-        case .instanceID: return "uint instance_id [[instance_id]]"
+        case .custom(let string): return string
         }
     }
     var index: Int{
@@ -29,7 +30,15 @@ public enum MetalFunctionArgument{
         case .texture(let arg): return arg.index!
         case .buffer(let arg): return arg.index!
         case .bytes(let arg): return arg.index!
-        case .instanceID: return -1 // no index for instanceID
+        case .custom: return -1 // no index for custom
+        }
+    }
+    var name: String{
+        switch self{
+        case .texture(let arg): return arg.name
+        case .buffer(let arg): return arg.name
+        case .bytes(let arg): return arg.name
+        case .custom: return "custom"
         }
     }
 }
@@ -69,14 +78,10 @@ public struct MetalTextureArgument{
                 .textureArgumentError("Unsupported texture type: "+String(describing: textureType))
         }
         let index = argumentIndex >= 0 ? argumentIndex : index
-        var h = prefix +
+        let h = prefix +
             (argumentIndex >= 0 ?
-            "<_TYPE_, access::_ACCESS_> _NAME_ [[id(_INDEX_)]]" :
-            "<_TYPE_, access::_ACCESS_> _NAME_ [[texture(_INDEX_)]]")
-        h = h.replacingOccurrences(of: "_TYPE_", with: type)
-        h = h.replacingOccurrences(of: "_ACCESS_", with: access)
-        h = h.replacingOccurrences(of: "_NAME_", with: name)
-        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
+            "<\(type), access::\(access)> \(name) [[id(\(index!))]]" :
+            "<\(type), access::\(access)> \(name) [[texture(\(index!))]]")
         return h
     }
     /// Creates a texture argument.
@@ -101,31 +106,39 @@ public struct MetalBufferArgument{
     var type: String?
     let name: String
     var index: Int?
+    
+    let passAs: PassBufferToMetal
+    let count: Int
+    
     let swiftType: Any.Type
     var swiftTypeToMetal: SwiftTypeToMetal{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
     }
+    var metalDeclaration: MetalTypeDeclaration?{
+        let type = swiftTypeToMetal
+        return metalTypeDeclaration(from: type.swiftType,
+                                    name: type.metalType)
+    }
     func string(argumentIndex: Int = -1) -> String{
         let index = argumentIndex >= 0 ? argumentIndex : index
-        var h =  argumentIndex >= 0 ?
-            "_NAMESPACE_ _TYPE_* _NAME_ [[id(_INDEX_)]]" :
-            "_NAMESPACE_ _TYPE_* _NAME_ [[buffer(_INDEX_)]]"
-        h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)
-        h = h.replacingOccurrences(of: "_TYPE_", with: type!)
-        h = h.replacingOccurrences(of: "_NAME_", with: name)
-        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
+        let h = argumentIndex >= 0 ?
+            "\(space) \(type!)\(passAs.prefix) \(name) [[id(\(index!))]]" :
+            "\(space) \(type!)\(passAs.prefix) \(name) [[buffer(\(index!))]]"
         return h
     }
-    init(swiftType: Any.Type, space: String, type: String?=nil, name: String, index: Int?=nil) {
+    init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int?,
+         passAs: PassBufferToMetal, count: Int) {
         self.space = space
         self.type = type
         self.name = name
         self.index = index
         self.swiftType = swiftType
+        self.passAs = passAs
+        self.count = count
     }
-    public init<T>(_ container: MTLBufferContainer<T>,
-                    space: String, type: String?=nil, name: String?=nil, index: Int?=nil) throws{
+    init<T>(_ container: MTLBufferContainer<T>,
+            space: String, type: String?, name: String?, index: Int?) throws{
         
         var t: String?
         if let type = metalType(for: T.self){
@@ -157,7 +170,8 @@ public struct MetalBufferArgument{
                 .bufferArgumentError("No Metal name for buffer!")
         }
 
-        self.init(swiftType: T.self, space: space, type: t, name: name, index: index)
+        self.init(swiftType: T.self, space: space, type: t, name: name, index: index,
+                  passAs: container.passAs, count: container.count!)
     }
 }
 
@@ -167,20 +181,25 @@ public struct MetalBytesArgument{
     let name: String
     var index: Int?
     let swiftType: Any.Type
-    let metalDeclaration: MetalTypeDeclaration?
+    var metalDeclaration: MetalTypeDeclaration?{
+        if let decl = _metalDeclaration{
+            return decl
+        }else{
+            let type = swiftTypeToMetal
+            return metalTypeDeclaration(from: type.swiftType,
+                                        name: type.metalType)
+        }
+    }
+    var _metalDeclaration: MetalTypeDeclaration?
     var swiftTypeToMetal: SwiftTypeToMetal{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
     }
     func string(forArgumentsBuffer: Bool = false, argumentIndex: Int = -1) -> String{
         let index = argumentIndex >= 0 ? argumentIndex : index
-        var h = forArgumentsBuffer ?
-            "_NAMESPACE_ _TYPE_& _NAME_ [[id(_INDEX_)]]" :
-            "_NAMESPACE_ _TYPE_& _NAME_ [[buffer(_INDEX_)]]"
-        h = h.replacingOccurrences(of: "_NAMESPACE_", with: space)
-        h = h.replacingOccurrences(of: "_TYPE_", with: type!)
-        h = h.replacingOccurrences(of: "_NAME_", with: name)
-        h = h.replacingOccurrences(of: "_INDEX_", with: "\(index!)")
+        let h = forArgumentsBuffer ?
+            "\(space) \(type!)& \(name) [[id(\(index!))]]" :
+            "\(space) \(type!)& \(name) [[buffer(\(index!))]]"
         return h
     }
     init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int?=nil, metalDeclaration: MetalTypeDeclaration?=nil) {
@@ -190,7 +209,7 @@ public struct MetalBytesArgument{
         self.name = name
         self.index = index
         
-        self.metalDeclaration = metalDeclaration
+        self._metalDeclaration = metalDeclaration
     }
     init<T>(binding: MetalBinding<T>, space: String, type: String?=nil, name: String?=nil, index: Int?=nil){
         var n: String

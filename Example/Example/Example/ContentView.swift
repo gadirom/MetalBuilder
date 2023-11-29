@@ -4,7 +4,7 @@ import MetalBuilder
 import MetalKit
 import MetalPerformanceShaders
 
-let particleCount = 10000
+let particleCount = 100000
 
 let vertexIndexCount = particleCount*3
 
@@ -54,6 +54,13 @@ struct ContentView: View {
             .sizeFromViewport(scaled: 1)
     ) var targetTexture
     
+    var argBufForTextures: ArgumentBuffer{
+        .new("texArgBuf", desc: .init()
+            .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
+            .texture(targetTexture, argument: .init(type: "float", access: "read", name: "target"))
+        )
+    }
+    
     @MetalState var blurRadius: Float = 2.5
     @State var fDilate: Float = 3
     @MetalState var dilateSize = 3
@@ -61,7 +68,9 @@ struct ContentView: View {
     
     @MetalBuffer<Particle>(BufferDescriptor()
         .count(particleCount)
-        .metalName("particles")) var particlesBuffer
+        .metalName("particles")
+        .passAs(.structReference("ParticlesStruct"))
+    ) var particlesBuffer
     @MetalBuffer<Vertex>(count: particleCount*3,
                          metalName: "vertices") var vertexBuffer
     
@@ -100,6 +109,7 @@ struct ContentView: View {
                        indexCount: MetalBinding<Int>.constant(3),
                        instanceCount: MetalBinding<Int>.constant(particleCount))
                     .uniforms(uniforms)//, name: "uni")
+                    .indexTypes(instance: .uint, vertex: .uint)
                     //.renderEncoder($renderEncoder, lastPass: true)
                     .toTexture(targetTexture)
                     //.vertexBuf(vertexBuffer, offset: 0)
@@ -111,7 +121,7 @@ struct ContentView: View {
                                   body:"""
                         RasterizerData out;
                     
-                        Particle particle = particles[instance_id];
+                        Particle particle = particles.array[instance_id];
                         float size = particle.size*scale;
                         float angle = particle.angle;
                         float2 position = particle.position;
@@ -156,6 +166,7 @@ struct ContentView: View {
                     """, body:
                     """
                         FragmentOut out;
+                        //primitive_id
                         out.color = in.color;
                         return out;
                     """))
@@ -192,18 +203,22 @@ struct ContentView: View {
                     .source(imageTexture)
                     .destination(scaledTexture)
                 Compute("postprocessKernel")
-                    .texture(targetTexture, argument: .init(type: "float", access: "read", name: "in"))
-                    .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
+                    .argBuffer(argBufForTextures, name: "textures", .init()
+                        .texture("image", usage: .read)
+                        .texture("target", usage: .read)
+                    )
+                    //.texture(targetTexture, argument: .init(type: "float", access: "read", name: "in"))
+                    //.texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
                     .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
                     .uniforms(uniforms)
                     //.gidIndexType(.uint)
                     .body("""
                         //uint2 count = uint2(out.get_width(), out.get_height());
                         //if(gid.x>=count.x||id.y>=count.y){ return; }
-                        float3 inColor = in.read(gid).rgb;
+                        float3 inColor = textures.target.read(gid).rgb;
                         //float2 uv = float2(gid)/float2(gidCount);
                         //constexpr sampler s(address::clamp_to_edge, filter::linear);
-                        float3 imageColor = image.read(gid).rgb;
+                        float3 imageColor = textures.image.read(gid).rgb;
                         float3 color = mix(inColor, imageColor, u.mix);
                         out.write(float4(color, 1), gid);
                     """)

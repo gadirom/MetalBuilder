@@ -2,10 +2,6 @@
 import MetalKit
 import SwiftUI
 
-public var defaultTexturesSeparatePlacement = false
-public var defaultBytesSeparatePlacement = true // for now the bytes are always separate
-public var defaultBuffersSeparatePlacement = false
-
 protocol ContainerOfResources{
     var indexCounter: Int{ get set }
 }
@@ -21,13 +17,18 @@ extension ContainerOfResources{
     }
 }
 
+enum ResourceType{
+    case texture
+    case bytes
+    case buffer
+}
+
 struct ContainerOfBuffersBytesAndUniforms: ContainerOfResources{
     var indexCounter: Int = 0
     var buffers: [BufferProtocol] = []
     var bytes: [BytesProtocol] = []
     
     mutating func addBuffer(_ buf: BufferProtocol,
-                               offset: MetalBinding<Int>,
                                argument: MetalBufferArgument) -> MetalFunctionArgument{
         var argument = argument
         var buf = buf
@@ -66,10 +67,11 @@ struct ContainerOfTextures: ContainerOfResources{
 struct ArgumentsContainer{
     
     var separateShaderArguments: [MetalFunctionArgument] = []
+    var resourcesUsages = ResourcesUsages()
+    var addedArgumentBuffers: [(ArgumentBuffer, Int)] = [] //buffer, index of buffer in shader function args
     
     let shaderName: String
     var uniforms: [UniformsContainer] = []
-    var argumentBuffers: [ArgumentBuffer] = []
     var buffersAndBytesContainer = ContainerOfBuffersBytesAndUniforms()
     var texturesContainer = ContainerOfTextures()
     init(shaderName: String){
@@ -77,36 +79,63 @@ struct ArgumentsContainer{
     }
 }
 
+//setup and other functions
 extension ArgumentsContainer{
-    func setup() throws -> String{
-        //try argumentsBuffer.typeDeclaration
-        ""
-    }
-    func getBuffersAndTextures() -> ([BufferProtocol], [MTLTextureContainer]){
-        let (bufs, texs) =
+    
+    func getBuffersAndTexturesAndArgBufDecl() throws -> ([BufferProtocol], [MTLTextureContainer], [FunctionAndArguments], String){
+        var (bufs, texs) =
         (buffersAndBytesContainer.buffers,
-         texturesContainer.textures)
-//        let (bufsA, texsA) = argumentsBuffer.buffersAndTextures
-//        bufs.append(contentsOf: bufsA)
-//        texs.append(contentsOf: texsA)
-        return (bufs, texs.map{ $0.container })
+         texturesContainer.textures.map{ $0.container })
+        var funcsAndArguments = [FunctionAndArguments(function: .compute(shaderName),
+                                                      arguments: separateShaderArguments)]
+        var argBufDecls = ""
+        for argBuf in addedArgumentBuffers{
+            let (bufs1, texs1, funcAndArgs1, decl) = try argBuf.0.setup()
+            bufs.append(contentsOf: bufs1)
+            texs.append(contentsOf: texs1)
+            if let funcAndArgs1{
+                funcsAndArguments.append(funcAndArgs1)
+            }
+            argBufDecls += decl
+        }
+        
+        return (bufs, texs, funcsAndArguments, argBufDecls)
     }
 }
 
+//chaning modifiers call these functions
 extension ArgumentsContainer{
+    mutating func argumentBufferToKernel(_ argBuf: ArgumentBuffer,
+                                         name: String?,
+                                         _ resources: UseResources)->GridFit?{
+        checkIfArgumentBufferIsNew(argBuf)
+        let buf = Buffer(container: argBuf.buffer, offset: .constant(0), index: 0)
+        let argument = argBuf.functionArgument(name: name)
+        let arg = self.buffersAndBytesContainer.addBuffer(buf,
+                                                          argument: argument)
+        
+        checkForSameNames(name: arg.name)
+        separateShaderArguments.append(arg)
+        addedArgumentBuffers.append((argBuf, arg.index))
+        return resourcesUsages.addToKernel(argBuf: argBuf, resources: resources)
+    }
     mutating func buffer<T>(_ container: MTLBufferContainer<T>,
-                   offset: MetalBinding<Int>,
-                   index: Int){
+                            offset: MetalBinding<Int>,
+                            index: Int){
         let buff = Buffer(container: container, offset: offset, index: index)
+        checkIfBufferIsNew(buf: buff,
+                           argumentName: String(describing: container))
         self.buffersAndBytesContainer.buffers.append(buff)
     }
     mutating func buffer<T>(_ container: MTLBufferContainer<T>,
-                   offset: MetalBinding<Int>,
-                   argument: MetalBufferArgument){
+                              offset: MetalBinding<Int>,
+                              argument: MetalBufferArgument){
         let buf = Buffer(container: container, offset: offset, index: 0)
         let arg = self.buffersAndBytesContainer.addBuffer(buf,
-                                                           offset: offset,
-                                                           argument: argument)
+                                                          argument: argument)
+        checkIfBufferIsNew(buf: buf,
+                           argumentName: arg.name)
+        checkForSameNames(name: arg.name)
         self.separateShaderArguments.append(arg)
     }
     mutating func bytes<T>(_ binding: Binding<T>, index: Int){
@@ -117,6 +146,7 @@ extension ArgumentsContainer{
                   argument: MetalBytesArgument){
         let bytes = Bytes(binding: binding, index: 0)
         let arg = self.buffersAndBytesContainer.addBytes(bytes, argument: argument)
+        checkForSameNames(name: arg.name)
         self.separateShaderArguments.append(arg)
     }
     mutating func uniforms(_ uniforms: UniformsContainer, name: String?){
@@ -126,24 +156,31 @@ extension ArgumentsContainer{
                              length: uniforms.length,
                              index: 0)
         let arg = self.buffersAndBytesContainer.addBytes(bytes, argument: argument)
+        checkForSameNames(name: arg.name)
         self.separateShaderArguments.append(arg)
     }
     mutating func texture(_ container: MTLTextureContainer, index: Int){
         let tex = Texture(container: container, index: index)
+        checkIfTextureIsNew(container: container,
+                            argumentName: String(describing: container))
         self.texturesContainer.textures.append(tex)
     }
     mutating func texture(_ container: MTLTextureContainer,
                   argument: MetalTextureArgument){
+        checkIfTextureIsNew(container: container,
+                            argumentName: argument.name)
         var argument = argument
         argument.textureType = container.descriptor.type
         let tex = Texture(container: container, index: 0)
         let arg = self.texturesContainer.add(tex, argument: argument)
+        checkForSameNames(name: arg.name)
         self.separateShaderArguments.append(arg)
     }
     mutating func drawable(argument: MetalTextureArgument)->Int{
         var argument = argument
         argument.textureType = .type2D
         let arg = self.texturesContainer.add(nil, argument: argument)
+        checkForSameNames(name: arg.name)
         self.separateShaderArguments.append(arg)
         return arg.index
     }
