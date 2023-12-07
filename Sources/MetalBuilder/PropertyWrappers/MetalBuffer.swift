@@ -151,7 +151,9 @@ public class BufferContainer: MTLResourceContainer{
     internal var dataType: MTLDataType = .pointer
     
     public var buffer: MTLBuffer?{
-        didSet { updateResourceInArgumentBuffers() }
+        didSet {
+            updateResourceInArgumentBuffers()
+        }
     }
     
     public var count: Int? { 0 }
@@ -177,6 +179,7 @@ extension BufferContainer{
     }
     func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int){
         argBuffer.encoder!.setBuffer(self.buffer, offset: offset, index: id)
+        print("updated buffer resource [\(id)] in \(argBuffer.name)")
     }
 }
 

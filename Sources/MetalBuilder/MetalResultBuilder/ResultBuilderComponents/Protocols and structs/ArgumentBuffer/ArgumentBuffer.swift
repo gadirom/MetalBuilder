@@ -26,12 +26,8 @@ import SwiftUI
 
 
 // TODO
-// +add declarations of arg buf structs to metal code
-// +create argument buffers
-// +call use resources
-// call update from buffer and texture
-// +api modifier for component
-// +ability to pass buffer by reference to fixed size array
+// performance monitor of change textures
+// make everything same for render
 
 struct ArgBufferInfo{
     var argBuffers: [(ArgumentBuffer, Int, MetalBinding<Int>)] = [] // arg buffer and id in that buffer

@@ -125,7 +125,7 @@ extension MTLTextureContainer: MTLResourceContainer{
     }
     func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int){
         argBuffer.encoder!.setTexture(self.texture, index: id)
-        print("created texture")
+        print("updated texture resource [\(id)] in \(argBuffer.name)")
     }
 }
 
