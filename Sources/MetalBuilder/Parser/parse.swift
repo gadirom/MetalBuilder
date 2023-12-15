@@ -14,10 +14,6 @@ public struct SwiftTypeToMetal{
     let metalType: String?
 }
 
-enum MetalBuilderParserError: Error{
-    case syntaxError(String), wrongType(String)
-}
-
 func parse(library: inout String,
            funcArguments: [FunctionAndArguments]) throws{
     

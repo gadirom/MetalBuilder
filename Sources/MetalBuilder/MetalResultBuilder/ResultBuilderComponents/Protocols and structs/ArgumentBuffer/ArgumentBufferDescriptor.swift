@@ -24,7 +24,8 @@ public extension ArgumentBufferDescriptor{
                                                         space: space,
                                                         type: type,
                                                         name: name,
-                                                        index: d.arguments.count))))
+                                                        index: d.arguments.count,
+                                                        forArgBuffer: true))))
         return d
     }
 //    func addBytes<T>(_ bytes: Bytes<T>, bytesArgument: MetalBytesArgument){
@@ -40,8 +41,9 @@ public extension ArgumentBufferDescriptor{
         var argument = argument
         argument.textureType = container.descriptor.type
         argument.index = d.arguments.count
+        argument.forArgBuffer = true
         d.arguments.append((ArgumentBufferDescriptorEntry(resource: container,
-                                                         offset: .constant(0)),
+                                                          offset: .constant(0)),
         
                             .texture(argument)))
         return d

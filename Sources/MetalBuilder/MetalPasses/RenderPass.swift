@@ -2,10 +2,26 @@
 import MetalKit
 import SwiftUI
 
-public enum MetalBuilderRenderError: Error{
+public enum MetalBuilderRenderPassError: Error{
     case noRenderEncoder(String),
-         textureIsNil(String),
+         textureIsNil(Int, String),
+         noIndexBuffer(String),
          badIndexBuffer(String)
+}
+
+extension MetalBuilderRenderPassError: LocalizedError{
+    public var errorDescription: String?{
+        switch self {
+        case .noRenderEncoder(let label):
+            "Couldn't create render encoder for \(label)!"
+        case .textureIsNil(let index, let shaderName):
+            "Texture \(index) is nil for \(shaderName)!"
+        case .noIndexBuffer(let label):
+            "No index buffer provided for \(label)!"
+        case .badIndexBuffer(let label):
+            "Elements of the index buffer for \(label) is of wrong type. Should be UInt32 or UInt16!"
+        }
+    }
 }
 
 //Render Pass
@@ -24,7 +40,6 @@ final class RenderPass: MetalPass{
         self.libraryContainer = libraryContainer
     }
     func setup(renderInfo: GlobalRenderInfo) throws{
-        try component.setup()
 
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         
@@ -72,8 +87,10 @@ final class RenderPass: MetalPass{
         if let piplineSetupClosure = component.piplineSetupClosure?.wrappedValue{
             renderPiplineState = piplineSetupClosure(renderInfo.device, libraryContainer!.library!)
         }else{
-            let vertexFunction = libraryContainer!.library!.makeFunction(name: component.vertexFunc)
-            let fragmentFunction = libraryContainer!.library!.makeFunction(name: component.fragmentFunc)
+            let vertexFunction = libraryContainer!.library!
+                .makeFunction(name: vertexNameFromLabel(component.label))
+            let fragmentFunction = libraryContainer!.library!
+                .makeFunction(name: fragmentNameFromLabel(component.label))
             renderPipelineDescriptor.vertexFunction = vertexFunction
             renderPipelineDescriptor.fragmentFunction = fragmentFunction
             renderPiplineState =
@@ -86,7 +103,7 @@ final class RenderPass: MetalPass{
                 indexType = try getIndexType(buf.elementType)
                 try buf.create(device: renderInfo.device)
             }else{
-                throw MetalBuilderRenderError.badIndexBuffer("No index buffer was provided for '" + self.component.vertexFunc + "'!")
+                throw MetalBuilderRenderPassError.noIndexBuffer(component.label)
             }
         }
         //Additional pipeline setup logic
@@ -94,14 +111,18 @@ final class RenderPass: MetalPass{
             additionalPiplineSetupClosure(renderPiplineState)
         }
     }
-    
+    func prerun(renderInfo: GlobalRenderInfo) throws {
+        component.vertexShader!.argumentsContainer.prerun()
+        component.fragmentShader!.argumentsContainer.prerun()
+    }
     func makeEncoder(passInfo: MetalPassInfo) throws -> MTLRenderCommandEncoder{
         let commandBuffer = passInfo.getCommandBuffer()
-        guard let createdRenderPassEncoder = commandBuffer.makeRenderCommandEncoder(renderableData: component.renderableData,
-                                                                                    passInfo: passInfo)
+        guard let createdRenderPassEncoder = commandBuffer
+            .makeRenderCommandEncoder(renderableData: component.renderableData,
+                                      passInfo: passInfo)
         else{
-            throw MetalBuilderRenderError
-                .noRenderEncoder("Wasn't able to create renderEncoder for the vertex shader: '"+component.vertexFunc+"'!")
+            throw MetalBuilderRenderPassError
+                .noRenderEncoder(component.label)
         }
         return createdRenderPassEncoder
     }
@@ -130,41 +151,65 @@ final class RenderPass: MetalPass{
         renderPassEncoder.setRenderPipelineState(renderPiplineState)
         
         //Set Buffers
-        for buffer in component.vertexBufs{
-            renderPassEncoder.setVertexBuffer(buffer.mtlBuffer, 
+        for buffer in component
+            .vertexShader!
+            .argumentsContainer
+            .buffersAndBytesContainer
+            .buffers{
+            renderPassEncoder.setVertexBuffer(buffer.mtlBuffer,
                                               offset: buffer.offset.wrappedValue,
                                               index: buffer.index)
         }
-        for buffer in component.fragBufs{
-            renderPassEncoder.setFragmentBuffer(buffer.mtlBuffer, 
+        for buffer in component
+            .fragmentShader!
+            .argumentsContainer
+            .buffersAndBytesContainer
+            .buffers{
+            renderPassEncoder.setFragmentBuffer(buffer.mtlBuffer,
                                                 offset: buffer.offset.wrappedValue,
                                                 index: buffer.index)
         }
         //Set Bytes
-        for bytes in component.vertexBytes{
+        for bytes in component
+            .vertexShader!
+            .argumentsContainer
+            .buffersAndBytesContainer
+            .bytes{
             bytes.encode{ pointer, length, index in
                 renderPassEncoder.setVertexBytes(pointer, length: length, index: index)
             }
         }
-        for bytes in component.fragBytes{
+        for bytes in component
+            .fragmentShader!
+            .argumentsContainer
+            .buffersAndBytesContainer
+            .bytes{
             bytes.encode{ pointer, length, index in
                 renderPassEncoder.setFragmentBytes(pointer, length: length, index: index)
             }
         }
         //Set Textures
-        for tex in component.vertexTextures{
+        for tex in component
+            .vertexShader!
+            .argumentsContainer
+            .texturesContainer
+            .textures{
             guard let texture = tex.container.texture
             else{
-                throw MetalBuilderRenderError
-                    .textureIsNil("Texture \(tex.index) for the vertex shader  '"+component.vertexFunc+"' is nil!")
+                throw MetalBuilderRenderPassError
+                    .textureIsNil(tex.index, vertexNameFromLabel(component.label))
             }
             renderPassEncoder.setVertexTexture(texture, index: tex.index)
         }
-        for tex in component.fragTextures{
+        for tex in component
+            .fragmentShader!
+            .argumentsContainer
+            .texturesContainer
+            .textures{
             guard let texture = tex.container.texture
             else{
-                throw MetalBuilderRenderError
-                    .textureIsNil("Texture \(tex.index) for the fragment shader  '"+component.fragmentFunc+"' is nil!")
+                throw MetalBuilderRenderPassError
+                    .textureIsNil(tex.index, fragmentNameFromLabel(component.label))
             }
             renderPassEncoder.setFragmentTexture(texture, index: tex.index)
         }
@@ -186,14 +231,16 @@ final class RenderPass: MetalPass{
             }
         }else{
             if let instanceCount = component.instanceCount{
-                renderPassEncoder.drawPrimitives(type: component.type,
-                                                 vertexStart: component.vertexOffset,
-                                                 vertexCount: component.vertexCount,
-                                                 instanceCount: instanceCount.wrappedValue)
+                renderPassEncoder
+                    .drawPrimitives(type: component.type,
+                                    vertexStart: component.vertexOffset.wrappedValue,
+                                    vertexCount: component.vertexCount.wrappedValue,
+                                    instanceCount: instanceCount.wrappedValue)
             }else{
-                renderPassEncoder.drawPrimitives(type: component.type,
-                                                 vertexStart: component.vertexOffset,
-                                                 vertexCount: component.vertexCount)
+                renderPassEncoder
+                    .drawPrimitives(type: component.type,
+                                    vertexStart: component.vertexOffset.wrappedValue,
+                                    vertexCount: component.vertexCount.wrappedValue)
             }
         }
         
@@ -215,7 +262,8 @@ final class RenderPass: MetalPass{
             return .uint16
         }
         
-        throw MetalBuilderRenderError.badIndexBuffer("Elements of the index buffer for '" + self.component.vertexFunc + "' is of wrong type. Should be UInt32 or UInt16!")
+        throw MetalBuilderRenderPassError
+            .badIndexBuffer(component.label)
 
     }
 }

@@ -3,7 +3,6 @@ import SwiftUI
 
 enum MetalBuilderRendererError: Error{
     case noCommandBuffer
-    case indexBufferElementType(String) // shader name
 }
 
 extension MetalBuilderRendererError: LocalizedError{
@@ -11,8 +10,6 @@ extension MetalBuilderRendererError: LocalizedError{
         switch self {
         case .noCommandBuffer:
             "No Command Buffer for!"
-        case .indexBufferElementType(let string):
-            "Index buffer's element type for \(string) should be UInt32 of UInt16!"
         }
     }
 }
@@ -78,7 +75,7 @@ public extension MetalBuilderRenderer{
         self.device = renderInfo.device
         self.commandQueue = device.makeCommandQueue()
         
-        let context = MetalBuilderRenderingContext()
+        let context = MetalBuilderRenderingContext(commandQueue: commandQueue)
         context.timer = timer
         
         do{

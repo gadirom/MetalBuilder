@@ -151,9 +151,7 @@ final class ComputePass: MetalPass{
     
     }
     func prerun(renderInfo: GlobalRenderInfo) throws {
-        for argBuf in component.argumentsContainer.addedArgumentBuffers{
-            argBuf.0.setEncoder()
-        }
+        component.argumentsContainer.prerun()
     }
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()

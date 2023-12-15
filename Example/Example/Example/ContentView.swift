@@ -54,26 +54,53 @@ struct ContentView: View {
             .sizeFromViewport(scaled: 1)
     ) var targetTexture
     
+    
+    var argBufForCreation: ArgumentBuffer{
+        .new("argBufForCreation", desc:
+            ArgumentBufferDescriptor()
+                .buffer(createdParticlesBuffer, name: "particles", space: "device")
+                .buffer(createdIndexBuffer, name: "indices", space: "device")
+        )
+    }
+    var argBuffer: ArgumentBuffer{
+        .new("argBuffer", desc:
+            ArgumentBufferDescriptor("MyArgBuffer")
+                .buffer(particlesBuffer, name: "particles", space: "device")
+                .buffer(vertexBuffer, name: "vertices", space: "device")
+        )
+    }
     var argBufForTextures: ArgumentBuffer{
         .new("texArgBuf", desc: .init()
-            .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
-            .texture(targetTexture, argument: .init(type: "float", access: "read", name: "target"))
+            .texture(scaledTexture,
+                     argument: .init(type: "float", access: "read", name: "image"))
+            .texture(targetTexture, 
+                     argument: .init(type: "float", access: "read", name: "target"))
         )
     }
     
-    @MetalState var blurRadius: Float = 2.5
+    @State var blurRadius: Float = 2.5
     @State var fDilate: Float = 3
     @MetalState var dilateSize = 3
     @MetalState var laplacianBias: Float = 0.5
     
-    @MetalBuffer<Particle>(BufferDescriptor()
+    @MetalBuffer<Particle>(
+        BufferDescriptor()
+        .count(particleCount)
+        .metalName("particles")
+        .passAs(.structReference("ParticlesStruct"))
+    ) var createdParticlesBuffer
+    
+    @MetalBuffer<Particle>(
+        BufferDescriptor()
         .count(particleCount)
         .metalName("particles")
         .passAs(.structReference("ParticlesStruct"))
     ) var particlesBuffer
+    
     @MetalBuffer<Vertex>(count: particleCount*3,
                          metalName: "vertices") var vertexBuffer
     
+    @MetalBuffer<UInt32>(count: particleCount*3) var createdIndexBuffer
     @MetalBuffer<UInt32>(count: particleCount*3) var indexBuffer
     
     @MetalState var vertexCount = 3 * particleCount
@@ -88,6 +115,8 @@ struct ContentView: View {
     
     @State var json: Data?
     
+    let asyncGroupInfo = AsyncGroupInfo(runOnStartup: true)
+    
     var viewSettings: MetalBuilderViewSettings{
         MetalBuilderViewSettings(depthPixelFormat: nil,
                                  clearDepth: nil,
@@ -100,28 +129,55 @@ struct ContentView: View {
     var body: some View {
         VStack{
             MetalBuilderView(viewSettings: viewSettings){ context in
-                ComputeBlock(context: context,
-                             particlesBuffer: $particlesBuffer,
-                             vertexBuffer: $vertexBuffer,
-                             //particleScale: $particleScale,
-                             u: uniforms)
-                Render(indexBuffer: indexBuffer,
-                       indexCount: MetalBinding<Int>.constant(3),
-                       instanceCount: MetalBinding<Int>.constant(particleCount))
-                    .uniforms(uniforms)//, name: "uni")
+                AsyncGroup(info: asyncGroupInfo) {
+                    ManualEncode{device,_,_ in
+                        try! createdParticlesBuffer.create(device: device)
+//                        createParticles(particlesBuf: createdParticlesBuffer,
+//                                        viewportSize: context.viewportSize)
+                        
+                        try! createdIndexBuffer.create(device: device)
+//                        createIndices(createdIndexBuffer, count: vertexCount)
+                        print("run running")
+                    }
+                   // CreationBlock(context: context, argBuffer: argBufForCreation)
+                }
+                EncodeGroup(active: asyncGroupInfo.complete) {
+                    ManualEncode{_,_,_ in
+                        asyncGroupInfo.setReady()
+                        particlesBuffer.buffer = createdParticlesBuffer.buffer
+                        indexBuffer.buffer = createdIndexBuffer.buffer
+                        print("was run for value: \(blurRadius)")
+                    }
+                }
+                EncodeGroup(active: asyncGroupInfo.wasCompleteOnce){
+                    ComputeBlock(context: context,
+                                 u: uniforms,
+                                 argBuffer: argBuffer)
+                    Render("renderParticles", indexBuffer: indexBuffer,
+                           indexCount: MetalBinding<Int>.constant(3),
+                           instanceCount: MetalBinding<Int>.constant(particleCount))
+                    //.uniforms(uniforms)//, name: "uni")
                     .indexTypes(instance: .uint, vertex: .uint)
                     //.renderEncoder($renderEncoder, lastPass: true)
                     .toTexture(targetTexture)
                     //.vertexBuf(vertexBuffer, offset: 0)
-                    .vertexBytes($particleScale, name: "scale")
-                    .vertexBuf(particlesBuffer)
-                    .vertexBytes(context.$viewportSize, space: "constant")
-                    .vertexShader(
-                        VertexShader("vertexShader",
-                                  body:"""
-                        RasterizerData out;
-                    
-                        Particle particle = particles.array[instance_id];
+                    .vertex(
+                        VertexShader()
+                            .argBuffer(argBuffer, name: "arg", UseResources()
+                                .buffer("particles", usage: [.read])
+                            )
+                            .bytes($particleScale, name: "scale")
+                        //.buffer(particlesBuffer)
+                            .bytes(context.$viewportSize)
+                            .uniforms(uniforms)
+                            .vertexOut(
+                        """
+                        float4 position [[position]];
+                        float4 color; //[[flat]];   // - use this flag to disable color interpolation
+                        """)
+                            .body(
+                        """
+                        Particle particle = arg.particles.array[instance_id];
                         float size = particle.size*scale;
                         float angle = particle.angle;
                         float2 position = particle.position;
@@ -132,85 +188,76 @@ struct ContentView: View {
                         case 1: color = float4((color.rgb + u.color)/2., 0.5); break;
                         case 2: color = float4(u.color, 1);
                         }
-
+                        
                         float pi = 3.14;
-
+                        
                         float2 scA = sincos2(angle+pi*2/3*float(vertex_id));
-
+                        
                         float2 pixelSpacePosition = position + size*scA;
-
+                        
                         float2 viewport = float2(viewportSize);
                         
                         out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
                         out.position.xy = pixelSpacePosition / (viewport / 2.0);
-
+                        
                         out.color = color;
-
+                        
                         return out;
-                    """)
-                        .vertexOut(
-                    """
-                    struct RasterizerData{
-                        float4 position [[position]];
-                        float4 color; //[[flat]];   // - use this flag to disable color interpolation
-                    };
-                    """
-                        )
+                        """)
                     )
-                    .fragmentShader(FragmentShader("fragmentShader",
-                                                   fragmentOut:
-                    """
-                       struct FragmentOut{
-                           float4 color [[color(0)]];
-                       };
-                    """, body:
-                    """
-                        FragmentOut out;
-                        //primitive_id
-                        out.color = in.color;
-                        return out;
-                    """))
-//                Render(vertex: "vertexShader", fragment: "fragmentShader", count: vertexCount)
-//                    .uniforms(uniforms)//, name: "uni")
-//                    .toTexture(targetTexture)
-//                    .vertexBuf(vertexBuffer, offset: 0)
-//                    .vertexBytes(context.$viewportSize, space: "constant")
-                EncodeGroup{
+                    .fragment(
+                        FragmentShader()
+                            .fragmentOut(
+                        """
+                            float4 color [[color(0)]];
+                        """)
+                            .body(
+                        """
+                            out.color = in.color;
+                            return out;
+                        """)
+                    )
+                    //                Render(vertex: "vertexShader", fragment: "fragmentShader", count: vertexCount)
+                    //                    .uniforms(uniforms)//, name: "uni")
+                    //                    .toTexture(targetTexture)
+                    //                    .vertexBuf(vertexBuffer, offset: 0)
+                    //                    .vertexBytes(context.$viewportSize, space: "constant")
                     EncodeGroup{
-                        CPUCompute{ _ in
-                            //blurRadius+=0.1
-                        }
-                        ManualEncode{ [self] device, commandBuffer, drawable in
-                            let l = MPSImageLaplacian(device: device)
-                            l.bias = laplacianBias
-                            l.encode(commandBuffer: commandBuffer, inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
-                        }
-                    }.repeating($laplacianPasses)
-                    //Seems that Laplacian can't be initialized through superclass init!
-    //                MPSUnary{MPSImageLaplacian(device: $0)}
-    //                    .source(targetTexture)
-    //                    .value($laplacianBias, for: "bias")
-                    MPSUnary{MPSImageAreaMax(device: $0,
-                                             kernelWidth: dilateSize, kernelHeight: dilateSize)}
+                        EncodeGroup{
+                            CPUCompute{ _ in
+                                //blurRadius+=0.1
+                            }
+                            ManualEncode{ [self] device, commandBuffer, drawable in
+                                let l = MPSImageLaplacian(device: device)
+                                l.bias = laplacianBias
+                                l.encode(commandBuffer: commandBuffer, inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
+                            }
+                        }.repeating($laplacianPasses)
+                        //Seems that Laplacian can't be initialized through superclass init!
+                        //                MPSUnary{MPSImageLaplacian(device: $0)}
+                        //                    .source(targetTexture)
+                        //                    .value($laplacianBias, for: "bias")
+                        MPSUnary{MPSImageAreaMax(device: $0,
+                                                 kernelWidth: dilateSize, kernelHeight: dilateSize)}
                         .source(targetTexture)
-                    MPSUnary{ [self] in MPSImageGaussianBlur(device: $0, sigma: blurRadius)}
-                        .source(targetTexture)
+                        MPSUnary{ [self] in MPSImageGaussianBlur(device: $0, sigma: blurRadius)}
+                            .source(targetTexture)
                         //.toDrawable()
-                }.repeating($n)
-//                BlitTexture()
-//                    .source(targetTexture)
-                ScaleTexture(type: .fit, method: .bilinear)
-                    .source(imageTexture)
-                    .destination(scaledTexture)
-                Compute("postprocessKernel")
-                    .argBuffer(argBufForTextures, name: "textures", .init()
-                        .texture("image", usage: .read)
-                        .texture("target", usage: .read)
-                    )
-//                    .texture(targetTexture, argument: .init(type: "float", access: "read", name: "target"))
-//                    .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
-                    .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
-                    .uniforms(uniforms)
+                    }.repeating($n)
+                    //                BlitTexture()
+                    //                    .source(targetTexture)
+                    ScaleTexture(type: .fit, method: .bilinear)
+                        .source(imageTexture)
+                        .destination(scaledTexture)
+                    Compute("postprocessKernel")
+                        .argBuffer(argBufForTextures, name: "textures", .init()
+                            .texture("image", usage: .read)
+                            .texture("target", usage: .read)
+                        )
+                    //                    .texture(targetTexture, argument: .init(type: "float", access: "read", name: "target"))
+                    //                    .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
+                        .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
+                        .uniforms(uniforms)
                     //.gidIndexType(.uint)
                     .body("""
                         //uint2 count = uint2(out.get_width(), out.get_height());
@@ -222,12 +269,16 @@ struct ContentView: View {
                         float3 color = mix(inColor, imageColor, u.mix);
                         out.write(float4(color, 1), gid);
                     """)
-                //let _ = print("compile")
+                    //let _ = print("compile")
+                }
             }
-            .onResize{ size in
-                createParticles(particlesBuf: particlesBuffer,
-                                viewportSize: size)
-                createIndices(indexBuffer, count: vertexCount)
+//            .onStartup{ _ in
+//                try! asyncGroupInfo.run()
+//            }
+            .onResize{ _ in
+                //if !asyncGroupInfo.busy.wrappedValue{
+                    try! asyncGroupInfo.run()
+                //}
             }
             if showUniforms{
                 UniformsView(uniforms)
@@ -267,7 +318,11 @@ struct ContentView: View {
                 }
 
             }
-            Slider(value: $blurRadius.binding, in: 0...5)
+            Slider(value: $blurRadius, in: 0...5)
+                .onChange(of: blurRadius) { newVal in
+                    print("run async for value: \(newVal)")
+                    try! asyncGroupInfo.run()
+                }
             Slider(value: $fDilate, in: 0...10)
                 .onChange(of: fDilate) { newValue in
                     dilateSize = Int(fDilate*10)*2+1
@@ -301,10 +356,10 @@ func createIndices(_ buf: MTLBufferContainer<UInt32>, count: Int){
     }
 }
 
-func createParticles(particlesBuf: MTLBufferContainer<Particle>, viewportSize: CGSize){
+func createParticles(particlesBuf: MTLBufferContainer<Particle>, viewportSize: simd_uint2){
     
-    let x = Float(viewportSize.width)
-    let y = Float(viewportSize.height)
+    let x = Float(viewportSize.x)
+    let y = Float(viewportSize.y)
     
     for i in 0..<particleCount{
         let red: Float = Float(Int.random(in: 0..<resolution))/Float(resolution)

@@ -64,42 +64,48 @@ struct ContainerOfTextures: ContainerOfResources{
     }
 }
 
-struct ArgumentsContainer{
+public struct ArgumentsContainer{
+    
+    var resourcesUsages = ResourcesUsages()
     
     var separateShaderArguments: [MetalFunctionArgument] = []
-    var resourcesUsages = ResourcesUsages()
     var addedArgumentBuffers: [(ArgumentBuffer, Int)] = [] //buffer, index of buffer in shader function args
     
-    let shaderName: String
     var uniforms: [UniformsContainer] = []
     var buffersAndBytesContainer = ContainerOfBuffersBytesAndUniforms()
     var texturesContainer = ContainerOfTextures()
-    init(shaderName: String){
-        self.shaderName = shaderName
+    init(){
+    }
+    func prerun(){//set buffer for arguments encoder once it created
+        for argBuf in addedArgumentBuffers{
+            argBuf.0.setEncoder()
+        }
     }
 }
+
+
 
 //setup and other functions
 extension ArgumentsContainer{
     
-    func getBuffersAndTexturesAndArgBufDecl() throws -> ([BufferProtocol], [MTLTextureContainer], [FunctionAndArguments], String){
-        var (bufs, texs) =
-        (buffersAndBytesContainer.buffers,
-         texturesContainer.textures.map{ $0.container })
-        var funcsAndArguments = [FunctionAndArguments(function: .compute(shaderName),
-                                                      arguments: separateShaderArguments)]
-        var argBufDecls = ""
+    func getData(metalFunction: MetalFunction) throws -> ArgumentsData{
+        
+        var argData = ArgumentsData(
+            buffers: buffersAndBytesContainer.buffers,
+            textures: texturesContainer.textures.map{ $0.container },
+            uniforms: uniforms,
+            funcAndArgs: separateShaderArguments.isEmpty ? [] :
+                [FunctionAndArguments(function: metalFunction,
+                                      arguments: separateShaderArguments)],
+            argBufDecls: ""
+        )
+        
         for argBuf in addedArgumentBuffers{
-            let (bufs1, texs1, funcAndArgs1, decl) = try argBuf.0.setup()
-            bufs.append(contentsOf: bufs1)
-            texs.append(contentsOf: texs1)
-            if let funcAndArgs1{
-                funcsAndArguments.append(funcAndArgs1)
-            }
-            argBufDecls += decl
+            let argData1 = try argBuf.0.setup()
+            argData.appendContents(of: argData1)
         }
         
-        return (bufs, texs, funcsAndArguments, argBufDecls)
+        return argData
     }
 }
 
@@ -131,11 +137,13 @@ extension ArgumentsContainer{
                               offset: MetalBinding<Int>,
                               argument: MetalBufferArgument){
         let buf = Buffer(container: container, offset: offset, index: 0)
+        
+        checkIfBufferIsNew(buf: buf,
+                           argumentName: argument.name)
+        checkForSameNames(name: argument.name)
+        
         let arg = self.buffersAndBytesContainer.addBuffer(buf,
                                                           argument: argument)
-        checkIfBufferIsNew(buf: buf,
-                           argumentName: arg.name)
-        checkForSameNames(name: arg.name)
         self.separateShaderArguments.append(arg)
     }
     mutating func bytes<T>(_ binding: Binding<T>, index: Int){
@@ -144,19 +152,20 @@ extension ArgumentsContainer{
     }
     mutating func bytes<T>(_ binding: Binding<T>,
                   argument: MetalBytesArgument){
+        checkForSameNames(name: argument.name)
         let bytes = Bytes(binding: binding, index: 0)
         let arg = self.buffersAndBytesContainer.addBytes(bytes, argument: argument)
-        checkForSameNames(name: arg.name)
+        
         self.separateShaderArguments.append(arg)
     }
     mutating func uniforms(_ uniforms: UniformsContainer, name: String?){
         self.uniforms.append(uniforms)
         let argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
+        checkForSameNames(name: argument.name)
         let bytes = RawBytes(binding: uniforms.pointerBinding,
                              length: uniforms.length,
                              index: 0)
         let arg = self.buffersAndBytesContainer.addBytes(bytes, argument: argument)
-        checkForSameNames(name: arg.name)
         self.separateShaderArguments.append(arg)
     }
     mutating func texture(_ container: MTLTextureContainer, index: Int){

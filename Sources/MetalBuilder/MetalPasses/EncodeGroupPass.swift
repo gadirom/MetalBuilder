@@ -19,6 +19,11 @@ class EncodeGroupPass: MetalPass{
             try pass.setup(renderInfo: renderInfo)
         }
     }
+    func prerun(renderInfo: GlobalRenderInfo) throws{
+        for pass in passes {
+            try pass.prerun(renderInfo: renderInfo)
+        }
+    }
     func encode(passInfo: MetalPassInfo) throws {
   
         let repeating = repeating.wrappedValue * (active.wrappedValue ? 1:0)

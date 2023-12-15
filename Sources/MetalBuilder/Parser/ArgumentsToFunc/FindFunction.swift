@@ -13,13 +13,13 @@ func findFunction(_ function: MetalFunction, in source: String) throws -> Range<
         guard let prefixId = findPrefix(prefix, in: s)
         else {
             throw MetalBuilderParserError
-            .syntaxError("no "+prefix+" "+name+" function in source!")
+                .noFunctionInSource(prefix, name)
         }
         // find "{"
         guard let curlyId = s[prefixId...].range(of: "{")?.upperBound
         else {
             throw MetalBuilderParserError
-            .syntaxError("no '{' after '"+prefix+"'!")
+            .syntaxError("no '{' after '"+name+"'!")
         }
         // find name between prefix and "{"
         guard let nameRange = s[prefixId...curlyId].range(of: name)
@@ -37,7 +37,7 @@ func findFunction(_ function: MetalFunction, in source: String) throws -> Range<
     guard let nameId = nameId
     else {
         throw MetalBuilderParserError
-        .syntaxError("no "+prefix+" "+name+" function in source!")
+            .noFunctionInSource(prefix, name)
     }
     guard let bracketRange = source[nameId...].range(of: function.openBrace.lowercased())
     else {

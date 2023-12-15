@@ -26,47 +26,39 @@ let sincos2 = """
         }
 """
 
-struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
+struct ComputeBlock: MetalBuildingBlock{
     
     let compileOptions: MetalBuilderCompileOptions? = nil //MetalBuilderCompileOptions(mtlCompileOptions: nil, libraryPrefix: .default)
     
     var context: MetalBuilderRenderingContext
     
+    let u: UniformsContainer
+    
     //As of Swift 5.6 the arguments of MetalBuffer property wrapper are ignored
     //when the variable is supposed to receive it's value from synthesised init
-    @MetalBuffer<Particle>(metalName: "particles") var particlesBuffer
-    @MetalBuffer<Vertex>(metalName: "vertices") var vertexBuffer
+    //@MetalBuffer<Particle>(metalName: "particles") var particlesBuffer
+    //@MetalBuffer<Vertex>(metalName: "vertices") var vertexBuffer
     
     //@MetalBinding var particleScale: Float
     
-    let u: UniformsContainer
+    var argBuffer: ArgumentBuffer
     
-    var argBuffer: ArgumentBuffer{
-        .new("argBuffer", desc:
-            ArgumentBufferDescriptor("MyArgBuffer")
-                .buffer(particlesBuffer, name: "particles", space: "device")
-                .buffer(vertexBuffer, name: "vertices", space: "device")
-        )
-    }
-    
-    var argBuffer1: ArgumentBuffer{
-        .new("argBuffer1", desc:
-            ArgumentBufferDescriptor("MyArgBuffer1")
-                .buffer(particlesBuffer, name: "particles", space: "device")
-                .buffer(vertexBuffer, name: "vertices", space: "device")
-        )
-    }
+//    var argBuffer1: ArgumentBuffer{
+//        .new("argBuffer1", desc:
+//            ArgumentBufferDescriptor("MyArgBuffer1")
+//                .buffer(particlesBuffer, name: "particles", space: "device")
+//                .buffer(vertexBuffer, name: "vertices", space: "device")
+//        )
+//    }
     
     var metalContent: MetalContent{
-            Compute("particleFunction")
+            Compute("create")
                 .argBuffer(argBuffer, name: "arg", UseResources()
-                    .buffer("particles", usage: [.read, .write], fitThreads: true)
+                    .buffer("particles", usage: .write, fitThreads: true)
+                    .buffer("indices", usage: .write, fitThreads: true)
                 )
                 .gidIndexType(.uint)
-                //.buffer(particlesBuffer, space: "device", fitThreads: true)
                 .bytes(context.$viewportSize)
-                //.bytes($particleScale, name: "scale")
-                .uniforms(u)
                 .body("""
                 //int gidi = int(gid);
                 Particle particle = arg.particles.array[gid];
@@ -87,6 +79,7 @@ struct ComputeBlock<Particle, Vertex>: MetalBuildingBlock{
                 if (particle.angle < -pi) { particle.angle += 2*pi; };
                 
                 arg.particles.array[gid] = particle;
+                arg.indices.array[gid] = index;
 
                 """)
         }

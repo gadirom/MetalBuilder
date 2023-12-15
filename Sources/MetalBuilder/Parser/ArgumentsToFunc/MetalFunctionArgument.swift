@@ -4,7 +4,8 @@ import Metal
 
 enum MetalBuilderFunctionArgumentsError: Error {
 case bufferArgumentError(String), 
-     textureArgumentError(String)
+     textureArgumentError(String),
+     noIndex(String)// name
 }
 
 public enum MetalFunctionArgument{
@@ -13,15 +14,14 @@ public enum MetalFunctionArgument{
          bytes(MetalBytesArgument),
          custom(String)
     
-    func string(forArgumentsBuffer: Bool = false,
-                argumentIndex: Int = -1) throws -> String{
+    func string() throws -> String{
         switch self{
         case .texture(let arg):
-            return try arg.string(argumentIndex: argumentIndex)
+            return try arg.string()
         case .buffer(let arg):
-            return arg.string(argumentIndex: argumentIndex)
+            return try arg.string()
         case .bytes(let arg):
-            return arg.string(argumentIndex: argumentIndex)
+            return try arg.string()
         case .custom(let string): return string
         }
     }
@@ -59,7 +59,8 @@ public struct MetalTextureArgument{
     let access: String
     let name: String
     var index: Int?
-    func string(argumentIndex: Int = -1) throws -> String{
+    var forArgBuffer: Bool
+    func string() throws -> String{
         var prefix = ""
         switch textureType!{
         case .type2D: prefix = "texture2d"
@@ -77,12 +78,17 @@ public struct MetalTextureArgument{
         default: throw MetalBuilderFunctionArgumentsError
                 .textureArgumentError("Unsupported texture type: "+String(describing: textureType))
         }
-        let index = argumentIndex >= 0 ? argumentIndex : index
-        let h = prefix +
-            (argumentIndex >= 0 ?
-            "<\(type), access::\(access)> \(name) [[id(\(index!))]]" :
-            "<\(type), access::\(access)> \(name) [[texture(\(index!))]]")
-        return h
+        guard let index
+        else{
+            throw  MetalBuilderFunctionArgumentsError
+                .noIndex(name)
+        }
+        if forArgBuffer{
+            return "\(prefix)<\(type), access::\(access)> \(name) [[id(\(index))]]"
+        }else{
+            return "\(prefix)<\(type), access::\(access)> \(name) [[texture(\(index))]]"
+        }
+        
     }
     /// Creates a texture argument.
     /// - Parameters:
@@ -93,11 +99,13 @@ public struct MetalTextureArgument{
     /// If nil, the index will be set automatically by MetalBuilder.
     /// (Once you pass nil for the index of a texture argument of a component,
     /// avoid passing non-nil values in texture arguments of the same component.)
-    public init(type: String, access: String, name: String, index: Int?=nil) {
+    public init(type: String, access: String, name: String, index: Int?=nil,
+                forArgBuffer: Bool = false) {
         self.type = type
         self.access = access
         self.name = name
         self.index = index
+        self.forArgBuffer = forArgBuffer
     }
 }
 
@@ -106,6 +114,7 @@ public struct MetalBufferArgument{
     var type: String?
     let name: String
     var index: Int?
+    var forArgBuffer: Bool
     
     let passAs: PassBufferToMetal
     let count: Int
@@ -120,15 +129,21 @@ public struct MetalBufferArgument{
         return metalTypeDeclaration(from: type.swiftType,
                                     name: type.metalType)
     }
-    func string(argumentIndex: Int = -1) -> String{
-        let index = argumentIndex >= 0 ? argumentIndex : index
-        let h = argumentIndex >= 0 ?
-            "\(space) \(type!)\(passAs.prefix) \(name) [[id(\(index!))]]" :
-            "\(space) \(type!)\(passAs.prefix) \(name) [[buffer(\(index!))]]"
-        return h
+    func string() throws -> String{
+        guard let index
+        else{
+            throw  MetalBuilderFunctionArgumentsError
+                .noIndex(name)
+        }
+        if forArgBuffer{
+            return "\(space) \(type!)\(passAs.prefix) \(name) [[id(\(index))]]"
+        }else{
+            return  "\(space) \(type!)\(passAs.prefix) \(name) [[buffer(\(index))]]"
+        }
     }
     init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int?,
-         passAs: PassBufferToMetal, count: Int) {
+         passAs: PassBufferToMetal, count: Int,
+         forArgBuffer: Bool) {
         self.space = space
         self.type = type
         self.name = name
@@ -136,9 +151,11 @@ public struct MetalBufferArgument{
         self.swiftType = swiftType
         self.passAs = passAs
         self.count = count
+        self.forArgBuffer = forArgBuffer
     }
     init<T>(_ container: MTLBufferContainer<T>,
-            space: String, type: String?, name: String?, index: Int?) throws{
+            space: String, type: String?, name: String?, index: Int?,
+            forArgBuffer: Bool=false) throws{
         
         var t: String?
         if let type = metalType(for: T.self){
@@ -171,7 +188,8 @@ public struct MetalBufferArgument{
         }
 
         self.init(swiftType: T.self, space: space, type: t, name: name, index: index,
-                  passAs: container.passAs, count: container.count!)
+                  passAs: container.passAs, count: container.count!,
+                  forArgBuffer: forArgBuffer)
     }
 }
 
@@ -180,6 +198,7 @@ public struct MetalBytesArgument{
     var type: String?
     let name: String
     var index: Int?
+    var forArgBuffer: Bool
     let swiftType: Any.Type
     var metalDeclaration: MetalTypeDeclaration?{
         if let decl = _metalDeclaration{
@@ -195,14 +214,21 @@ public struct MetalBytesArgument{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
     }
-    func string(forArgumentsBuffer: Bool = false, argumentIndex: Int = -1) -> String{
-        let index = argumentIndex >= 0 ? argumentIndex : index
-        let h = forArgumentsBuffer ?
-            "\(space) \(type!)& \(name) [[id(\(index!))]]" :
-            "\(space) \(type!)& \(name) [[buffer(\(index!))]]"
-        return h
+    func string() throws -> String{
+        guard let index
+        else{
+            throw  MetalBuilderFunctionArgumentsError
+                .noIndex(name)
+        }
+        if forArgBuffer{
+            return "\(space) \(type!)& \(name) [[id(\(index))]]"
+        }else{
+            return "\(space) \(type!)& \(name) [[buffer(\(index))]]"
+        }
     }
-    init(swiftType: Any.Type, space: String, type: String?, name: String, index: Int?=nil, metalDeclaration: MetalTypeDeclaration?=nil) {
+    init(swiftType: Any.Type, space: String, type: String?, name: String, 
+         index: Int?=nil, metalDeclaration: MetalTypeDeclaration?=nil,
+         forArgBuffer: Bool) {
         self.swiftType = swiftType
         self.space = space
         self.type = type
@@ -210,8 +236,11 @@ public struct MetalBytesArgument{
         self.index = index
         
         self._metalDeclaration = metalDeclaration
+        self.forArgBuffer = forArgBuffer
     }
-    init<T>(binding: MetalBinding<T>, space: String, type: String?=nil, name: String?=nil, index: Int?=nil){
+    init<T>(binding: MetalBinding<T>, space: String, 
+            type: String?=nil, name: String?=nil, index: Int?=nil,
+            forArgBuffer: Bool=false){
         var n: String
         if let name = name {
             n = name
@@ -225,7 +254,8 @@ public struct MetalBytesArgument{
             t = binding.metalType
         }
         
-        self.init(swiftType: T.self, space: space, type: t, name: n, index: index)
+        self.init(swiftType: T.self, space: space, type: t, name: n, index: index,
+                  forArgBuffer: forArgBuffer)
     }
     init(uniformsContainer: UniformsContainer, name: String?){
         let type = uniformsContainer.metalType
@@ -237,6 +267,7 @@ public struct MetalBytesArgument{
             metalName = uniformsContainer.metalName!
         }
         self.init(swiftType: Any.self, space: "constant",
-                  type: type, name: metalName, metalDeclaration: metalDeclaration)
+                  type: type, name: metalName, metalDeclaration: metalDeclaration,
+                  forArgBuffer: false)
     }
 }

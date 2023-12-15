@@ -1,6 +1,6 @@
 import MetalKit
 import SwiftUI
-
+/*
 /// Building block for rendering full screen quad
 public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     /// Creates a new building block that renders full scrwwn quad.
@@ -92,3 +92,4 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
             .fragmentShader(quadFragmentShader)
     }
 }
+*/

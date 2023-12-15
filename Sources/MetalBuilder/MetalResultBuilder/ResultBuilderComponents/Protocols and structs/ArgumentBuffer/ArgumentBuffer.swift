@@ -98,24 +98,26 @@ extension ArgumentBuffer{
                     name: name ?? self.name,
                     index: nil)
     }
-    func setup() throws -> ([BufferProtocol], [MTLTextureContainer], FunctionAndArguments?, String) {// - metal declaration
-        if wasSetUp{ return ([], [], nil, "") }
+    func setup() throws -> ArgumentsData {// - metal declaration
+        var argData = ArgumentsData()
+        if wasSetUp{ return argData }
         wasSetUp = true
-        var buffers: [BufferProtocol] = []
-        var texures: [MTLTextureContainer] = []
+        
         for entry in descriptor.arguments.enumerated(){
             if let buf = entry.element.0.resource as? BufferContainer{
-                buffers.append(buf.createBufferProtocolConformingBuffer())
+                argData.buffers.append(buf.createBufferProtocolConformingBuffer())
             }
             if let tex = entry.element.0.resource as? MTLTextureContainer{
-                texures.append(tex)
+                argData.textures.append(tex)
             }
             entry.element.0.resource
-                .addToArgumentBuffer(self, id: entry.offset, offset: entry.element.0.offset)
+                .addToArgumentBuffer(self, id: entry.offset,
+                                     offset: entry.element.0.offset)
         }
-        let funcAndArgs = FunctionAndArguments(function: .argBuffer(type),
-                                               arguments: descriptor.arguments.map{ $0.1 })
-        return (buffers, texures, funcAndArgs, typeDeclaration)
+        argData.funcAndArgs = [FunctionAndArguments(function: .argBuffer(type),
+                                                    arguments: descriptor.arguments.map{ $0.1 })]
+        argData.argBufDecls = typeDeclaration
+        return argData
     }
     func create(device: MTLDevice,
                 mtlFunction: MTLFunction,

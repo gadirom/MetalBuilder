@@ -1,4 +1,22 @@
 
+enum FragmentShaderError: Error{
+    case noFragmentOut(String)//label
+    case noBody(String)//label
+    case noVertexOut(String)//label
+}
+extension FragmentShaderError: LocalizedError{
+    public var errorDescription: String?{
+        switch self {
+        case .noFragmentOut(let label):
+            "Fragment shader for \(label) has no return type declaration!"
+        case .noBody(let label):
+            "Fragment shader for \(label) has no body!"
+        case .noVertexOut(let label):
+            "Fragment shader for \(label) cannot be constructed from body since VertexOut is unknown!"
+        }
+    }
+}
+
 import SwiftUI
 
 /// Fragment Shader that you pass to a Render component
@@ -19,99 +37,65 @@ import SwiftUI
 ///             .buffer(colorsBuffer)
 ///     )
 /// ```
-public struct FragmentShader: InternalShaderProtocol{
+public struct FragmentShader: ShaderProtocol{
     
-    var bufsAndArgs: [(BufferProtocol, MetalBufferArgument)] = []
-    var bytesAndArgs: [(BytesProtocol, MetalBytesArgument)] = []
-    var texsAndArgs: [(Texture, MetalTextureArgument)] = []
+    public var argumentsContainer = ArgumentsContainer()
+    public var gridFit: GridFit?
     
-    var uniformsAndNames: [(UniformsContainer, String?)] = []
-    
-    /// Creates the FragmentShader with the name and the raw Metal source code
-    /// - Parameters:
-    ///   - name: Name of the fragment shader function in your Metal code
-    ///   - source: The source code
-    ///
-    /// The source of the fragment shader should countain the shader function declaration:
-    /// ```
-    /// let fragment = FragmentShader("myFragmetFunction", source:"""
-    ///     fragment float4 myFragmetFunction(VertexOut in [[stage_in]],
-    ///                                       float2 p [[point_coord]]){
-    ///         return in.color;
-    ///     }
-    /// """)
-    /// ```
-    public init(_ name: String, source: String=""){
-        self.fragmentFunc = name
-        self.source = source
-    }
-    /// Creates the Fragment Shader with the name, return type and and the body of the fragment function
-    /// - Parameters:
-    ///   - name: Name of the fragment shader function in your Metal code
-    ///   - returns: The Metal type the the fragment returns. Default type is `float4`.
-    ///   - source: The body of the Fragment shader without the function declaration
-    ///
-    /// You pass only the body of the fragment function.
-    /// MetalBuilder will generate the declaration automatically, passing the output of the vertex function as `in`:
-    /// ```
-    /// let fragment = FragmentShader("myFragmetFunction", body:"""
-    ///     return in.color;
-    /// """
-    /// ```
-    public init(_ name: String, returns: String="float4",
-                body: String=""){
-        self.fragmentFunc = name
-        self.returnType = returns
-        self.body = body
-    }
-    /// Creates the Fragment Shader with the name, return type and and the body of the fragment function
-    /// - Parameters:
-    ///   - name: Name of the fragment shader function in your Metal code
-    ///   - returns: The Metal type the the fragment returns. Default type is `float4`.
-    ///   - source: The body of the Fragment shader without the function declaration
-    ///
-    /// You pass only the body of the fragment function.
-    /// MetalBuilder will generate the declaration automatically, passing the output of the vertex function as `in`:
-    /// ```
-    /// let fragment = FragmentShader("myFragmetFunction", body:"""
-    ///     return in.color;
-    /// """
-    /// ```
-    public init(_ name: String, fragmentOut: String,
-                body: String=""){
-        self.fragmentFunc = name
-        self.returnType = getTypeFromFromStructDeclaration(fragmentOut)
-        self.returnTypeDeclaration = fragmentOut
-        self.body = body
+    /// Creates the FragmentShader
+    public init(){
     }
     
-    let fragmentFunc: String
+    var fragmentOutFields: String?
+    var fragmentOutType: String?
     
-    var returnTypeDeclaration: String?
+    public var _body: String?
+    public var _source: String?
     
-    var returnType: String?
+    func getFragmentOut(label: String) throws -> (String, String){//FragmentOut (Type, decl)
+        if let fragmentOutType{
+            return (fragmentOutType, "")
+        }
+        guard let fragmentOutFields
+        else {
+            throw FragmentShaderError
+                .noFragmentOut(label)
+        }
+        let fragmentOut = "\(label)FragmentOut"
+        let decl = """
+                   struct \(fragmentOut){
+                     \(fragmentOutFields)
+                   };
+                   """
+        return (fragmentOut, decl)
+    }
     
-    public var body: String?
-    public var source: String?
-    
-    func librarySource(vertexOut: String?) -> String{
-        if let source = source{
+    func librarySource(label: String, vertexOut: String?) throws -> String{
+        if let source = _source{
             return source
         }
+        guard let _body
+        else {
+            throw FragmentShaderError
+                .noBody(label)
+        }
+        guard let vertexOut
+        else {
+            throw FragmentShaderError
+                .noVertexOut(label)
+        }
+        let (type, decl) = try getFragmentOut(label: label)
+        let fragmentName = fragmentNameFromLabel(label)
         
-        let returnTypeDeclaration: String
-        if let declaration = self.returnTypeDeclaration{
-            returnTypeDeclaration = declaration
-        }else{
-            returnTypeDeclaration = ""
-        }
-        if let body = body, let returns = returnType, let vertexOut = vertexOut{
-            return returnTypeDeclaration + "fragment "+returns+" "+fragmentFunc+"("+vertexOut+" in [[stage_in]]){"+body+"}"
-        }
-        print("Couldn't get the source code for ", fragmentFunc, " fragment shader!")
-        return ""
+        return """
+                \(decl) fragment \(type) \(fragmentName)(\(vertexOut) in [[stage_in]]){
+                \(type) out;
+                \(_body)
+                }
+               """
     }
 }
+/*
 //FragmentShader's wrappers for ShaderProtocol modifiers
 public extension FragmentShader{
     func buffer<T>(_ container: MTLBufferContainer<T>, offset: MetalBinding<Int>, argument: MetalBufferArgument) -> FragmentShader{
@@ -136,16 +120,38 @@ public extension FragmentShader{
         return _body(body) as! FragmentShader
     }
 }
-
+*/
 //Modifiers specific to FragmentShader
 public extension FragmentShader{
-    ///  Adds the declaration of the C-struct that used as output of the fragment shader
-    /// - Parameter declaration: Declaration of the output type.
+    ///  Adds the declaration of fields of the C-struct that used as output of the fragment shader
+    /// - Parameter fields: Declaration of fields of the output type.
     /// - Returns: Fragment shader with the added declaration of output type.
-    func fragmentOut(_ declaration: String)->FragmentShader{
+    ///
+    ///Example:
+    ///```
+    ///FragmentShader()
+    ///     .fragmentOut("""
+    ///         float4 color;
+    ///         float depth;
+    ///     """)
+    ///```
+    func fragmentOut(_ fields: String)->FragmentShader{
         var v = self
-        v.returnType = getTypeFromFromStructDeclaration(declaration)
-        v.returnTypeDeclaration = declaration
+        v.fragmentOutFields = fields
+        return v
+    }
+    ///  Adds a Metal type as output of the fragment shader
+    /// - Parameter metalType: Metal type name for shader output.
+    /// - Returns: Fragment shader with the added output type.
+    ///
+    ///Example:
+    ///```
+    ///FragmentShader()
+    ///     .returns("float")
+    ///```
+    func returns(_ metalType: String)->FragmentShader{
+        var v = self
+        v.fragmentOutType = metalType
         return v
     }
 }

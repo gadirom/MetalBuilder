@@ -24,6 +24,12 @@ public final class MetalBuilderRenderingContext{
     /// ```
     @MetalState(metalName: "viewportToDeviceTransform") public var viewportToDeviceTransform = simd_float3x3()
     
+    let commandQueue: MTLCommandQueue
+    
+    init(commandQueue: MTLCommandQueue){
+        self.commandQueue = commandQueue
+    }
+    
     func updateViewportToDeviceTransform(){
         viewportToDeviceTransform = .init(columns: (
             [scaleFactor*2/Float(viewportSize.x), 0, -1],

@@ -42,6 +42,12 @@ public final class UniformsContainer: ObservableObject{
         self.packed = packed
     }
 }
+extension UniformsContainer: Equatable{
+    public static func == (lhs: UniformsContainer, rhs: UniformsContainer) -> Bool {
+        lhs === rhs
+    }
+}
+
 //init and setup
 public extension UniformsContainer{
     /// Creates a uniforms container

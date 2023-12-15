@@ -3,19 +3,19 @@ import MetalKit
 
 //String, String = shaderName, argument
 enum ArgumentsContainerError: Error{
-    case sameArgumentBuffer(String, String)// shaderName, argument
-    case sameArgument(String, String, ResourceType)// shaderName, argument
-    case sameNamedArguments(String, String)// shaderName, resource metal name
+    case sameArgumentBuffer(String)//  argument
+    case sameArgument(String, ResourceType)// argument
+    case sameNamedArguments(String)// resource metal name
 }
 extension ArgumentsContainerError: LocalizedError{
     public var errorDescription: String?{
         switch self {
-        case .sameArgumentBuffer(let shaderName, let argument):
-            return "Same argument buffer ('\(argument)') was provided twice for the shader '\(shaderName)'"
-        case .sameArgument(let shaderName, let argument, let dataType):
-            return "Same \(String(describing: dataType)) ('\(argument)') was provided twice for the shader '\(shaderName)'"
-        case .sameNamedArguments(let shaderName, let argumentName):
-            return "Two resources of the same name ('\(argumentName)') were provided for the shader '\(shaderName)'"
+        case .sameArgumentBuffer(let argument):
+            return "Same argument buffer ('\(argument)') was provided twice for a shader!"
+        case .sameArgument(let argument, let dataType):
+            return "Same \(String(describing: dataType)) ('\(argument)') was provided twice for a shader!"
+        case .sameNamedArguments(let argumentName):
+            return "Two resources of the same name ('\(argumentName)') were provided for a shader!"
         }
     }
 }
@@ -26,7 +26,7 @@ extension ArgumentsContainer{
         do{
             if self.buffersAndBytesContainer.buffers.contains(where: { $0 === buf }){
                 throw ArgumentsContainerError
-                    .sameArgument(argumentName, shaderName, .buffer)
+                    .sameArgument(argumentName, .buffer)
             }
         }catch{
             fatalError(error.localizedDescription)
@@ -37,7 +37,7 @@ extension ArgumentsContainer{
         do{
             if self.texturesContainer.textures.contains(where: { $0.container === container }){
                 throw ArgumentsContainerError
-                    .sameArgument(shaderName, argumentName, .texture)
+                    .sameArgument(argumentName, .texture)
             }
         }catch{
             fatalError(error.localizedDescription)
@@ -47,7 +47,7 @@ extension ArgumentsContainer{
         do{
             if self.separateShaderArguments.contains(where: { $0.name == name }){
                 throw ArgumentsContainerError
-                    .sameNamedArguments(shaderName, name)
+                    .sameNamedArguments(name)
             }
         }catch{
             fatalError(error.localizedDescription)
@@ -57,7 +57,8 @@ extension ArgumentsContainer{
         do{
             for argBuf in addedArgumentBuffers{
                 if argBuf.0 === argumentBuffer{
-                    throw ArgumentsContainerError.sameArgumentBuffer(shaderName, argumentBuffer.name)
+                    throw ArgumentsContainerError
+                        .sameArgumentBuffer(argumentBuffer.name)
                 }
             }
         }catch{

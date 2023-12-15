@@ -12,13 +12,13 @@ extension MTLSize{
     }
 }
 
-typealias ThreadsSourceName = String
+public typealias ThreadsSourceName = String
 
 public enum IndexType: String{
     case uint = "uint",
     ushort = "ushort"
 }
-enum GridFit{
+public enum GridFit{
     case fitTexture(MTLTextureContainer, ThreadsSourceName, MBGridScale),
          fitBuffer(BufferContainer, ThreadsSourceName, MBGridScale),
          size2D(MetalBinding<(Int, Int)>),
@@ -102,9 +102,11 @@ extension GridFit{
                 case .type3D:
                     3
                 case nil:
-                    throw MetalBuilderComputeError.gridFitTextureIsNil(String(describing:  mTLTextureContainer))
+                    throw MetalBuilderComputeError
+                        .gridFitTextureIsNil(String(describing:  mTLTextureContainer))
                 case .some(_):
-                    throw MetalBuilderComputeError.gridFitTextureIsUnknown(String(describing:  mTLTextureContainer))
+                    throw MetalBuilderComputeError
+                        .gridFitTextureIsUnknown(String(describing:  mTLTextureContainer))
                 }
             case .size3D(_):
                 3

@@ -1,8 +1,20 @@
 import SwiftUI
 
-public protocol ShaderProtocol {
-    var body: String? { get set}
-    var source: String? { get set }
+public protocol ShaderProtocol: ReceiverOfArgumentsContainer {
+    var _body: String? { get set}
+    var _source: String? { get set }
+}
+public extension ShaderProtocol{
+    func source(_ source: String)->Self{
+        var sh = self
+        sh._source = source
+        return sh
+    }
+    func body(_ body: String)->Self{
+        var sh = self
+        sh._body = body
+        return sh
+    }
 }
 
 //Internal implementation for ShaderProtocol's logic
@@ -46,16 +58,7 @@ extension InternalShaderProtocol{
         sh.uniformsAndNames.append((uniforms, name))
         return sh
     }
-    func _source(_ source: String)->ShaderProtocol{
-        var sh = self
-        sh.source = source
-        return sh
-    }
-    func _body(_ body: String)->ShaderProtocol{
-        var sh = self
-        sh.body = body
-        return sh
-    }
+    
 }
 
 func getTypeFromFromStructDeclaration(_ source: String) ->String?{
