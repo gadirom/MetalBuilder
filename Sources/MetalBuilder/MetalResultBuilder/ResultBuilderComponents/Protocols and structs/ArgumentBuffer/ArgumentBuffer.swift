@@ -24,13 +24,15 @@ import SwiftUI
 //    init
 //}
 
-
-// TODO
-// performance monitor of change textures
-// make everything same for render
-
 struct ArgBufferInfo{
     var argBuffers: [(ArgumentBuffer, Int, MetalBinding<Int>)] = [] // arg buffer and id in that buffer
+    
+    func withArrayIndex(_ id: Int) -> Self{
+        let a = self.argBuffers.map{
+            ($0.0, $0.1+id, $0.2)
+        }
+        return Self(argBuffers: a)
+    }
 }
 
 protocol MTLResourceContainer: AnyObject{
@@ -66,12 +68,6 @@ public class ArgumentBuffer{
     
     var wasSetUp = false
     
-//    static func createBuffers(device: MTLDevice) throws{
-//        for argBuf in argumentBuffersSingleton{
-//           // argBuf.create(device: <#T##MTLDevice#>, mtlFunction: <#T##MTLFunction#>, index: <#T##Int#>)
-//        }
-//    }
-    
     public static func new(_ name: String, desc: ArgumentBufferDescriptor) -> ArgumentBuffer{
         if let argBuf = argumentBuffersSingleton.first(where: { $0.name == name }){
             return argBuf
@@ -91,9 +87,9 @@ extension ArgumentBuffer{
     var typeDeclaration: String{
         "struct \(type) {};\n"
     }
-    func functionArgument(name: String?) -> MetalBufferArgument{
+    func functionArgument(name: String?, space: String) -> MetalBufferArgument{
          try! .init(buffer,
-                    space: "device",
+                    space: space,
                     type: type,
                     name: name ?? self.name,
                     index: nil)
@@ -110,9 +106,14 @@ extension ArgumentBuffer{
             if let tex = entry.element.0.resource as? MTLTextureContainer{
                 argData.textures.append(tex)
             }
-            entry.element.0.resource
-                .addToArgumentBuffer(self, id: entry.offset,
+            entry.element.0.resource?
+                .addToArgumentBuffer(self, id: entry.element.1.index,
                                      offset: entry.element.0.offset)
+            entry.element.0.array?
+                .argBufferInfo.argBuffers.append(
+                    (self, id: entry.element.1.index,
+                     offset: entry.element.0.offset)
+                )
         }
         argData.funcAndArgs = [FunctionAndArguments(function: .argBuffer(type),
                                                     arguments: descriptor.arguments.map{ $0.1 })]

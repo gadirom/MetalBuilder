@@ -23,11 +23,11 @@ public enum PassBufferToMetal{
             false
         }
     }
-    var structName: String{
+    var structName: String?{
         if case let .structReference(structName) = self {
             structName
         }else{
-            ""
+            nil
         }
     }
     func referenceStructDecl(type: String, count: Int) -> String{

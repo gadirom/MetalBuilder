@@ -12,6 +12,7 @@ public enum MetalFunctionArgument{
     case texture(MetalTextureArgument),
          buffer(MetalBufferArgument),
          bytes(MetalBytesArgument),
+         
          custom(String)
     
     func string() throws -> String{
@@ -22,7 +23,8 @@ public enum MetalFunctionArgument{
             return try arg.string()
         case .bytes(let arg):
             return try arg.string()
-        case .custom(let string): return string
+        case .custom(let string): 
+            return string
         }
     }
     var index: Int{
@@ -60,6 +62,7 @@ public struct MetalTextureArgument{
     let name: String
     var index: Int?
     var forArgBuffer: Bool
+    var arrayOfTexturesCount: Int?
     func string() throws -> String{
         var prefix = ""
         switch textureType!{
@@ -83,10 +86,17 @@ public struct MetalTextureArgument{
             throw  MetalBuilderFunctionArgumentsError
                 .noIndex(name)
         }
-        if forArgBuffer{
-            return "\(prefix)<\(type), access::\(access)> \(name) [[id(\(index))]]"
+        let base: String
+        if let arrayOfTexturesCount{
+            base = "array<\(prefix)<\(type), access::\(access)>, \(arrayOfTexturesCount)>"
         }else{
-            return "\(prefix)<\(type), access::\(access)> \(name) [[texture(\(index))]]"
+            base = "\(prefix)<\(type), access::\(access)>"
+        }
+        
+        if forArgBuffer{
+            return "\(base) \(name) [[id(\(index))]]"
+        }else{
+            return "\(base) \(name) [[texture(\(index))]]"
         }
         
     }
@@ -100,12 +110,13 @@ public struct MetalTextureArgument{
     /// (Once you pass nil for the index of a texture argument of a component,
     /// avoid passing non-nil values in texture arguments of the same component.)
     public init(type: String, access: String, name: String, index: Int?=nil,
-                forArgBuffer: Bool = false) {
+                forArgBuffer: Bool = false, arrayOfTexturesCount: Int? = nil) {
         self.type = type
         self.access = access
         self.name = name
         self.index = index
         self.forArgBuffer = forArgBuffer
+        self.arrayOfTexturesCount = arrayOfTexturesCount
     }
 }
 

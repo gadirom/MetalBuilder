@@ -21,6 +21,7 @@ enum ResourceType{
     case texture
     case bytes
     case buffer
+    case arrayOfTextures
 }
 
 struct ContainerOfBuffersBytesAndUniforms: ContainerOfResources{
@@ -67,6 +68,7 @@ struct ContainerOfTextures: ContainerOfResources{
 public struct ArgumentsContainer{
     
     var resourcesUsages = ResourcesUsages()
+    var stages: MTLRenderStages?
     
     var separateShaderArguments: [MetalFunctionArgument] = []
     var addedArgumentBuffers: [(ArgumentBuffer, Int)] = [] //buffer, index of buffer in shader function args
@@ -74,7 +76,8 @@ public struct ArgumentsContainer{
     var uniforms: [UniformsContainer] = []
     var buffersAndBytesContainer = ContainerOfBuffersBytesAndUniforms()
     var texturesContainer = ContainerOfTextures()
-    init(){
+    init(stages: MTLRenderStages?){
+        self.stages = stages
     }
     func prerun(){//set buffer for arguments encoder once it created
         for argBuf in addedArgumentBuffers{
@@ -113,17 +116,18 @@ extension ArgumentsContainer{
 extension ArgumentsContainer{
     mutating func argumentBufferToKernel(_ argBuf: ArgumentBuffer,
                                          name: String?,
+                                         space: String,
                                          _ resources: UseResources)->GridFit?{
         checkIfArgumentBufferIsNew(argBuf)
         let buf = Buffer(container: argBuf.buffer, offset: .constant(0), index: 0)
-        let argument = argBuf.functionArgument(name: name)
+        let argument = argBuf.functionArgument(name: name, space: space)
         let arg = self.buffersAndBytesContainer.addBuffer(buf,
                                                           argument: argument)
         
         checkForSameNames(name: arg.name)
         separateShaderArguments.append(arg)
         addedArgumentBuffers.append((argBuf, arg.index))
-        return resourcesUsages.addToKernel(argBuf: argBuf, resources: resources)
+        return resourcesUsages.addToKernel(argBuf: argBuf, resources: resources, stages: self.stages)
     }
     mutating func buffer<T>(_ container: MTLBufferContainer<T>,
                             offset: MetalBinding<Int>,

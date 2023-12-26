@@ -6,17 +6,53 @@ struct UseResource{
     let stages: MTLRenderStages?
     let name: String
 }
+
+struct GridFitBasedOnResourceID{
+    let resourceID: Int
+    let arrayID: MetalBinding<Int>?
+}
+
 public struct UseResources{
-    var array: [UseResource] = []
-    var gridFitBasedOnResourceID: Int?
+    var resources: [UseResource] = []
+    var gridFitBasedOnResourceID: GridFitBasedOnResourceID?
     var gridScale: MBGridScale?
     public init(){
     }
 }
 public extension UseResources{
+    func arrayOfTextures(_ name: String, usage: MTLResourceUsage) -> Self {
+        var ur = self
+        ur.resources.append(
+            UseResource(resourceType: .arrayOfTextures,
+                        usage: usage, stages: nil,
+                        name: name)
+        )
+        return ur
+    }
+    func arrayOfTextures(_ name: String, usage: MTLResourceUsage,
+                         fitThreadsId: MetalBinding<Int>?=nil, gridScale: MBGridScale?=nil) -> Self {
+        var ur = self
+        do{
+            if gridScale != nil && fitThreadsId == nil{
+                throw ArgumentBufferError.gridScaleIsSetButIndexInTheArrayOfTexturesIsNotSet(name)
+            }
+            if let fitThreadsId{
+                if gridFitBasedOnResourceID != nil{
+                    throw ArgumentBufferError.gridFitSetTwice(name)
+                }else{
+                    ur.gridFitBasedOnResourceID = .init(resourceID: resources.count, arrayID: fitThreadsId)
+                    ur.gridScale = gridScale
+                }
+            }
+            ur = ur.texture(name, usage: usage, stages: nil)
+        }catch{
+            fatalError(error.localizedDescription)
+        }
+        return ur
+    }
     func texture(_ name: String, usage: MTLResourceUsage, stages: MTLRenderStages?) -> Self {
         var ur = self
-        ur.array.append(
+        ur.resources.append(
             UseResource(resourceType: .texture,
                         usage: usage, stages: stages,
                         name: name)
@@ -31,7 +67,7 @@ public extension UseResources{
                 if gridFitBasedOnResourceID != nil{
                     throw ArgumentBufferError.gridFitSetTwice(name)
                 }else{
-                    ur.gridFitBasedOnResourceID = array.count
+                    ur.gridFitBasedOnResourceID = .init(resourceID: resources.count, arrayID: nil)
                     ur.gridScale = gridScale
                 }
             }
@@ -43,7 +79,7 @@ public extension UseResources{
     }
     func buffer(_ name: String, usage: MTLResourceUsage, stages: MTLRenderStages?) -> Self {
         var ur = self
-        ur.array.append(
+        ur.resources.append(
             UseResource(resourceType: .buffer,
                         usage: usage, stages: stages,
                         name: name)
@@ -58,7 +94,7 @@ public extension UseResources{
                 if gridFitBasedOnResourceID != nil{
                     throw ArgumentBufferError.gridFitSetTwice(name)
                 }else{
-                    ur.gridFitBasedOnResourceID = array.count
+                    ur.gridFitBasedOnResourceID = .init(resourceID: resources.count, arrayID: nil)
                     ur.gridScale = gridScale
                 }
             }
@@ -82,28 +118,39 @@ struct UseResourceEntry: Equatable{
 
 class ResourcesUsages{
     var allResourcesUsages: [UseResourceEntry] = [] // agglomerated resources used by kernel/draw call
+    var allHeapsUsed: [MTLHeapContainer] = []
     
-    func addToKernel(argBuf: ArgumentBuffer, resources: UseResources) -> GridFit?{
+    func addToKernel(argBuf: ArgumentBuffer, resources: UseResources, stages: MTLRenderStages?) -> GridFit?{
         var gridfit: GridFit?=nil
         do{
-            _ = try resources.array.enumerated()
+            _ = try resources.resources.enumerated()
                 .map{ id, ur in
                     guard let resource = argBuf.descriptor.arguments
                         .first(where: { $0.1.name == ur.name })?.0
                     else{
                         throw ArgumentBufferError.argumentBufferNoArgumentWithName(argBuf.name, ur.name)
                     }
-                    let entry = UseResourceEntry(resource: resource.resource,
-                                                 usage: ur.usage,
-                                                 stages: ur.stages)
-                    allResourcesUsages.appendUnique(entry)
+                    if let r = resource.resource{
+                        let entry = UseResourceEntry(resource: r,
+                                                     usage: ur.usage,
+                                                     stages: ur.stages ?? stages)
+                        allResourcesUsages.appendUnique(entry)
+                    }
+                    if let array = resource.array{
+                        allHeapsUsed.appendUnique(array.heap!)
+                    }
                     let threadsSourceName = argBuf.name+"."+ur.name
-                    if id == resources.gridFitBasedOnResourceID{
-                        if let tex = resource.resource as? MTLTextureContainer{
-                            gridfit = .fitTexture(tex, threadsSourceName, resources.gridScale ?? (1,1,1))
-                        }
-                        if let buf = resource.resource as? BufferContainer{
-                            gridfit = .fitBuffer(buf, threadsSourceName, resources.gridScale ?? (1,1,1))
+                    if let gridFitResource = resources.gridFitBasedOnResourceID{
+                        if id == gridFitResource.resourceID{
+                            if let tex = resource.resource as? MTLTextureContainer{
+                                gridfit = .fitTexture(tex, threadsSourceName, resources.gridScale ?? (1,1,1))
+                            }
+                            if let buf = resource.resource as? BufferContainer{
+                                gridfit = .fitBuffer(buf, threadsSourceName, resources.gridScale ?? (1,1,1))
+                            }
+                            if let arrOfTex = resource.array{
+                                gridfit = .fitArrayOfTextures(arrOfTex, threadsSourceName, resources.gridScale ?? (1,1,1), gridFitResource.arrayID!)
+                            }
                         }
                     }
                 }

@@ -29,7 +29,7 @@ class ScaleTexturePass: MetalPass{
             }else{
                 guard let t = passInfo.drawable?.texture
                 else{
-                    print("blit: no out was set and no drawable!")
+                    print("scale: no out was set and no drawable!")
                     return
                 }
                 outTexture = t

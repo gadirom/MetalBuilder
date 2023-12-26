@@ -125,6 +125,8 @@ public extension MetalBuilderRenderer{
         }
 
         endEncode(commandBuffer: commandBuffer, drawable: drawable)
+        
+        renderData.context.firstFrame = false
     }
     func setScaleFactor(_ sf: CGFloat){
         renderData.context.setScaleFactor(sf)

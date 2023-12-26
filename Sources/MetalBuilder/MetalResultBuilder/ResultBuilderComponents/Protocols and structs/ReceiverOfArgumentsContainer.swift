@@ -9,9 +9,11 @@ public protocol ReceiverOfArgumentsContainer{
 public extension ReceiverOfArgumentsContainer{
     func argBuffer(_ argBuffer: ArgumentBuffer,
                           name: String?=nil,
+                          space: String="constant",
                           _ useResources: UseResources) -> Self{
         var c = self
-        c.gridFit = c.argumentsContainer.argumentBufferToKernel(argBuffer, name: name, useResources)
+        c.gridFit = c.argumentsContainer.argumentBufferToKernel(argBuffer, name: name,
+                                                                space: space, useResources)
         return c
     }
     /// Passes a buffer to the compute kernel.

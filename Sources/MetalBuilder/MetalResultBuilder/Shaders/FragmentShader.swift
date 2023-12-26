@@ -39,7 +39,7 @@ import SwiftUI
 /// ```
 public struct FragmentShader: ShaderProtocol{
     
-    public var argumentsContainer = ArgumentsContainer()
+    public var argumentsContainer = ArgumentsContainer(stages: .fragment)
     public var gridFit: GridFit?
     
     /// Creates the FragmentShader

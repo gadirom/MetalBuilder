@@ -1,10 +1,15 @@
+import Foundation
+
 enum ArgumentBufferError: Error{
     case argumentBufferNoArgumentWithName(String, String)//argumentBuffer, argument
     case argumentBufferResourceUncastable(String, String)//argumentBuffer, argument
     case twoArgumentBuffersWithSameNameAndDifferentDescriptors(String)//argumentBuffer
     case gridFitSetTwice(String)
-    
-    var localizedDescription: String{
+    case gridScaleIsSetButIndexInTheArrayOfTexturesIsNotSet(String)
+}
+
+extension ArgumentBufferError: LocalizedError{
+    public var errorDescription: String?{
         switch self {
         case .argumentBufferNoArgumentWithName(let buffer, let argument):
             "Argument buffer \(buffer) has no argument \(argument)!"
@@ -14,6 +19,8 @@ enum ArgumentBufferError: Error{
             "Two argument buffers of the same name '\(buffer)' but different descriptors!"
         case .gridFitSetTwice(let resource):
             "GridFit is set twice by argument '\(resource)'!"
+        case .gridScaleIsSetButIndexInTheArrayOfTexturesIsNotSet(let resource):
+            "GridScale is set but index in the array of textures is not set for '\(resource)'!"
     }
     }
 }

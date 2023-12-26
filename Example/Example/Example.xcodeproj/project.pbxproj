@@ -15,6 +15,8 @@
 		0055B530288CDE82008580B0 /* renderFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0055B52F288CDE82008580B0 /* renderFunctions.swift */; };
 		00695B5D28AC42B300E969C8 /* MetalBuilder in Frameworks */ = {isa = PBXBuildFile; productRef = 00695B5C28AC42B300E969C8 /* MetalBuilder */; };
 		00E000C12AE136C0001653B5 /* testImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 00E000C02AE136C0001653B5 /* testImage.png */; };
+		00F1E2862B38E33E0045A463 /* AutomataBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F1E2852B38E33E0045A463 /* AutomataBlock.swift */; };
+		00F57C292B2D0F6500368F95 /* CreationBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F57C282B2D0F6500368F95 /* CreationBlock.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +30,8 @@
 		0055B52F288CDE82008580B0 /* renderFunctions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = renderFunctions.swift; sourceTree = "<group>"; };
 		00695B5B28AC42A800E969C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		00E000C02AE136C0001653B5 /* testImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = testImage.png; path = Example/testImage.png; sourceTree = "<group>"; };
+		00F1E2852B38E33E0045A463 /* AutomataBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomataBlock.swift; sourceTree = "<group>"; };
+		00F57C282B2D0F6500368F95 /* CreationBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreationBlock.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,7 +71,9 @@
 				00695B5B28AC42A800E969C8 /* Info.plist */,
 				0055B51C288CDCDA008580B0 /* ExampleApp.swift */,
 				0055B51E288CDCDA008580B0 /* ContentView.swift */,
+				00F1E2852B38E33E0045A463 /* AutomataBlock.swift */,
 				003BE1222894CF8100797903 /* ComputeBlock.swift */,
+				00F57C282B2D0F6500368F95 /* CreationBlock.swift */,
 				0055B52F288CDE82008580B0 /* renderFunctions.swift */,
 				0055B520288CDCDB008580B0 /* Assets.xcassets */,
 				0055B522288CDCDB008580B0 /* Preview Content */,
@@ -175,7 +181,9 @@
 				0055B51F288CDCDA008580B0 /* ContentView.swift in Sources */,
 				0055B530288CDE82008580B0 /* renderFunctions.swift in Sources */,
 				0055B51D288CDCDA008580B0 /* ExampleApp.swift in Sources */,
+				00F57C292B2D0F6500368F95 /* CreationBlock.swift in Sources */,
 				003BE1232894CF8100797903 /* ComputeBlock.swift in Sources */,
+				00F1E2862B38E33E0045A463 /* AutomataBlock.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

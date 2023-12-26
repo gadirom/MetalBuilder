@@ -16,7 +16,7 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
     var threadsPerThreadgroup: MetalBinding<MTLSize>?
     
     public var gridFit: GridFit?
-    public var argumentsContainer = ArgumentsContainer()
+    public var argumentsContainer = ArgumentsContainer(stages: nil)
     
     var librarySource: String = ""
     var bodySource: String = ""

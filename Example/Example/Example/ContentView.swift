@@ -4,7 +4,7 @@ import MetalBuilder
 import MetalKit
 import MetalPerformanceShaders
 
-let particleCount = 100000
+let particleCount = 10000
 
 let vertexIndexCount = particleCount*3
 
@@ -41,8 +41,18 @@ struct ContentView: View {
             .type(.type2D)
             .pixelFormatFromDrawable()
             .usage([.shaderRead, .shaderWrite])
-            .sizeFromViewport(scaled: 1)
+            .manual()
+            //.sizeFromViewport(scaled: 1)
     ) var scaledTexture
+    
+    @MetalTexture(
+        TextureDescriptor()
+            .type(.type2D)
+            .pixelFormatFromDrawable()
+            .usage([.shaderRead, .shaderWrite])
+            //.manual()
+            //.sizeFromViewport(scaled: 1)
+    ) var outTexture
     
     @MetalTexture(
         TextureDescriptor()
@@ -69,19 +79,32 @@ struct ContentView: View {
                 .buffer(vertexBuffer, name: "vertices", space: "device")
         )
     }
+    
     var argBufForTextures: ArgumentBuffer{
         .new("texArgBuf", desc: .init()
-            .texture(scaledTexture,
+            .texture(outTexture,
                      argument: .init(type: "float", access: "read", name: "image"))
             .texture(targetTexture, 
                      argument: .init(type: "float", access: "read", name: "target"))
         )
     }
     
+    @ArrayOfTextures(type: .type2D, maxCount: 2,
+                     label: "Array of Textures for automata") var autoTexs
+    
+    var argBufForAutomata: ArgumentBuffer{
+        .new("texAuto", desc: .init()
+            .arrayTextures(autoTexs, type: "float", access: "read_write", name: "textures")
+        )
+    }
+    
     @State var blurRadius: Float = 2.5
+    @State var automataIterations: Float = 10
     @State var fDilate: Float = 3
     @MetalState var dilateSize = 3
     @MetalState var laplacianBias: Float = 0.5
+    
+    @MetalState var iterations: Int = 2000
     
     @MetalBuffer<Particle>(
         BufferDescriptor()
@@ -100,8 +123,10 @@ struct ContentView: View {
     @MetalBuffer<Vertex>(count: particleCount*3,
                          metalName: "vertices") var vertexBuffer
     
-    @MetalBuffer<UInt32>(count: particleCount*3) var createdIndexBuffer
     @MetalBuffer<UInt32>(count: particleCount*3) var indexBuffer
+    @MetalBuffer<UInt32>(BufferDescriptor()
+                         .count(particleCount*3)
+                         .passAs(.structReference("IndexStruct"))) var createdIndexBuffer
     
     @MetalState var vertexCount = 3 * particleCount
     @MetalState var particleScale: Float = 1
@@ -117,6 +142,8 @@ struct ContentView: View {
     
     let asyncGroupInfo = AsyncGroupInfo(runOnStartup: true)
     
+    @MetalState var readyToSetReady = false
+    
     var viewSettings: MetalBuilderViewSettings{
         MetalBuilderViewSettings(depthPixelFormat: nil,
                                  clearDepth: nil,
@@ -129,25 +156,78 @@ struct ContentView: View {
     var body: some View {
         VStack{
             MetalBuilderView(viewSettings: viewSettings){ context in
+                EncodeGroup(active: context.$firstFrame){
+                    
+                }
                 AsyncGroup(info: asyncGroupInfo) {
-                    ManualEncode{device,_,_ in
+                    ManualEncode{device,_,drawable in
+                        print("Start running for value: \(automataIterations)")
+                        iterations = Int(automataIterations)*2
+                        
                         try! createdParticlesBuffer.create(device: device)
-//                        createParticles(particlesBuf: createdParticlesBuffer,
-//                                        viewportSize: context.viewportSize)
+                        createParticles(particlesBuf: createdParticlesBuffer,
+                                        viewportSize: context.viewportSize)
                         
                         try! createdIndexBuffer.create(device: device)
-//                        createIndices(createdIndexBuffer, count: vertexCount)
-                        print("run running")
+                        createIndices(createdIndexBuffer, count: vertexCount)
+    
+                        let currentSize = MTLSize(
+                            width: Int(context.viewportSize.x),
+                            height: Int(context.viewportSize.y),
+                            depth: 1)
+                        try! scaledTexture.create(device: device,
+                                                  mtlSize: currentSize,
+                                                  pixelFormat: .bgra8Unorm)
+                        
+                        print("create scale for currentSize: \(currentSize)")
+                        
                     }
-                   // CreationBlock(context: context, argBuffer: argBufForCreation)
+                    //CreationBlock(context: context, argBuffer: argBufForCreation)
+                    ScaleTexture(type: .fit, method: .bilinear)
+                        .source(imageTexture)
+                        .destination(scaledTexture)
+                    GPUDispatchAndWait()
+                    ManualEncode{device, commandBuffer, _ in
+                        try! autoTexs.create(textures: [scaledTexture.texture!,
+                                                        scaledTexture.texture!],
+                                             device: device, commandBuffer: commandBuffer)
+                        //imageTexture.texture = nil
+                        //scaledTexture.texture = nil
+                    }
+                    AutomataBlock(context: context,
+                                  iterations: $iterations, 
+                                  argBuf: argBufForAutomata)
                 }
                 EncodeGroup(active: asyncGroupInfo.complete) {
-                    ManualEncode{_,_,_ in
-                        asyncGroupInfo.setReady()
+                    ManualEncode{device,_,_ in
+                        if readyToSetReady{
+                            readyToSetReady = false
+                            if scaledTexture.texture!.width != Int(context.viewportSize.x) ||
+                                scaledTexture.texture!.height != Int(context.viewportSize.y) || iterations != Int(automataIterations)*2{
+                                try! asyncGroupInfo.run()
+                            }
+                            asyncGroupInfo.setReady()
+                            return
+                        }else{
+                            readyToSetReady = true
+                        }
                         particlesBuffer.buffer = createdParticlesBuffer.buffer
                         indexBuffer.buffer = createdIndexBuffer.buffer
-                        print("was run for value: \(blurRadius)")
+                        //print("was run for value: \(automataIterations)")
+                        
+                        let size = scaledTexture.texture!.mtlSize
+                        
+                        try! outTexture.create(device: device,
+                                               mtlSize: size,
+                                               pixelFormat: .bgra8Unorm)
+                        print("create out for currentSize: \(size)")
+                        
                     }
+                }
+                EncodeGroup(active: $readyToSetReady){
+                    BlitArrayOfTextures()
+                        .source(autoTexs, range: .constant(0...0))
+                        .destination(outTexture)
                 }
                 EncodeGroup(active: asyncGroupInfo.wasCompleteOnce){
                     ComputeBlock(context: context,
@@ -217,17 +297,13 @@ struct ContentView: View {
                             return out;
                         """)
                     )
-                    //                Render(vertex: "vertexShader", fragment: "fragmentShader", count: vertexCount)
-                    //                    .uniforms(uniforms)//, name: "uni")
-                    //                    .toTexture(targetTexture)
-                    //                    .vertexBuf(vertexBuffer, offset: 0)
-                    //                    .vertexBytes(context.$viewportSize, space: "constant")
                     EncodeGroup{
                         EncodeGroup{
-                            CPUCompute{ _ in
-                                //blurRadius+=0.1
-                            }
+//                            CPUCompute{ _ in
+//                                //blurRadius+=0.1
+//                            }
                             ManualEncode{ [self] device, commandBuffer, drawable in
+                                
                                 let l = MPSImageLaplacian(device: device)
                                 l.bias = laplacianBias
                                 l.encode(commandBuffer: commandBuffer, inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
@@ -246,16 +322,14 @@ struct ContentView: View {
                     }.repeating($n)
                     //                BlitTexture()
                     //                    .source(targetTexture)
-                    ScaleTexture(type: .fit, method: .bilinear)
-                        .source(imageTexture)
-                        .destination(scaledTexture)
+//                    AutomataBlock(context: context,
+//                                  u: uniforms,
+//                                  argBuf: argBufForAutomata)
                     Compute("postprocessKernel")
                         .argBuffer(argBufForTextures, name: "textures", .init()
                             .texture("image", usage: .read)
                             .texture("target", usage: .read)
                         )
-                    //                    .texture(targetTexture, argument: .init(type: "float", access: "read", name: "target"))
-                    //                    .texture(scaledTexture, argument: .init(type: "float", access: "read", name: "image"))
                         .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
                         .uniforms(uniforms)
                     //.gidIndexType(.uint)
@@ -277,6 +351,7 @@ struct ContentView: View {
 //            }
             .onResize{ _ in
                 //if !asyncGroupInfo.busy.wrappedValue{
+                    print("run on resize")
                     try! asyncGroupInfo.run()
                 //}
             }
@@ -318,11 +393,13 @@ struct ContentView: View {
                 }
 
             }
-            Slider(value: $blurRadius, in: 0...5)
-                .onChange(of: blurRadius) { newVal in
+            Slider(value: $automataIterations, in: 1...2000)
+                .onChange(of: automataIterations) { newVal in
                     print("run async for value: \(newVal)")
                     try! asyncGroupInfo.run()
                 }
+            Slider(value: $blurRadius, in: 0...5)
+                
             Slider(value: $fDilate, in: 0...10)
                 .onChange(of: fDilate) { newValue in
                     dilateSize = Int(fDilate*10)*2+1

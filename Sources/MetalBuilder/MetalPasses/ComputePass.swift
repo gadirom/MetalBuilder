@@ -12,6 +12,12 @@ public enum MetalBuilderComputeError: Error{
          textureIsNil(String)
 }
 
+extension MetalBuilderComputeError: LocalizedError{
+    public var errorDescription: String?{
+        String(describing: self)
+    }
+}
+
 func encodeGIDCount(encoder: MTLComputeCommandEncoder,
                     size: MTLSize,
                     indexType: IndexType,
@@ -82,41 +88,7 @@ final class ComputePass: MetalPass{
         
         libraryContainer = nil
     }
-    func setGrid(_ drawable: CAMetalDrawable?) throws -> MTLSize{
-        var size: MTLSize
-        var gridScale: MBGridScale = (1,1,1)
-        switch component.gridFit!{
-        case .fitTexture(let container, _, let gScale):
-            guard let texture = container.texture
-            else{
-                throw MetalBuilderComputeError
-                    .gridFitTextureIsNil("fitTextrure for threads dispatching for the kernel: "+component.kernel+" is nil!")
-            }
-            size = MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
-            gridScale = gScale
-        case .size3D(let s):
-            size = s.wrappedValue
-        case .size2D(let bs):
-            let s = bs.wrappedValue
-            size = MTLSize(width: s.0, height: s.1, depth: 1)
-        case .size1D(let s):
-            size = MTLSize(width: s.wrappedValue, height: 1, depth: 1)
-        case .drawable: size = MTLSize(width: drawable!.texture.width, height: drawable!.texture.height, depth: 1)
-        case .fitBuffer(let buf, _, let gScale):
-            guard let count = buf.count
-            else{
-                throw MetalBuilderComputeError
-                    .gridFitNoBuffer("buffer \(String(describing: buf.metalName)) for threads dispatching for the kernel: '"+component.kernel+"' has no count!")
-            }
-            size = MTLSize(width: count, height: 1, depth: 1)
-            gridScale = gScale
-       
-        }
-        
-        size.scale(gridScale)
-        
-        return size
-    }
+    
     func dispatch(size: MTLSize, commandEncoder: MTLComputeCommandEncoder){
         
         encodeGIDCount(encoder: commandEncoder,
@@ -163,6 +135,16 @@ final class ComputePass: MetalPass{
         #if DEBUG
         computeCommandEncoder.label = component.kernel
         #endif
+        
+        //Use Resources
+        for resourceUsage in component.argumentsContainer.resourcesUsages.allResourcesUsages{
+            computeCommandEncoder.useResource(resourceUsage.resource.mtlResource,
+                                              usage: resourceUsage.usage)
+        }
+        
+        //Use Heaps
+        computeCommandEncoder.useHeaps(component.argumentsContainer.resourcesUsages.allHeapsUsed.compactMap{ $0.heap })
+        
         computeCommandEncoder.setComputePipelineState(computePiplineState)
         
         //Set Buffers
@@ -190,17 +172,11 @@ final class ComputePass: MetalPass{
             computeCommandEncoder.setTexture(passInfo.drawable?.texture, index: index)
         }
         
-        //Use Resources
-        for resourceUsage in component.argumentsContainer.resourcesUsages.allResourcesUsages{
-            computeCommandEncoder.useResource(resourceUsage.resource.mtlResource,
-                                              usage: resourceUsage.usage)
-        }
-        
         if let additionalEncodeClosure = component.additionalEncodeClosure?.wrappedValue{
             additionalEncodeClosure(computeCommandEncoder)
         }
         
-        let size = try setGrid(passInfo.drawable)
+        let size = try component.gridFit!.gridSize(passInfo.drawable)
         //Dispatch
         dispatch(size: size, commandEncoder: computeCommandEncoder)
         

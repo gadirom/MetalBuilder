@@ -52,13 +52,13 @@ struct ComputeBlock: MetalBuildingBlock{
 //    }
     
     var metalContent: MetalContent{
-            Compute("create")
+            Compute("integrate")
                 .argBuffer(argBuffer, name: "arg", UseResources()
-                    .buffer("particles", usage: .write, fitThreads: true)
-                    .buffer("indices", usage: .write, fitThreads: true)
+                    .buffer("particles", usage: [.read, .write], fitThreads: true)
                 )
                 .gidIndexType(.uint)
                 .bytes(context.$viewportSize)
+                .uniforms(u, name: "u")
                 .body("""
                 //int gidi = int(gid);
                 Particle particle = arg.particles.array[gid];
@@ -79,7 +79,6 @@ struct ComputeBlock: MetalBuildingBlock{
                 if (particle.angle < -pi) { particle.angle += 2*pi; };
                 
                 arg.particles.array[gid] = particle;
-                arg.indices.array[gid] = index;
 
                 """)
         }

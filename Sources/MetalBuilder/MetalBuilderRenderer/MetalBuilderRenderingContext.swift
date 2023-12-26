@@ -24,6 +24,8 @@ public final class MetalBuilderRenderingContext{
     /// ```
     @MetalState(metalName: "viewportToDeviceTransform") public var viewportToDeviceTransform = simd_float3x3()
     
+    @MetalState public var firstFrame = true
+    
     let commandQueue: MTLCommandQueue
     
     init(commandQueue: MTLCommandQueue){

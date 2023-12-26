@@ -13,8 +13,8 @@ class AsyncGroupPass{
         self.info = info
         info.pass = self
     }
-    func setup(renderInfo: GlobalRenderInfo, commandQueue: MTLCommandQueue) throws{
-        info.commandQueue = commandQueue
+    func setup(renderInfo: GlobalRenderInfo) throws{
+        info.commandQueue = renderInfo.device.makeCommandQueue()
         for pass in passes {
             try pass.setup(renderInfo: renderInfo)
         }

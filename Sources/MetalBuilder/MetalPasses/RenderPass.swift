@@ -113,7 +113,7 @@ final class RenderPass: MetalPass{
     }
     func prerun(renderInfo: GlobalRenderInfo) throws {
         component.vertexShader!.argumentsContainer.prerun()
-        component.fragmentShader!.argumentsContainer.prerun()
+        component.fragmentShader?.argumentsContainer.prerun()
     }
     func makeEncoder(passInfo: MetalPassInfo) throws -> MTLRenderCommandEncoder{
         let commandBuffer = passInfo.getCommandBuffer()
@@ -212,6 +212,24 @@ final class RenderPass: MetalPass{
                     .textureIsNil(tex.index, fragmentNameFromLabel(component.label))
             }
             renderPassEncoder.setFragmentTexture(texture, index: tex.index)
+        }
+        
+        //Use Resources
+        for resourceUsage in component.fragmentShader?
+            .argumentsContainer
+            .resourcesUsages
+            .allResourcesUsages ?? []{
+            renderPassEncoder.useResource(resourceUsage.resource.mtlResource,
+                                          usage: resourceUsage.usage,
+                                          stages: resourceUsage.stages ?? .fragment)
+        }
+        for resourceUsage in component.vertexShader!
+            .argumentsContainer
+            .resourcesUsages
+            .allResourcesUsages{
+            renderPassEncoder.useResource(resourceUsage.resource.mtlResource,
+                                          usage: resourceUsage.usage,
+                                          stages: resourceUsage.stages ?? .vertex)
         }
         
         if component.indexedPrimitives{

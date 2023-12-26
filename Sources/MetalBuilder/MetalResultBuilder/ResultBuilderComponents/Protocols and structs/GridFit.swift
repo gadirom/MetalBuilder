@@ -20,12 +20,63 @@ public enum IndexType: String{
 }
 public enum GridFit{
     case fitTexture(MTLTextureContainer, ThreadsSourceName, MBGridScale),
+         fitArrayOfTextures(ArrayOfTexturesContainer, ThreadsSourceName, MBGridScale, MetalBinding<Int>),
          fitBuffer(BufferContainer, ThreadsSourceName, MBGridScale),
          size2D(MetalBinding<(Int, Int)>),
          size3D(MetalBinding<(MTLSize)>),
          size1D(MetalBinding<Int>),
          drawable(ThreadsSourceName, MBGridScale)
 }
+
+//render time funcs
+extension GridFit{
+    func gridSize(_ drawable: CAMetalDrawable?) throws -> MTLSize{
+        var size: MTLSize
+        var gridScale: MBGridScale = (1,1,1)
+        switch self{
+        case .fitTexture(let container, _, let gScale):
+            size = try fitTex(container: container)
+            gridScale = gScale
+        case .fitArrayOfTextures(let array, _, let gScale, let id):
+            let container = array.textures[id.wrappedValue]
+            size = try fitTex(container: container)
+            gridScale = gScale
+        case .size3D(let s):
+            size = s.wrappedValue
+        case .size2D(let bs):
+            let s = bs.wrappedValue
+            size = MTLSize(width: s.0, height: s.1, depth: 1)
+        case .size1D(let s):
+            size = MTLSize(width: s.wrappedValue, height: 1, depth: 1)
+        case .drawable: size = MTLSize(width: drawable!.texture.width, height: drawable!.texture.height, depth: 1)
+        case .fitBuffer(let buf, _, let gScale):
+            size = try fitBuf(buf: buf)
+            gridScale = gScale
+        }
+        
+        size.scale(gridScale)
+        
+        return size
+    }
+    func fitTex(container: MTLTextureContainer) throws -> MTLSize{
+        guard let texture = container.texture
+        else{
+            throw MetalBuilderComputeError
+                .gridFitTextureIsNil("fitTextrure \(container.label ?? "") for threads dispatching for a kernel is nil!")
+        }
+        return MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
+    }
+    func fitBuf(buf: BufferContainer) throws -> MTLSize{
+        guard let count = buf.count
+        else{
+            throw MetalBuilderComputeError
+                .gridFitNoBuffer("buffer \(String(describing: buf.metalName)) for threads dispatching for a kernel has no count!")
+        }
+        return MTLSize(width: count, height: 1, depth: 1)
+    }
+}
+
+//generate code
 extension GridFit{
     var gridCheck: String{
         get throws{
@@ -73,41 +124,13 @@ extension GridFit{
         get throws{
             return switch self {
             case .fitTexture(let mTLTextureContainer, _, let mbGridScale):
-                switch mTLTextureContainer.texture?.textureType {
-                case    .type1D,
-                        .typeTextureBuffer,
-                        .type1DArray:
-                    if mbGridScale.2 > 1{
-                        3
-                    }else{
-                        if mbGridScale.1 > 1{
-                            2
-                        }else{
-                            1
-                        }
-                    }
-                case    .type2D,
-                        .type2DArray,
-                        .type2DMultisample,
-                        .type2DMultisampleArray:
-                    if mbGridScale.2 > 1{
-                        3
-                    }else{
-                        2
-                    }
-                case .typeCube:
-                    2// ???
-                case .typeCubeArray:
-                    2// ???
-                case .type3D:
-                    3
-                case nil:
-                    throw MetalBuilderComputeError
-                        .gridFitTextureIsNil(String(describing:  mTLTextureContainer))
-                case .some(_):
-                    throw MetalBuilderComputeError
-                        .gridFitTextureIsUnknown(String(describing:  mTLTextureContainer))
-                }
+                try dimFromTextureType(mTLTextureContainer.descriptor.type,
+                                       mbGridScale: mbGridScale,
+                                       source: String(describing: mTLTextureContainer))
+            case .fitArrayOfTextures(let arrayOfTextures, _, let mbGridScale, _):
+                try dimFromTextureType(arrayOfTextures.type,
+                                       mbGridScale: mbGridScale,
+                                       source: String(describing: arrayOfTextures))
             case .size3D(_):
                 3
             case .size2D(_):
@@ -131,6 +154,43 @@ extension GridFit{
                     }
                 }
             }
+        }
+    }
+    func dimFromTextureType(_ type: MTLTextureType?, mbGridScale: MBGridScale, source: String) throws -> Int{
+        switch type{
+        case    .type1D,
+                .typeTextureBuffer,
+                .type1DArray:
+            if mbGridScale.2 > 1{
+                3
+            }else{
+                if mbGridScale.1 > 1{
+                    2
+                }else{
+                    1
+                }
+            }
+        case    .type2D,
+                .type2DArray,
+                .type2DMultisample,
+                .type2DMultisampleArray:
+            if mbGridScale.2 > 1{
+                3
+            }else{
+                2
+            }
+        case .typeCube:
+            2// ???
+        case .typeCubeArray:
+            2// ???
+        case .type3D:
+            3
+        case nil:
+            throw MetalBuilderComputeError
+                .gridFitTextureIsNil(source)
+        case .some(_):
+            throw MetalBuilderComputeError
+                .gridFitTextureIsUnknown(source)
         }
     }
 }

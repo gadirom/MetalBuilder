@@ -10,8 +10,10 @@ public func not(_ arg: MetalBinding<Bool>) -> MetalBinding<Bool>{
 }
 
 public class AsyncGroupInfo{
-    public init(runOnStartup: Bool=false,
+    public init(label: String = "Async Queue",
+                runOnStartup: Bool=false,
                 rerun: Bool=false){ //rerun if called when busy(e.g. to match probable changed value)
+        self.label = label
         self.runOnStartup = runOnStartup
         self.rerunIfCalledWhenBusy = rerun
         busy = MetalBinding<Bool>.init{
@@ -56,11 +58,17 @@ public class AsyncGroupInfo{
     private let functionCheckQueue = DispatchQueue(label: "Metal Builder async group check queue",
                                                    attributes: .concurrent)
     private let functionQueue = DispatchQueue(label: "Metal Builder async group function queue",
+                                              //qos: .background,
                                               attributes: .concurrent)
     var wasCalledWhenBusy: Bool = false
     
     //var renderInfo: GlobalRenderInfo!
-    var commandQueue: MTLCommandQueue!
+    var commandQueue: MTLCommandQueue!{
+        didSet{
+            commandQueue.label = self.label
+        }
+    }
+    var label: String
     var commandBuffer: MTLCommandBuffer!
     var pass: AsyncGroupPass!
     
@@ -88,23 +96,23 @@ public class AsyncGroupInfo{
     }
     
     func dispatch(once: Bool) throws{
-        try functionQueue.sync{
-            commandBuffer = try startEncode()
+        functionQueue.sync{
+            self.commandBuffer = try! self.startEncode()
             
             let renderPassDescriptor = MTLRenderPassDescriptor()
             
-            let passInfo = MetalPassInfo(getCommandBuffer: getCommandBuffer,
+            let passInfo = MetalPassInfo(getCommandBuffer: self.getCommandBuffer,
                                          drawable: nil,
                                          depthStencilTexture: nil,
                                          renderPassDescriptor: renderPassDescriptor){
-                try self.restartEncode(commandBuffer: self.commandBuffer)
+                try! self.restartEncode(commandBuffer: self.commandBuffer)
             }
             
-            try pass.encode(passInfo: passInfo)
+            try! self.pass.encode(passInfo: passInfo)
             
-            endEncode(commandBuffer: commandBuffer)
+            self.endEncode(commandBuffer: self.commandBuffer)
             
-            functionCheckQueue.async(flags: .barrier) { [weak self] in
+            self.functionCheckQueue.async(flags: .barrier) { [weak self] in
                 guard let self = self else { return }
                 if self.rerunIfCalledWhenBusy && !once{
                     try! self.dispatch(once: false)

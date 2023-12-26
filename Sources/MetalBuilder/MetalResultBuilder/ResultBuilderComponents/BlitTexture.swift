@@ -30,7 +30,8 @@ public extension BlitTexture{
         b.inTexture = container
         return b
     }
-    func destination(_ container: MTLTextureContainer?, slice: Binding<Int>=Binding<Int>.constant(0))->BlitTexture{
+    func destination(_ container: MTLTextureContainer?,
+                     slice: Binding<Int>=Binding<Int>.constant(0))->BlitTexture{
         var b = self
         b.destinationSlice = slice
         b.outTexture = container

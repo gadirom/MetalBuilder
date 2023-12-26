@@ -186,6 +186,10 @@ struct RenderData{
             if let cpuComponentComponent = component as? CPUCompute{
                 data.passes.append(CPUComputePass(cpuComponentComponent))
             }
+            //GPUDispatchAndWait
+            if let gpuDispatchAndWaitComponent = component as? GPUDispatchAndWait{
+                data.passes.append(GPUDispatchAndWaitPass())
+            }
             //MPSUnary
             if let mpsUnaryComponent = component as? MPSUnary{
                 data.argumentsData.addTextures(newTexs: [mpsUnaryComponent.inTexture, mpsUnaryComponent.outTexture])
@@ -195,6 +199,10 @@ struct RenderData{
             if let blitTextureComponent = component as? BlitTexture{
                 data.argumentsData.addTextures(newTexs: [blitTextureComponent.inTexture, blitTextureComponent.outTexture])
                 data.passes.append(BlitTexturePass(blitTextureComponent))
+            }
+            //Blit Array of Textures
+            if let blitArrayOfTexturesComponent = component as? BlitArrayOfTextures{
+                data.passes.append(BlitArrayOfTexturesPass(blitArrayOfTexturesComponent))
             }
             //Blit Buffer
             if let blitBufferComponent = component as? BlitBuffer{
@@ -386,7 +394,7 @@ struct RenderData{
     func setupAsyncPasses(renderInfo: GlobalRenderInfo, commandQueue: MTLCommandQueue) throws{
         //setup passes
         for pass in asyncPasses{
-            try pass.setup(renderInfo: renderInfo, commandQueue: commandQueue)
+            try pass.setup(renderInfo: renderInfo)
         }
     }
     func prerunPasses(renderInfo: GlobalRenderInfo) throws{

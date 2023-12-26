@@ -18,7 +18,7 @@ extension VertexShaderError: LocalizedError{
 
 public struct VertexShader: ShaderProtocol{
     
-    public var argumentsContainer = ArgumentsContainer()
+    public var argumentsContainer = ArgumentsContainer(stages: .vertex)
     public var gridFit: GridFit?
     
     /// Creates the VertexShader

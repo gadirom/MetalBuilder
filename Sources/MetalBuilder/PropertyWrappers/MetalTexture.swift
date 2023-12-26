@@ -48,16 +48,18 @@ public final class MTLTextureContainer{
     }
     
     //creates or loads the texture
-    public func initialize(device: MTLDevice,
-                           viewportSize: simd_uint2,
-                           pixelFormat: MTLPixelFormat?) throws{
-        if let image{
-            self.device = device
-            try loadImage(image)
-        }else{
-            try create(device: device,
-                       viewportSize: viewportSize,
-                       pixelFormat: pixelFormat)
+    func initialize(device: MTLDevice,
+                    viewportSize: simd_uint2,
+                    pixelFormat: MTLPixelFormat?) throws{
+        if !descriptor.manualCreation{
+            if let image{
+                self.device = device
+                try loadImage(image)
+            }else{
+                try create(device: device,
+                           viewportSize: viewportSize,
+                           pixelFormat: pixelFormat)
+            }
         }
     }
     
@@ -108,7 +110,9 @@ public final class MTLTextureContainer{
             throw MetalBuilderTextureError
                 .textureNotCreated
         }
-        if let label{ texture.label = label }
+        if let label{
+            texture.label = label
+        }
         self.texture = texture
     }
 }
@@ -194,6 +198,8 @@ public struct TextureDescriptor{
     public var storageMode: MTLStorageMode = .private
     
     public var mipmapLevelCount: Int = 1
+    
+    public var manualCreation = false
     
     public init() {}
     
@@ -288,5 +294,16 @@ public extension TextureDescriptor{
         var d = self
         d.mipmapLevelCount = mipmapLevelCount
         return d
+    }
+    func manual() -> TextureDescriptor {
+        var d = self
+        d.manualCreation = true
+        return d
+    }
+}
+
+public extension MTLTexture{
+    var mtlSize: MTLSize{
+        .init(width: self.width, height: self.height, depth: self.depth)
     }
 }
