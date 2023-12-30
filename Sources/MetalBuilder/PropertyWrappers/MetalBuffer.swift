@@ -209,19 +209,37 @@ public final class MTLBufferContainer<T>: BufferContainer{
     
     private var _count: Int?
     
+    private var manual: Bool!
+    
     public init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil,
                 options: MTLResourceOptions = .init(),
                 fromArray: [T]? = nil,
-                passAs: PassBufferToMetal = .pointer){
+                passAs: PassBufferToMetal = .pointer,
+                manual: Bool = false){
         super.init()
         self.metalType = metalType
         self.metalName = metalName
         self._count = count
+        self.manual = manual
         
         self.bufferOptions = options
         
         self.fromArray = fromArray
+        if self.count == nil{
+            if let fromArray{
+                self.count = fromArray.count
+            }
+        }
         self.passAs = passAs
+    }
+    
+    // called on startup for each buffer that added to some component
+    func initialize(device: MTLDevice) throws{
+        if manual{
+            return
+        }else{
+            try create(device: device)
+        }
     }
     
     /// Creates a new buffer for the container.

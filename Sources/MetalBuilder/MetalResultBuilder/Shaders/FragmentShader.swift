@@ -58,8 +58,9 @@ public struct FragmentShader: ShaderProtocol{
         }
         guard let fragmentOutFields
         else {
-            throw FragmentShaderError
-                .noFragmentOut(label)
+            return  ("float4", "")
+//            throw FragmentShaderError
+//                .noFragmentOut(label)
         }
         let fragmentOut = "\(label)FragmentOut"
         let decl = """
@@ -91,6 +92,7 @@ public struct FragmentShader: ShaderProtocol{
                 \(decl) fragment \(type) \(fragmentName)(\(vertexOut) in [[stage_in]]){
                 \(type) out;
                 \(_body)
+                return out;
                 }
                """
     }

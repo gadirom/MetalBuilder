@@ -19,6 +19,6 @@ final class ManualEncodePass: MetalPass{
     }
     func encode(passInfo: MetalPassInfo) throws {
         let commandBuffer = passInfo.getCommandBuffer()
-        component.code(device, commandBuffer, passInfo.drawable)
+        component.code(device, passInfo)
     }
 }

@@ -55,6 +55,7 @@ public struct VertexShader: ShaderProtocol{
                 \(decl)
                 vertex \(type) \(vertexName)(){\(type) out;
                 \(body)
+                return out;
                 }
                 """, type)
     }

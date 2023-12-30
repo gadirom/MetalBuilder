@@ -1,6 +1,6 @@
 import MetalKit
 import SwiftUI
-/*
+
 /// Building block for rendering full screen quad
 public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     /// Creates a new building block that renders full scrwwn quad.
@@ -32,11 +32,6 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     public var renderableData: RenderableData
     //
     
-    struct FullScreenQuadVertex: MetalStruct{
-        var coord: simd_float2 = [0, 0]
-        var uv: simd_float2 = [0, 0]
-    }
-    
     public var context: MetalBuilderRenderingContext
     public var helpers = ""
     public var librarySource = ""
@@ -47,9 +42,8 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
     var quadFragmentShader: FragmentShader!
     
     var defaultFragmentShader: FragmentShader{
-        FragmentShader("fullScreenQuadFragmentShader",
-                                       returns: "float4",
-                                       body:
+        FragmentShader()
+            .body(
         """
             constexpr sampler s(address::clamp_to_zero, filter::linear);
             float4 color = inTexture.sample(s, in.uv);
@@ -58,38 +52,45 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
             .texture(sampleTexture, argument: .init(type: "float", access: "sample", name: "inTexture"))
         }
     
-    @MetalBuffer<FullScreenQuadVertex>(count: 6, metalName: "quadBuffer") var quadBuffer
-    
-    public func startup(device: MTLDevice){
-        //create quad
-        let p = quadBuffer.pointer!
-        p[0] = .init(coord: [-1, 1], uv: [0,0])
-        p[1] = .init(coord: [1, 1], uv: [1,0])
-        p[2] = .init(coord: [1, -1], uv: [1,1])
-        
-        p[3] = .init(coord: [-1, -1], uv: [0,1])
-        p[4] = .init(coord: [-1, 1], uv: [0,0])
-        p[5] = .init(coord: [1, -1], uv: [1,1])
-    }
+    @MetalBuffer<FullScreenQuadVertex>(metalName: "quadBuffer",
+                                       fromArray: quadVertexArray()) var quadBuffer
     
     public var metalContent: MetalContent{
-        Render(type: .triangle, count: 6, renderableData: renderableData)
-            .vertexBuf(quadBuffer)
-            .vertexBytes(context.$viewportToDeviceTransform)
-            .vertexShader(VertexShader("fullScreenQuadVertexShader", vertexOut:"""
-            struct FullScreenQuadVertexOut{
+        Render("MBQuad", 
+               type: .triangle,
+               count: .constant(6),
+               renderableData: renderableData)
+            .vertex(VertexShader()
+                       .buffer(quadBuffer)
+                       .bytes(context.$viewportToDeviceTransform)
+                .vertexOut("""
                 float4 position [[position]];
                 float2 uv;
-            };
-            """, body:"""
-              FullScreenQuadVertexOut out;
-              FullScreenQuadVertex p = quadBuffer[vertex_id];
+            """)
+                    .body("""
+              auto p = quadBuffer[vertex_id];
               float3 pos = float3(p.coord.xy, 1);
               out.position = float4(pos.xy, 0, 1);
               out.uv = p.uv;
               return out;
         """))
-            .fragmentShader(quadFragmentShader)
+            .fragment(quadFragmentShader)
     }
 }
-*/
+
+struct FullScreenQuadVertex: MetalStruct{
+    var coord: simd_float2 = [0, 0]
+    var uv: simd_float2 = [0, 0]
+}
+
+func quadVertexArray() -> [FullScreenQuadVertex]{
+    [
+    .init(coord: [-1,  1], uv: [0,0]),
+    .init(coord: [ 1,  1], uv: [1,0]),
+    .init(coord: [ 1, -1], uv: [1,1]),
+    
+    .init(coord: [-1, -1], uv: [0,1]),
+    .init(coord: [-1,  1], uv: [0,0]),
+    .init(coord: [ 1, -1], uv: [1,1])
+    ]
+}

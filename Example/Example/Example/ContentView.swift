@@ -4,6 +4,8 @@ import MetalBuilder
 import MetalKit
 import MetalPerformanceShaders
 
+import SceneKit
+
 let particleCount = 10000
 
 let vertexIndexCount = particleCount*3
@@ -83,9 +85,9 @@ struct ContentView: View {
     var argBufForTextures: ArgumentBuffer{
         .new("texArgBuf", desc: .init()
             .texture(outTexture,
-                     argument: .init(type: "float", access: "read", name: "image"))
-            .texture(targetTexture, 
-                     argument: .init(type: "float", access: "read", name: "target"))
+                     argument: .init(type: "float", access: "sample", name: "image"))
+            .texture(targetTexture,
+                     argument: .init(type: "float", access: "sample", name: "target"))
         )
     }
     
@@ -153,82 +155,83 @@ struct ContentView: View {
                                  preferredFramesPerSecond: 60)
     }
     
+    @State var isDrawing = false
+    
+    @MetalState var scene: SCNScene!
+    
     var body: some View {
         VStack{
-            MetalBuilderView(viewSettings: viewSettings){ context in
+            MetalBuilderView(isDrawing: $isDrawing,
+                             viewSettings: viewSettings){ context in
                 EncodeGroup(active: context.$firstFrame){
-                    
+                    ManualEncode{_,_ in
+                        self.scene = createScene()
+                    }
                 }
-                AsyncGroup(info: asyncGroupInfo) {
-                    ManualEncode{device,_,drawable in
-                        print("Start running for value: \(automataIterations)")
-                        iterations = Int(automataIterations)*2
-                        
-                        try! createdParticlesBuffer.create(device: device)
-                        createParticles(particlesBuf: createdParticlesBuffer,
-                                        viewportSize: context.viewportSize)
-                        
-                        try! createdIndexBuffer.create(device: device)
-                        createIndices(createdIndexBuffer, count: vertexCount)
-    
-                        let currentSize = MTLSize(
-                            width: Int(context.viewportSize.x),
-                            height: Int(context.viewportSize.y),
-                            depth: 1)
-                        try! scaledTexture.create(device: device,
-                                                  mtlSize: currentSize,
+                AsyncBlock(context: context,
+                           asyncGroupInfo: asyncGroupInfo,
+                           isDrawing: $isDrawing) 
+//                {
+//                    scaledTexture.texture!.width != Int(context.viewportSize.x) ||
+//                    scaledTexture.texture!.height != Int(context.viewportSize.y) || 
+//                    iterations != Int(automataIterations)*2
+//                }
+                   .asyncContent {
+                       ManualEncode{device, _ in
+                           print("Start running for value: \(automataIterations)")
+                           iterations = Int(automataIterations)*2
+                           
+                           try! createdParticlesBuffer.create(device: device)
+                           createParticles(particlesBuf: createdParticlesBuffer,
+                                           viewportSize: context.viewportSize)
+                           
+                           try! createdIndexBuffer.create(device: device)
+                           createIndices(createdIndexBuffer, count: vertexCount)
+       
+                           let currentSize = MTLSize(
+                               width: Int(context.viewportSize.x),
+                               height: Int(context.viewportSize.y),
+                               depth: 1)
+                           try! scaledTexture.create(device: device,
+                                                     mtlSize: currentSize,
+                                                     pixelFormat: .bgra8Unorm)
+                           
+                           print("create scale for currentSize: \(currentSize)")
+                           
+                       }
+                       //CreationBlock(context: context, argBuffer: argBufForCreation)
+                       ScaleTexture(type: .fit, method: .bilinear)
+                           .source(imageTexture)
+                           .destination(scaledTexture)
+                       GPUDispatchAndWait()
+                       ManualEncode{device, passInfo in
+                           try! autoTexs.create(textures: [scaledTexture.texture!,
+                                                           scaledTexture.texture!],
+                                                device: device, commandBuffer: passInfo.getCommandBuffer())
+                           //imageTexture.texture = nil
+                           //scaledTexture.texture = nil
+                       }
+                       AutomataBlock(context: context,
+                                     iterations: $iterations,
+                                     argBuf: argBufForAutomata)
+                   }
+                   .processResult {
+                       ManualEncode{device, _ in
+                           particlesBuffer.buffer = createdParticlesBuffer.buffer
+                           indexBuffer.buffer = createdIndexBuffer.buffer
+                           //print("was run for value: \(automataIterations)")
+                           
+                           let size = scaledTexture.texture!.mtlSize
+                           
+                           try! outTexture.create(device: device,
+                                                  mtlSize: size,
                                                   pixelFormat: .bgra8Unorm)
-                        
-                        print("create scale for currentSize: \(currentSize)")
-                        
-                    }
-                    //CreationBlock(context: context, argBuffer: argBufForCreation)
-                    ScaleTexture(type: .fit, method: .bilinear)
-                        .source(imageTexture)
-                        .destination(scaledTexture)
-                    GPUDispatchAndWait()
-                    ManualEncode{device, commandBuffer, _ in
-                        try! autoTexs.create(textures: [scaledTexture.texture!,
-                                                        scaledTexture.texture!],
-                                             device: device, commandBuffer: commandBuffer)
-                        //imageTexture.texture = nil
-                        //scaledTexture.texture = nil
-                    }
-                    AutomataBlock(context: context,
-                                  iterations: $iterations, 
-                                  argBuf: argBufForAutomata)
-                }
-                EncodeGroup(active: asyncGroupInfo.complete) {
-                    ManualEncode{device,_,_ in
-                        if readyToSetReady{
-                            readyToSetReady = false
-                            if scaledTexture.texture!.width != Int(context.viewportSize.x) ||
-                                scaledTexture.texture!.height != Int(context.viewportSize.y) || iterations != Int(automataIterations)*2{
-                                try! asyncGroupInfo.run()
-                            }
-                            asyncGroupInfo.setReady()
-                            return
-                        }else{
-                            readyToSetReady = true
-                        }
-                        particlesBuffer.buffer = createdParticlesBuffer.buffer
-                        indexBuffer.buffer = createdIndexBuffer.buffer
-                        //print("was run for value: \(automataIterations)")
-                        
-                        let size = scaledTexture.texture!.mtlSize
-                        
-                        try! outTexture.create(device: device,
-                                               mtlSize: size,
-                                               pixelFormat: .bgra8Unorm)
-                        print("create out for currentSize: \(size)")
-                        
-                    }
-                }
-                EncodeGroup(active: $readyToSetReady){
-                    BlitArrayOfTextures()
-                        .source(autoTexs, range: .constant(0...0))
-                        .destination(outTexture)
-                }
+                           print("create out for currentSize: \(size)")
+                       }
+                       BlitArrayOfTextures()
+                           .source(autoTexs, range: .constant(0...0))
+                           .destination(outTexture)
+                   }
                 EncodeGroup(active: asyncGroupInfo.wasCompleteOnce){
                     ComputeBlock(context: context,
                                  u: uniforms,
@@ -281,8 +284,6 @@ struct ContentView: View {
                         out.position.xy = pixelSpacePosition / (viewport / 2.0);
                         
                         out.color = color;
-                        
-                        return out;
                         """)
                     )
                     .fragment(
@@ -294,7 +295,6 @@ struct ContentView: View {
                             .body(
                         """
                             out.color = in.color;
-                            return out;
                         """)
                     )
                     EncodeGroup{
@@ -302,11 +302,12 @@ struct ContentView: View {
 //                            CPUCompute{ _ in
 //                                //blurRadius+=0.1
 //                            }
-                            ManualEncode{ [self] device, commandBuffer, drawable in
-                                
+                            ManualEncode{ device, passInfo in
+                                print("draw frame")
                                 let l = MPSImageLaplacian(device: device)
                                 l.bias = laplacianBias
-                                l.encode(commandBuffer: commandBuffer, inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
+                                l.encode(commandBuffer: passInfo.getCommandBuffer(),
+                                         inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
                             }
                         }.repeating($laplacianPasses)
                         //Seems that Laplacian can't be initialized through superclass init!
@@ -325,7 +326,27 @@ struct ContentView: View {
 //                    AutomataBlock(context: context,
 //                                  u: uniforms,
 //                                  argBuf: argBufForAutomata)
-                    Compute("postprocessKernel")
+                    SceneKitRenderer(context: context,
+                                     scene: $scene)
+                    .toTexture(targetTexture)
+                    FullScreenQuad(context: context,
+                                   fragmentShader: 
+                                    
+                        FragmentShader()
+                            .uniforms(uniforms)
+                            .argBuffer(argBufForTextures, name: "textures", .init()
+                                .texture("image", usage: .read)
+                                .texture("target", usage: .read)
+                            )
+                            .body("""
+                                constexpr sampler s(address::clamp_to_edge, filter::linear);
+                                float3 inColor = textures.target.sample(s, in.uv).rgb;
+                                float3 imageColor = textures.image.sample(s, in.uv).rgb;
+                                float3 color = mix(inColor, imageColor, u.mix);
+                                out = float4(color, 1);
+                            """)
+                    )
+                    /*Compute("postprocessKernel")
                         .argBuffer(argBufForTextures, name: "textures", .init()
                             .texture("image", usage: .read)
                             .texture("target", usage: .read)
@@ -342,7 +363,7 @@ struct ContentView: View {
                         float3 imageColor = textures.image.read(gid).rgb;
                         float3 color = mix(inColor, imageColor, u.mix);
                         out.write(float4(color, 1), gid);
-                    """)
+                    """)*/
                     //let _ = print("compile")
                 }
             }

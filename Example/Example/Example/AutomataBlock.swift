@@ -25,7 +25,7 @@ struct AutomataBlock: MetalBuildingBlock{
     
     var metalContent: MetalContent{
         //GPUDispatchAndWait()
-        ManualEncode{device,_,_ in
+        ManualEncode{device,_ in
             //iterations = 2000
             print("run automata for \(iterations) iterations")
 //            event = device.makeEvent()
@@ -85,7 +85,7 @@ struct AutomataBlock: MetalBuildingBlock{
 //                iter += 1
 //            }
             
-            ManualEncode{_,_,_ in
+            ManualEncode{_,_ in
                 print("from: \(from), to: \(to)")
                 from = (from+1)%2
                 to = (to+1)%2

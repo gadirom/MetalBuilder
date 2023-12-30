@@ -12,7 +12,7 @@ public func not(_ arg: MetalBinding<Bool>) -> MetalBinding<Bool>{
 public class AsyncGroupInfo{
     public init(label: String = "Async Queue",
                 runOnStartup: Bool=false,
-                rerun: Bool=false){ //rerun if called when busy(e.g. to match probable changed value)
+                rerun: Bool=true){ //rerun if called when busy(e.g. to match probable changed value)
         self.label = label
         self.runOnStartup = runOnStartup
         self.rerunIfCalledWhenBusy = rerun
@@ -78,7 +78,10 @@ public class AsyncGroupInfo{
             
             guard !self.busy.wrappedValue
             else {
-                if !once { self.wasCalledWhenBusy = true }
+                print("running: busy")
+                if !once {
+                    self.wasCalledWhenBusy = true
+                }
                 return
             }
             
@@ -114,7 +117,8 @@ public class AsyncGroupInfo{
             
             self.functionCheckQueue.async(flags: .barrier) { [weak self] in
                 guard let self = self else { return }
-                if self.rerunIfCalledWhenBusy && !once{
+                if self.rerunIfCalledWhenBusy && !once && self.wasCalledWhenBusy{
+                    self.wasCalledWhenBusy = false
                     try! self.dispatch(once: false)
                 }else{
                     self._complete = true

@@ -42,7 +42,7 @@ struct Buffer<T>: BufferProtocol{
     }
     
     func create(device: MTLDevice) throws {
-        try container.create(device: device)
+        try container.initialize(device: device)
     }
     
     var bContainer: BufferContainer{

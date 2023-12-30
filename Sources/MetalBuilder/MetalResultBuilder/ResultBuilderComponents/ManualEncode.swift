@@ -8,9 +8,9 @@ import SwiftUI
 /// Use this component to manually encode dispatches on the current command buffer.
 public struct ManualEncode: MetalBuilderComponent{
     
-    let code: (MTLDevice, MTLCommandBuffer, CAMetalDrawable?) -> ()
+    let code: (MTLDevice, MetalPassInfo) -> ()
     
-    public init(code: @escaping (MTLDevice, MTLCommandBuffer, CAMetalDrawable?) -> ()) {
+    public init(code: @escaping (MTLDevice, MetalPassInfo) -> ()) {
         self.code = code
     }
 }

@@ -68,6 +68,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         context.coordinator.setupFunction = setupFunction
         context.coordinator.startupFunction = startupFunction
         context.coordinator.viewSettings = viewSettings
+        //context.coordinator.mtkView = mtkView
         
         let renderInfo = GlobalRenderInfo(device: mtkView.device!,
                                           depthPixelFormat: viewSettings.depthPixelFormat,
@@ -103,6 +104,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     }
     public class Coordinator: NSObject, MTKViewDelegate {
         
+        //var mtkView: MTKView!
         //var device: MTLDevice!
         var renderer: MetalBuilderRenderer?
         

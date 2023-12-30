@@ -423,6 +423,8 @@ struct RenderData{
             passes.append(contentsOf: data.passes)
         }
         
+        asyncPasses.append(contentsOf: data.asyncPasses)
+        
         argumentsData.appendContents(of: data.argumentsData)
     
         setupFunctions.append(contentsOf: data.setupFunctions)

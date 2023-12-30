@@ -60,7 +60,7 @@ public struct Camera: MetalBuildingBlock{
     
     public var metalContent: MetalContent{
         EncodeGroup{//Setup Camera
-                ManualEncode{ device,_,_ in
+                ManualEncode{ device,_ in
                     if cameraConfiguration.changed(position: position,
                                                    videoOrientation: videoOrientation){
                         camera = CameraCapture(position: position,
@@ -74,7 +74,7 @@ public struct Camera: MetalBuildingBlock{
             }
         }
         EncodeGroup(active: $cameraCapture){
-            ManualEncode{_,_,_ in
+            ManualEncode{_,_ in
                 if let pixelBuffer = camera!.pixelBuffer{
                     self.pixelBuffer = pixelBuffer
                     ready = true

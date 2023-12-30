@@ -86,8 +86,6 @@ public struct ArgumentsContainer{
     }
 }
 
-
-
 //setup and other functions
 extension ArgumentsContainer{
     
@@ -109,6 +107,14 @@ extension ArgumentsContainer{
         }
         
         return argData
+    }
+    
+    func createArgumentBuffers(device: MTLDevice, mtlFunction: MTLFunction) throws{
+        for argBuf in addedArgumentBuffers{
+            try argBuf.0.create(device: device,
+                                mtlFunction: mtlFunction,
+                                index: argBuf.1)
+        }
     }
 }
 

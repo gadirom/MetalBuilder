@@ -32,7 +32,7 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
     }
     
     public var metalContent: MetalContent{
-        ManualEncode{device,_,drawable in
+        ManualEncode{device, passInfo in
             guard let pixelBuffer = buffer
             else{ return }
             if newTextureIsNeeded{
@@ -43,7 +43,7 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
                 let tempTexture = MTLTextureContainer(pixelTextureDesc
                                                     .usage([.shaderRead, .shaderWrite])
                                                     .fixedSize(size))
-                try? tempTexture.create(device: device, drawable: drawable!)
+                try? tempTexture.create(device: device, drawable: passInfo.drawable!)
                 
                 if let texture = tempTexture.texture{
                     self.texture.texture = texture

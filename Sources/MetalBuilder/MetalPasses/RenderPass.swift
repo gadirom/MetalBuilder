@@ -88,13 +88,23 @@ final class RenderPass: MetalPass{
             renderPiplineState = piplineSetupClosure(renderInfo.device, libraryContainer!.library!)
         }else{
             let vertexFunction = libraryContainer!.library!
-                .makeFunction(name: vertexNameFromLabel(component.label))
+                .makeFunction(name: vertexNameFromLabel(component.label))!
             let fragmentFunction = libraryContainer!.library!
-                .makeFunction(name: fragmentNameFromLabel(component.label))
+                .makeFunction(name: fragmentNameFromLabel(component.label))!
             renderPipelineDescriptor.vertexFunction = vertexFunction
             renderPipelineDescriptor.fragmentFunction = fragmentFunction
             renderPiplineState =
             try renderInfo.device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
+            
+            try component.vertexShader!
+                .argumentsContainer
+                .createArgumentBuffers(device: renderInfo.device,
+                                       mtlFunction: vertexFunction)
+            try component.fragmentShader!
+                .argumentsContainer
+                .createArgumentBuffers(device: renderInfo.device,
+                                       mtlFunction: fragmentFunction)
+            
         }
         libraryContainer = nil
         

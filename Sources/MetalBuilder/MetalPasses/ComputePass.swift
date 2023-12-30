@@ -73,11 +73,10 @@ final class ComputePass: MetalPass{
             computePiplineState =
             try renderInfo.device.makeComputePipelineState(function: function)
             
-            for argBuf in component.argumentsContainer.addedArgumentBuffers{
-                try argBuf.0.create(device: renderInfo.device,
-                                    mtlFunction: function,
-                                    index: argBuf.1)
-            }
+            try component
+                .argumentsContainer
+                .createArgumentBuffers(device: renderInfo.device,
+                                       mtlFunction: function)
             
         }
         
