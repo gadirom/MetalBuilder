@@ -166,6 +166,8 @@ struct ContentView: View {
                 EncodeGroup(active: context.$firstFrame){
                     ManualEncode{_,_ in
                         self.scene = createScene()
+//                        self.scene.addCustomGeometry(indices: indexBuffer,
+//                                                     vertices: vertexBuffer)
                     }
                 }
                 AsyncBlock(context: context,
@@ -182,8 +184,8 @@ struct ContentView: View {
                            iterations = Int(automataIterations)*2
                            
                            try! createdParticlesBuffer.create(device: device)
-                           createParticles(particlesBuf: createdParticlesBuffer,
-                                           viewportSize: context.viewportSize)
+                           //createParticles(particlesBuf: createdParticlesBuffer,
+                           //                viewportSize: context.viewportSize)
                            
                            try! createdIndexBuffer.create(device: device)
                            createIndices(createdIndexBuffer, count: vertexCount)
@@ -199,12 +201,13 @@ struct ContentView: View {
                            print("create scale for currentSize: \(currentSize)")
                            
                        }
-                       //CreationBlock(context: context, argBuffer: argBufForCreation)
+                       CreationBlock(context: context, argBuffer: argBufForCreation)
                        ScaleTexture(type: .fit, method: .bilinear)
                            .source(imageTexture)
                            .destination(scaledTexture)
                        GPUDispatchAndWait()
                        ManualEncode{device, passInfo in
+                           
                            try! autoTexs.create(textures: [scaledTexture.texture!,
                                                            scaledTexture.texture!],
                                                 device: device, commandBuffer: passInfo.getCommandBuffer())
@@ -219,6 +222,10 @@ struct ContentView: View {
                        ManualEncode{device, _ in
                            particlesBuffer.buffer = createdParticlesBuffer.buffer
                            indexBuffer.buffer = createdIndexBuffer.buffer
+                           
+//                           self.scene = createScene()
+//                           self.scene.addCustomGeometry(indices: indexBuffer,
+//                                                        vertices: vertexBuffer)
                            //print("was run for value: \(automataIterations)")
                            
                            let size = scaledTexture.texture!.mtlSize
@@ -237,8 +244,7 @@ struct ContentView: View {
                                  u: uniforms,
                                  argBuffer: argBuffer)
                     Render("renderParticles", indexBuffer: indexBuffer,
-                           indexCount: MetalBinding<Int>.constant(3),
-                           instanceCount: MetalBinding<Int>.constant(particleCount))
+                           indexCount: MetalBinding<Int>.constant(vertexIndexCount))
                     //.uniforms(uniforms)//, name: "uni")
                     .indexTypes(instance: .uint, vertex: .uint)
                     //.renderEncoder($renderEncoder, lastPass: true)
@@ -247,9 +253,9 @@ struct ContentView: View {
                     .vertex(
                         VertexShader()
                             .argBuffer(argBuffer, name: "arg", UseResources()
-                                .buffer("particles", usage: [.read])
+                                .buffer("vertices", usage: [.read])
                             )
-                            .bytes($particleScale, name: "scale")
+                            //.bytes($particleScale, name: "scale")
                         //.buffer(particlesBuffer)
                             .bytes(context.$viewportSize)
                             .uniforms(uniforms)
@@ -260,30 +266,15 @@ struct ContentView: View {
                         """)
                             .body(
                         """
-                        Particle particle = arg.particles.array[instance_id];
-                        float size = particle.size*scale;
-                        float angle = particle.angle;
-                        float2 position = particle.position;
-                        float4 color = particle.color;
                         
-                        switch(vertex_id){
-                        case 0: color = float4(color.rgb, 0.5); break;
-                        case 1: color = float4((color.rgb + u.color)/2., 0.5); break;
-                        case 2: color = float4(u.color, 1);
-                        }
-                        
-                        float pi = 3.14;
-                        
-                        float2 scA = sincos2(angle+pi*2/3*float(vertex_id));
-                        
-                        float2 pixelSpacePosition = position + size*scA;
+                        float2 pixelSpacePosition = arg.vertices[vertex_id].position.xy;
                         
                         float2 viewport = float2(viewportSize);
                         
                         out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
                         out.position.xy = pixelSpacePosition / (viewport / 2.0);
                         
-                        out.color = color;
+                        out.color = arg.vertices[vertex_id].color;
                         """)
                     )
                     .fragment(
@@ -326,6 +317,12 @@ struct ContentView: View {
 //                    AutomataBlock(context: context,
 //                                  u: uniforms,
 //                                  argBuf: argBufForAutomata)
+                    GPUDispatchAndWait()
+                    ManualEncode{_,_ in
+                        print("frame")
+                        self.scene.addCustomGeometry(indices: indexBuffer,
+                                                     vertices: vertexBuffer)
+                    }
                     SceneKitRenderer(context: context,
                                      scene: $scene)
                     .toTexture(targetTexture)
@@ -479,11 +476,11 @@ func createParticles(particlesBuf: MTLBufferContainer<Particle>, viewportSize: s
         let angvelo = Float.random(in: -1..<1) * angSpeed
         
         particlesBuf.pointer![i] =
-           Particle(color: color,
-                    position: [posX, posY],
-                    velocity: [veloX, veloY],
-                    size: size,
-                    angle: angle, angvelo: angvelo)
+        Particle(position: [posX, posY],
+                 color: color,
+                 velocity: [veloX, veloY],
+                 size: size,
+                 angle: angle, angvelo: angvelo)
     }
 }
 

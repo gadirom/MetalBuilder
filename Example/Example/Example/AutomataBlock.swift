@@ -86,7 +86,7 @@ struct AutomataBlock: MetalBuildingBlock{
 //            }
             
             ManualEncode{_,_ in
-                print("from: \(from), to: \(to)")
+//                print("from: \(from), to: \(to)")
                 from = (from+1)%2
                 to = (to+1)%2
             }

@@ -4,8 +4,8 @@ import MetalKit
 
 
 struct Particle: MetalStruct{
+    var position: simd_float3 = [0, 0, 0]
     var color: simd_float4 = [0, 0, 0, 0]
-    var position: simd_float2 = [0, 0]
     var velocity: simd_float2 = [0, 0]
     var size: Float = 0
     var angle: Float = 0
@@ -14,7 +14,7 @@ struct Particle: MetalStruct{
 
 struct Vertex: MetalStruct
 {
-    var position: simd_float2 = [0, 0]
+    var position: simd_float3 = [0, 0, 0]
     var color: simd_float4 = [0, 0, 0, 0]
 }
 
@@ -55,6 +55,7 @@ struct ComputeBlock: MetalBuildingBlock{
             Compute("integrate")
                 .argBuffer(argBuffer, name: "arg", UseResources()
                     .buffer("particles", usage: [.read, .write], fitThreads: true)
+                    .buffer("vertices", usage: [.write])
                 )
                 .gidIndexType(.uint)
                 .bytes(context.$viewportSize)
@@ -62,13 +63,13 @@ struct ComputeBlock: MetalBuildingBlock{
                 .body("""
                 //int gidi = int(gid);
                 Particle particle = arg.particles.array[gid];
-                float2 position = particle.position;
+                float2 position = particle.position.xy;
                 float pi = 3.14;
 
                 float2 viewport = float2(viewportSize);
 
                 position += particle.velocity*u.speed;
-                particle.position = position;
+                particle.position.xy = position;
 
                 if (position.x < -viewport.x/2 || position.x > viewport.x/2) particle.velocity.x *= -1.0;
                 if (position.y < -viewport.y/2  || position.y > viewport.y/2) particle.velocity.y *= -1.0;
@@ -79,6 +80,30 @@ struct ComputeBlock: MetalBuildingBlock{
                 if (particle.angle < -pi) { particle.angle += 2*pi; };
                 
                 arg.particles.array[gid] = particle;
+                
+                                        
+                float size = particle.size;
+                float angle = particle.angle;
+                float4 color = particle.color;
+                
+                for(short i=0;i<3;i++){
+                
+                    switch(i){
+                    case 0: color = float4(color.rgb, 0.5); break;
+                    case 1: color = float4((color.rgb + u.color)/2., 0.5); break;
+                    case 2: color = float4(u.color, 1);
+                    }
+                    
+                    float pi = 3.14;
+                    
+                    float2 scA = sincos2(angle+pi*2/3*float(i));
+                    
+                    Vertex v;
+                    v.position.xy = position + size*scA;
+                    v.position.z = 0.;
+                    v.color = color;
+                    arg.vertices[gid*3+i] = v;
+                }
 
                 """)
         }

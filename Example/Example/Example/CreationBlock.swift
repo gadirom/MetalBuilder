@@ -39,7 +39,7 @@ struct CreationBlock: MetalBuildingBlock{
                 
                 particle.angle = h;
                 
-                particle.position = (hash3(fid+49.).xy-0.5)*vSize;
+                particle.position.xy = (hash3(fid+49.).xy-0.5)*vSize;
                 
                 particle.angvelo = (hash(fid+9.)-0.5) * angSpeed;
                 
