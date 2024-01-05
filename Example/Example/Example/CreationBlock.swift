@@ -33,7 +33,7 @@ struct CreationBlock: MetalBuildingBlock{
                 float sizeOfTrianglesMax = 50.;
                 float angSpeed = 0.5;
                 
-                float h = hash(fid+4.);
+                float h = fhash(fid+4.);
                 
                 particle.size = sizeOfTrianglesMin * (1 - h) + sizeOfTrianglesMax * h;
                 
@@ -41,7 +41,7 @@ struct CreationBlock: MetalBuildingBlock{
                 
                 particle.position.xy = (hash3(fid+49.).xy-0.5)*vSize;
                 
-                particle.angvelo = (hash(fid+9.)-0.5) * angSpeed;
+                particle.angvelo = (fhash(fid+9.)-0.5) * angSpeed;
                 
                 arg.particles.array[gid] = particle;
                 arg.indices.array[gid] = gid;
@@ -52,7 +52,7 @@ struct CreationBlock: MetalBuildingBlock{
     //from here https://www.shadertoy.com/view/DdyyDD
     let helpers: String = """
 
-    float hash(float p)
+    float fhash(float p)
     {
         p = fract(p * .1031);
         p *= p + 33.33;

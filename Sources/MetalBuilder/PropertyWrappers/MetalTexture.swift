@@ -199,7 +199,7 @@ public struct TextureDescriptor{
     
     public var mipmapLevelCount: Int = 1
     
-    public var manualCreation = false
+    var manualCreation = false
     
     public init() {}
     

@@ -80,7 +80,8 @@ public extension ArrayOfTexturesContainer{
     
     func create(textures inTextures: [MTLTexture?], 
                 usage: MTLTextureUsage = [.shaderRead, .shaderWrite],
-                device: MTLDevice, commandBuffer: MTLCommandBuffer) throws{
+                device: MTLDevice, commandBuffer: MTLCommandBuffer,
+                hazardTracking: MTLHazardTrackingMode) throws{
         let descriptors: [MTLTextureDescriptor?] = inTextures.map {
             if let t = $0{
                 let desc = newDescriptorFromTexture(texture: t)
@@ -93,7 +94,8 @@ public extension ArrayOfTexturesContainer{
 
         let blitEncoder = commandBuffer.makeBlitCommandEncoder()
         
-        try create(descriptors: descriptors, device: device)
+        try create(descriptors: descriptors, device: device,
+                   hazardTracking: hazardTracking)
         
         for (id, inTexture) in inTextures.enumerated() {
             
@@ -111,7 +113,11 @@ public extension ArrayOfTexturesContainer{
         }
         blitEncoder?.endEncoding()
     }
-    func create(sizes: [MTLSize], pixelFormat: MTLPixelFormat, device: MTLDevice) throws{
+    func create(sizes: [MTLSize],
+                pixelFormat: MTLPixelFormat,
+                usage: MTLTextureUsage,
+                device: MTLDevice,
+                hazardTracking: MTLHazardTrackingMode) throws{
         
         
         let descriptors: [MTLTextureDescriptor?] = sizes.map {
@@ -127,6 +133,7 @@ public extension ArrayOfTexturesContainer{
             descriptor.width            = $0.width
             descriptor.height           = $0.height
             descriptor.depth            = $0.depth
+            descriptor.usage            = usage
             //descriptor.mipmapLevelCount = texture.mipmapLevelCount
             //descriptor.arrayLength      = 1
             //descriptor.sampleCount      = texture.sampleCount
@@ -135,9 +142,12 @@ public extension ArrayOfTexturesContainer{
             return descriptor
         }
         
-        try create(descriptors: descriptors, device: device)
+        try create(descriptors: descriptors, device: device,
+                   hazardTracking: hazardTracking)
     }
-    func create(descriptors: [MTLTextureDescriptor?], device: MTLDevice) throws{
+    func create(descriptors: [MTLTextureDescriptor?],
+                device: MTLDevice,
+                hazardTracking: MTLHazardTrackingMode) throws{
         guard descriptors.count<=maxCount else {
             throw ArrayOfTexturesContainerError
                 .numberOfTexturesExceedMaxNum(label)
@@ -147,7 +157,8 @@ public extension ArrayOfTexturesContainer{
             throw ArrayOfTexturesContainerError
                 .noHeap(label)
         }
-        try heap.create(device: device, descriptors: descriptors)
+        try heap.create(device: device, descriptors: descriptors,
+                        hazardTracking: hazardTracking)
         self.textures = []
         for desc in descriptors {
             try self.createTexture(descriptor: desc)

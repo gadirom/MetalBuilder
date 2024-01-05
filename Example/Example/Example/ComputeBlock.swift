@@ -16,6 +16,7 @@ struct Vertex: MetalStruct
 {
     var position: simd_float3 = [0, 0, 0]
     var color: simd_float4 = [0, 0, 0, 0]
+    var uv: simd_float2 = [0, 0]
 }
 
 let sincos2 = """
@@ -74,7 +75,7 @@ struct ComputeBlock: MetalBuildingBlock{
                 if (position.x < -viewport.x/2 || position.x > viewport.x/2) particle.velocity.x *= -1.0;
                 if (position.y < -viewport.y/2  || position.y > viewport.y/2) particle.velocity.y *= -1.0;
 
-                particle.angle += particle.angvelo;
+                particle.angle += particle.angvelo*u.angSpeed;
 
                 if (particle.angle >  pi) { particle.angle -= 2*pi; };
                 if (particle.angle < -pi) { particle.angle += 2*pi; };
@@ -85,13 +86,23 @@ struct ComputeBlock: MetalBuildingBlock{
                 float size = particle.size;
                 float angle = particle.angle;
                 float4 color = particle.color;
+                float2 uv;
                 
                 for(short i=0;i<3;i++){
                 
                     switch(i){
-                    case 0: color = float4(color.rgb, 0.5); break;
-                    case 1: color = float4((color.rgb + u.color)/2., 0.5); break;
-                    case 2: color = float4(u.color, 1);
+                    case 0: 
+                        color = float4(color.rgb, 0.5);
+                        uv = float2(0., 0.);
+                        break;
+                    case 1: 
+                        color = float4((color.rgb + u.color)/2., 0.5);
+                        uv = float2(1., 0.);
+                        break;
+                    case 2: 
+                        color = float4(u.color, 1);
+                        uv = float2(0.5, 1.);
+                        break;
                     }
                     
                     float pi = 3.14;
@@ -99,9 +110,10 @@ struct ComputeBlock: MetalBuildingBlock{
                     float2 scA = sincos2(angle+pi*2/3*float(i));
                     
                     Vertex v;
-                    v.position.xy = position + size*scA;
+                    v.position.xy = position + size*scA*u.size;
                     v.position.z = 0.;
                     v.color = color;
+                    v.uv = uv;
                     arg.vertices[gid*3+i] = v;
                 }
 

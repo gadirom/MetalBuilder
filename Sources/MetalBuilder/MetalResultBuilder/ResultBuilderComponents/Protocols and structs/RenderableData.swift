@@ -127,6 +127,14 @@ public struct StencilAttachment{
     }
 }
 
+extension RenderableData{
+    var usedTextures: [MTLTextureContainer]{
+        self.passColorAttachments.compactMap{
+            $0.value.texture
+        }
+    }
+}
+
 /// Depth attachment
 public struct DepthAttachment{
     public var texture: MTLTextureContainer?

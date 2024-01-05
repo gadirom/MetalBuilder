@@ -15,6 +15,7 @@
 		0055B530288CDE82008580B0 /* renderFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0055B52F288CDE82008580B0 /* renderFunctions.swift */; };
 		006171E72B406FB400F5C395 /* CreateSCNScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 006171E62B406FB400F5C395 /* CreateSCNScene.swift */; };
 		00695B5D28AC42B300E969C8 /* MetalBuilder in Frameworks */ = {isa = PBXBuildFile; productRef = 00695B5C28AC42B300E969C8 /* MetalBuilder */; };
+		00ADAD842B4829850060C032 /* LightRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00ADAD832B4829850060C032 /* LightRenderer.swift */; };
 		00CCACB22B471935000A595E /* NewUniformsTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CCACB12B471935000A595E /* NewUniformsTest.swift */; };
 		00E000C12AE136C0001653B5 /* testImage.png in Resources */ = {isa = PBXBuildFile; fileRef = 00E000C02AE136C0001653B5 /* testImage.png */; };
 		00F1E2862B38E33E0045A463 /* AutomataBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F1E2852B38E33E0045A463 /* AutomataBlock.swift */; };
@@ -32,6 +33,7 @@
 		0055B52F288CDE82008580B0 /* renderFunctions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = renderFunctions.swift; sourceTree = "<group>"; };
 		006171E62B406FB400F5C395 /* CreateSCNScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSCNScene.swift; sourceTree = "<group>"; };
 		00695B5B28AC42A800E969C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		00ADAD832B4829850060C032 /* LightRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightRenderer.swift; sourceTree = "<group>"; };
 		00CCACB12B471935000A595E /* NewUniformsTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewUniformsTest.swift; sourceTree = "<group>"; };
 		00E000C02AE136C0001653B5 /* testImage.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = testImage.png; path = Example/testImage.png; sourceTree = "<group>"; };
 		00F1E2852B38E33E0045A463 /* AutomataBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomataBlock.swift; sourceTree = "<group>"; };
@@ -79,6 +81,7 @@
 				00CCACB12B471935000A595E /* NewUniformsTest.swift */,
 				006171E62B406FB400F5C395 /* CreateSCNScene.swift */,
 				003BE1222894CF8100797903 /* ComputeBlock.swift */,
+				00ADAD832B4829850060C032 /* LightRenderer.swift */,
 				00F57C282B2D0F6500368F95 /* CreationBlock.swift */,
 				0055B52F288CDE82008580B0 /* renderFunctions.swift */,
 				0055B520288CDCDB008580B0 /* Assets.xcassets */,
@@ -187,6 +190,7 @@
 				0055B51F288CDCDA008580B0 /* ContentView.swift in Sources */,
 				0055B530288CDE82008580B0 /* renderFunctions.swift in Sources */,
 				0055B51D288CDCDA008580B0 /* ExampleApp.swift in Sources */,
+				00ADAD842B4829850060C032 /* LightRenderer.swift in Sources */,
 				006171E72B406FB400F5C395 /* CreateSCNScene.swift in Sources */,
 				00F57C292B2D0F6500368F95 /* CreationBlock.swift in Sources */,
 				00CCACB22B471935000A595E /* NewUniformsTest.swift in Sources */,

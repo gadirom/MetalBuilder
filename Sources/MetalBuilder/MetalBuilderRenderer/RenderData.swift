@@ -155,7 +155,8 @@ struct RenderData{
             }
             //Render
             if var renderComponent = component as? Render{
-                let (argData, source) = try renderComponent.setup()
+                var (argData, source) = try renderComponent.setup()
+                argData.textures.append(contentsOf: renderComponent.renderableData.usedTextures)
                 data.passes.append(
                     RenderPass(renderComponent,
                                libraryContainer: libraryContainer)
@@ -187,7 +188,7 @@ struct RenderData{
                 data.passes.append(CPUComputePass(cpuComponentComponent))
             }
             //GPUDispatchAndWait
-            if let gpuDispatchAndWaitComponent = component as? GPUDispatchAndWait{
+            if component is GPUDispatchAndWait{
                 data.passes.append(GPUDispatchAndWaitPass())
             }
             //MPSUnary
@@ -346,9 +347,9 @@ struct RenderData{
                 texturesCreated = true
                 
                 for sf in startupFunctions{
-                    DispatchQueue.main.async{
+                    //DispatchQueue.main.async{
                         sf(device)
-                    }
+                    //}
                 }
                 startupFunctions = []
                 

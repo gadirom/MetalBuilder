@@ -242,6 +242,26 @@ final class RenderPass: MetalPass{
                                           stages: resourceUsage.stages ?? .vertex)
         }
         
+        //Use Heaps
+        if let fragmentShader = component.fragmentShader{
+            renderPassEncoder.useHeaps(
+                fragmentShader
+                    .argumentsContainer
+                    .resourcesUsages
+                    .allHeapsUsed.compactMap{ $0.heap }
+                ,stages: .fragment
+            )
+        }
+        
+        renderPassEncoder.useHeaps(
+            component
+                .vertexShader!
+                .argumentsContainer
+                .resourcesUsages
+                .allHeapsUsed.compactMap{ $0.heap }
+            ,stages: .vertex
+        )
+        
         if component.indexedPrimitives{
             if let instanceCount = component.instanceCount{
                 renderPassEncoder.drawIndexedPrimitives(type: component.type,

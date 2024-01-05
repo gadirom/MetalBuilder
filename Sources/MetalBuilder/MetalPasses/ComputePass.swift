@@ -142,7 +142,12 @@ final class ComputePass: MetalPass{
         }
         
         //Use Heaps
-        computeCommandEncoder.useHeaps(component.argumentsContainer.resourcesUsages.allHeapsUsed.compactMap{ $0.heap })
+        computeCommandEncoder.useHeaps(
+            component
+                .argumentsContainer
+                .resourcesUsages
+                .allHeapsUsed.compactMap{ $0.heap }
+        )
         
         computeCommandEncoder.setComputePipelineState(computePiplineState)
         

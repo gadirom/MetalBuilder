@@ -11,17 +11,19 @@ class MPSUnaryPass: MetalPass{
     let component: MPSUnary
     unowned var device: MTLDevice!
     
+    var kernel: MPSUnaryImageKernel!
+    
     //var kernel: MPSUnaryImageKernel!
     init(_ component: MPSUnary){
         self.component = component
     }
     func setup(renderInfo: GlobalRenderInfo){
         self.device = renderInfo.device
+        self.kernel = component.initCode(renderInfo.device)
     }
     func encode(passInfo: MetalPassInfo) throws {
         
         let commandBuffer = passInfo.getCommandBuffer()
-        let kernel = component.initCode(device)
         for key in component.dict.keys{
             let value = component.dict[key]!.wrappedValue
             kernel.setValue(value, forKey: key)

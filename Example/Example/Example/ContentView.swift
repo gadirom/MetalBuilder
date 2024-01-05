@@ -6,7 +6,9 @@ import MetalPerformanceShaders
 
 import SceneKit
 
-let particleCount = 10000
+let particlesInOneFrame = 1000
+
+let particleCount = maxTexCount*particlesInOneFrame
 
 let vertexIndexCount = particleCount*3
 
@@ -20,13 +22,26 @@ public let angSpeed : Float = 0.1
 
 public let isLaplacian = true
 
+let maxTexCount = 10
+
+var uniDesc: UniformsDescriptor{
+    var uniDesc = UniformsDescriptor(packed: true)
+        .float3("color")
+        .float("speed", range: 0...10, value: 1)
+        .float("angSpeed", range: 0...1, value: 1)
+        .float("size", range: 0...100, value: 0.5)
+        .float("texId", range: 0...Float(maxTexCount-1), value: 0.0)
+        .float("texId1", range: 0...Float(maxTexCount-1), value: 0.5)
+        .float("mix", range: 0...1, value: 0.5)
+        .float("cMix", range: 0...1, value: 0.5)
+    LightRenderer.addUniforms(&uniDesc)
+    return uniDesc
+}
+
 struct ContentView: View {
     
     @MetalUniforms(
-        UniformsDescriptor(packed: true)
-            .float3("color")
-            .float("speed", range: 0...10, value: 1)
-            .float("mix", range: 0...1, value: 0.5),
+        uniDesc,
         type: "Uniform",
         name: "u"
     ) var uniforms
@@ -41,20 +56,20 @@ struct ContentView: View {
     @MetalTexture(
         TextureDescriptor()
             .type(.type2D)
-            .pixelFormatFromDrawable()
+            .pixelFormat(.r16Float)
             .usage([.shaderRead, .shaderWrite])
-            .manual()
+            //.manual()
             //.sizeFromViewport(scaled: 1)
-    ) var scaledTexture
+    ) var monoTexture
     
     @MetalTexture(
         TextureDescriptor()
             .type(.type2D)
-            .pixelFormatFromDrawable()
+            .pixelFormat(.r16Float)
             .usage([.shaderRead, .shaderWrite])
             //.manual()
             //.sizeFromViewport(scaled: 1)
-    ) var outTexture
+    ) var sdf
     
     @MetalTexture(
         TextureDescriptor()
@@ -64,7 +79,19 @@ struct ContentView: View {
             .usage([.renderTarget, .shaderRead, .shaderWrite])
             //.fixedSize([200, 100])
             .sizeFromViewport(scaled: 1)
+            .manual()
     ) var targetTexture
+    
+    @MetalTexture(
+        TextureDescriptor()
+            .type(.type2D)
+            //.pixelFormat(.bgra8Unorm)
+            .pixelFormatFromDrawable()
+            .usage([.renderTarget, .shaderRead, .shaderWrite])
+            //.fixedSize([200, 100])
+            .sizeFromViewport(scaled: 1)
+            .manual()
+    ) var previousTexture
     
     
     var argBufForCreation: ArgumentBuffer{
@@ -82,21 +109,21 @@ struct ContentView: View {
         )
     }
     
-    var argBufForTextures: ArgumentBuffer{
-        .new("texArgBuf", desc: .init()
-            .texture(outTexture,
-                     argument: .init(type: "float", access: "sample", name: "image"))
-            .texture(targetTexture,
-                     argument: .init(type: "float", access: "sample", name: "target"))
-        )
-    }
+//    var argBufForTextures: ArgumentBuffer{
+//        .new("texArgBuf", desc: .init()
+//            .texture(outTexture,
+//                     argument: .init(type: "float", access: "sample", name: "image"))
+//            .texture(targetTexture,
+//                     argument: .init(type: "float", access: "sample", name: "target"))
+//        )
+//    }
     
-    @ArrayOfTextures(type: .type2D, maxCount: 2,
+    @ArrayOfTextures(type: .type2D, maxCount: maxTexCount,
                      label: "Array of Textures for automata") var autoTexs
     
     var argBufForAutomata: ArgumentBuffer{
         .new("texAuto", desc: .init()
-            .arrayTextures(autoTexs, type: "float", access: "read_write", name: "textures")
+            .arrayTextures(autoTexs, type: "float", access: "sample", name: "textures")
         )
     }
     
@@ -142,9 +169,7 @@ struct ContentView: View {
     
     @State var json: Data?
     
-    let asyncGroupInfo = AsyncGroupInfo(runOnStartup: true)
-    
-    @MetalState var readyToSetReady = false
+    let asyncGroupInfo = AsyncGroupInfo(runOnStartup: false)
     
     var viewSettings: MetalBuilderViewSettings{
         MetalBuilderViewSettings(depthPixelFormat: nil,
@@ -155,29 +180,34 @@ struct ContentView: View {
                                  preferredFramesPerSecond: 60)
     }
     
-    @State var isDrawing = false
+    @State var isDrawing = true
     
-    @MetalState var scene: SCNScene!
+    @MetalState var texCount = maxTexCount
+    @MetalState var currentTex = 0
+    @MetalState var shiftTex: UInt32 = 0
+    
+    @MetalState var indexOffset = 0
+    
+    @MetalState var pixelFormat: MTLPixelFormat? = nil
+    
+    @MetalState var event: MTLEvent!
     
     var body: some View {
-        VStack{
+        ZStack{
             MetalBuilderView(isDrawing: $isDrawing,
                              viewSettings: viewSettings){ context in
                 EncodeGroup(active: context.$firstFrame){
-                    ManualEncode{_,_ in
-                        self.scene = createScene()
-//                        self.scene.addCustomGeometry(indices: indexBuffer,
-//                                                     vertices: vertexBuffer)
+                    ManualEncode{device,info in
+                        event = device.makeEvent()
+                        uniforms.setFloat(0, for: "texId")
+                        uniforms.setFloat(0, for: "texId1")
+                        pixelFormat = info.drawable!.texture.pixelFormat
+                        try! asyncGroupInfo.run()
                     }
                 }
                 AsyncBlock(context: context,
-                           asyncGroupInfo: asyncGroupInfo,
-                           isDrawing: $isDrawing) 
-//                {
-//                    scaledTexture.texture!.width != Int(context.viewportSize.x) ||
-//                    scaledTexture.texture!.height != Int(context.viewportSize.y) || 
-//                    iterations != Int(automataIterations)*2
-//                }
+                           asyncGroupInfo: asyncGroupInfo) 
+
                    .asyncContent {
                        ManualEncode{device, _ in
                            print("Start running for value: \(automataIterations)")
@@ -190,81 +220,89 @@ struct ContentView: View {
                            try! createdIndexBuffer.create(device: device)
                            createIndices(createdIndexBuffer, count: vertexCount)
        
-                           let currentSize = MTLSize(
-                               width: Int(context.viewportSize.x),
-                               height: Int(context.viewportSize.y),
-                               depth: 1)
-                           try! scaledTexture.create(device: device,
-                                                     mtlSize: currentSize,
-                                                     pixelFormat: .bgra8Unorm)
-                           
-                           print("create scale for currentSize: \(currentSize)")
                            
                        }
                        CreationBlock(context: context, argBuffer: argBufForCreation)
-                       ScaleTexture(type: .fit, method: .bilinear)
-                           .source(imageTexture)
-                           .destination(scaledTexture)
-                       GPUDispatchAndWait()
+                       
                        ManualEncode{device, passInfo in
                            
-                           try! autoTexs.create(textures: [scaledTexture.texture!,
-                                                           scaledTexture.texture!],
-                                                device: device, commandBuffer: passInfo.getCommandBuffer())
-                           //imageTexture.texture = nil
-                           //scaledTexture.texture = nil
+                           
+                           let sizes = (0..<texCount)
+                               .map{ _ in
+                                   MTLSize(width: Int.random(in: 10...2000),
+                                           height: Int.random(in: 10...2000),
+                                           depth: 1)
+                               }
+                           
+                           try! autoTexs.create(sizes: sizes,
+                                                pixelFormat: pixelFormat!,
+                                                usage: [.renderTarget, 
+                                                        .shaderRead,
+                                                        .shaderWrite],
+                                                device: device, 
+                                                hazardTracking: .tracked)
                        }
-                       AutomataBlock(context: context,
-                                     iterations: $iterations,
-                                     argBuf: argBufForAutomata)
                    }
                    .processResult {
                        ManualEncode{device, _ in
                            particlesBuffer.buffer = createdParticlesBuffer.buffer
                            indexBuffer.buffer = createdIndexBuffer.buffer
                            
-//                           self.scene = createScene()
-//                           self.scene.addCustomGeometry(indices: indexBuffer,
-//                                                        vertices: vertexBuffer)
-                           //print("was run for value: \(automataIterations)")
-                           
-                           let size = scaledTexture.texture!.mtlSize
-                           
-                           try! outTexture.create(device: device,
-                                                  mtlSize: size,
-                                                  pixelFormat: .bgra8Unorm)
-                           print("create out for currentSize: \(size)")
                        }
-                       BlitArrayOfTextures()
-                           .source(autoTexs, range: .constant(0...0))
-                           .destination(outTexture)
                    }
                 EncodeGroup(active: asyncGroupInfo.wasCompleteOnce){
                     ComputeBlock(context: context,
                                  u: uniforms,
                                  argBuffer: argBuffer)
-                    Render("renderParticles", indexBuffer: indexBuffer,
-                           indexCount: MetalBinding<Int>.constant(vertexIndexCount))
-                    //.uniforms(uniforms)//, name: "uni")
-                    .indexTypes(instance: .uint, vertex: .uint)
-                    //.renderEncoder($renderEncoder, lastPass: true)
-                    .toTexture(targetTexture)
-                    //.vertexBuf(vertexBuffer, offset: 0)
-                    .vertex(
-                        VertexShader()
-                            .argBuffer(argBuffer, name: "arg", UseResources()
-                                .buffer("vertices", usage: [.read])
+                    EncodeGroup(repeating: texCount){
+                        ManualEncode{_,passInfo in
+//                            let buffer = passInfo.getCommandBuffer()
+//                            
+//                            buffer.encodeSignalEvent(
+//                                event, value: UInt64(currentTex*2)
+//                            )
+//                            buffer.encodeWaitForEvent(
+//                                event, value: UInt64(currentTex*2)
+//                            )
+                            
+                            targetTexture.texture = autoTexs[currentTex]!.texture!
+                            
+                            let shiftTex = (
+                                (currentTex+texCount - 1) % texCount
                             )
+                            
+                            previousTexture.texture = autoTexs[shiftTex]!.texture!
+                            
+                            indexOffset = currentTex*particlesInOneFrame*3*4
+                            currentTex = (currentTex + 1) % texCount
+                            
+                        }
+                        
+                        Render("renderParticles", indexBuffer: indexBuffer,
+                               indexOffset: $indexOffset, 
+                               indexCount: MetalBinding<Int>.constant(particlesInOneFrame*3))
+                        //.uniforms(uniforms)//, name: "uni")
+                        .indexTypes(instance: .uint, vertex: .uint)
+                        //.renderEncoder($renderEncoder, lastPass: true)
+                        .toTexture(targetTexture)
+                        //.vertexBuf(vertexBuffer, offset: 0)
+                        .vertex(
+                            VertexShader()
+                                .argBuffer(argBuffer, name: "arg", UseResources()
+                                    .buffer("vertices", usage: [.read])
+                                )
                             //.bytes($particleScale, name: "scale")
-                        //.buffer(particlesBuffer)
-                            .bytes(context.$viewportSize)
-                            .uniforms(uniforms)
-                            .vertexOut(
+                            //.buffer(particlesBuffer)
+                                .bytes(context.$viewportSize)
+                                .uniforms(uniforms)
+                                
+                                .vertexOut(
                         """
                         float4 position [[position]];
-                        float4 color; //[[flat]];   // - use this flag to disable color interpolation
+                        float4 color;
+                        float2 uv;
                         """)
-                            .body(
+                                .body(
                         """
                         
                         float2 pixelSpacePosition = arg.vertices[vertex_id].position.xy;
@@ -275,20 +313,53 @@ struct ContentView: View {
                         out.position.xy = pixelSpacePosition / (viewport / 2.0);
                         
                         out.color = arg.vertices[vertex_id].color;
+                        out.uv = arg.vertices[vertex_id].uv;
                         """)
-                    )
-                    .fragment(
-                        FragmentShader()
-                            .fragmentOut(
+                        )
+                        .fragment(
+                            FragmentShader()
+                                .uniforms(uniforms)
+                                .texture(previousTexture, argument: .init(type: "float", access: "sample", name: "target"))
+                                .bytes($shiftTex, name: "shiftId")
+                                .fragmentOut(
                         """
                             float4 color [[color(0)]];
                         """)
-                            .body(
+                                .body(
                         """
-                            out.color = in.color;
+                        constexpr sampler s(address::clamp_to_edge, filter::linear);
+                        float3 inColor = in.color.rgb;
+                        uint id = shiftId;
+                        float3 texColor = target.sample(s, in.uv).rgb;
+                        float3 color = mix(inColor, texColor, u.mix);
+                        out.color = float4(color, 1);
                         """)
-                    )
-                    EncodeGroup{
+                        )
+//                        ManualEncode{_,passInfo in
+//                            let buffer = passInfo.getCommandBuffer()
+//                            
+//                            let e = currentTex>0 ? currentTex-1 : texCount-1
+//                            
+//                            buffer.encodeSignalEvent(
+//                                event, value: UInt64(e*2+1)
+//                            )
+//                            buffer.encodeWaitForEvent(
+//                                event, value: UInt64(e*2+1)
+//                            )
+//                        }
+                        
+                        //GPUDispatchAndWait()
+//                        Compute("postprocessKernel")
+//                            .texture(targetTexture, argument: .init(type: "float", access: "read_write", name: "target"), fitThreads: true)
+//                            .uniforms(uniforms)
+//                        .body("""
+//                            float3 inColor = target.read(gid).rgb;
+//                            
+//                            float3 color = mix(inColor, float3(0.5), u.mix);
+//                            target.write(float4(color, 1), gid);
+//                        """)
+                    }
+                   /* EncodeGroup{
                         EncodeGroup{
 //                            CPUCompute{ _ in
 //                                //blurRadius+=0.1
@@ -311,56 +382,175 @@ struct ContentView: View {
                         MPSUnary{ [self] in MPSImageGaussianBlur(device: $0, sigma: blurRadius)}
                             .source(targetTexture)
                         //.toDrawable()
-                    }.repeating($n)
-                    //                BlitTexture()
-                    //                    .source(targetTexture)
-//                    AutomataBlock(context: context,
-//                                  u: uniforms,
-//                                  argBuf: argBufForAutomata)
-                    GPUDispatchAndWait()
-                    ManualEncode{_,_ in
-                        print("frame")
-                        self.scene.addCustomGeometry(indices: indexBuffer,
-                                                     vertices: vertexBuffer)
-                    }
-                    SceneKitRenderer(context: context,
-                                     scene: $scene)
+                    }.repeating($n)*/
+                    /*Render("renderPart", indexBuffer: indexBuffer,
+                           indexCount: MetalBinding<Int>.constant(vertexIndexCount))
+                    //.uniforms(uniforms)//, name: "uni")
+                    .indexTypes(instance: .uint, vertex: .uint)
+                    //.renderEncoder($renderEncoder, lastPass: true)
                     .toTexture(targetTexture)
-                    FullScreenQuad(context: context,
-                                   fragmentShader: 
-                                    
+                    //.vertexBuf(vertexBuffer, offset: 0)
+                    .vertex(
+                        VertexShader()
+                            .argBuffer(argBuffer, name: "arg", UseResources()
+                                .buffer("vertices", usage: [.read])
+                            )
+                        //.bytes($particleScale, name: "scale")
+                        //.buffer(particlesBuffer)
+                            .bytes(context.$viewportSize)
+                            .uniforms(uniforms)
+                            .vertexOut(
+                    """
+                    float4 position [[position]];
+                    float2 uv;
+                    float4 color; //[[flat]];   // - use this flag to disable color interpolation
+                    """)
+                            .body(
+                    """
+                    
+                    float2 pixelSpacePosition = arg.vertices[vertex_id].position.xy;
+                    
+                    float2 viewport = float2(viewportSize);
+                    
+                    out.position = vector_float4(0.0, 0.0, 0.0, 1.0);
+                    out.position.xy = pixelSpacePosition / (viewport / 2.0);
+                    out.uv = arg.vertices[vertex_id].uv;
+                    
+                    out.color = arg.vertices[vertex_id].color;
+                    """)
+                    )
+                    .fragment(
                         FragmentShader()
                             .uniforms(uniforms)
-                            .argBuffer(argBufForTextures, name: "textures", .init()
-                                .texture("image", usage: .read)
-                                .texture("target", usage: .read)
+                            .argBuffer(argBufForAutomata, name: "textures", .init()
+                                .arrayOfTextures("textures", usage: .read)
                             )
+                            .fragmentOut(
+                    """
+                        float4 color [[color(0)]];
+                    """)
+                            .body(
+                    """
+                        constexpr sampler s(address::clamp_to_edge, filter::linear);
+                        float3 inColor = in.color.rgb;
+                        uint id = uint(u.texId);
+                        float3 texColor = textures.textures[id].sample(s, in.uv).rgb;
+                        float3 color = mix(inColor, texColor, 0.5);
+                        out.color = float4(color, 1);
+                    """)
+                    )*/
+//                    ManualEncode{_,passInfo in
+//                        let id = Int(uniforms.getFloat("texId1")!)
+//                        targetTexture.texture = autoTexs[id]!.texture
+//                        
+//                        let buffer = passInfo.getCommandBuffer()
+//                        buffer.encodeSignalEvent(
+//                            event, value: UInt64(texCount*2)
+//                        )
+//                        buffer.encodeWaitForEvent(
+//                            event, value: UInt64(texCount*2)
+//                        )
+//                    }
+//                    MPSUnary{MPSImageAreaMax(device: $0,
+//                                             kernelWidth: dilateSize,
+//                                             kernelHeight: dilateSize)}
+//                    .source(targetTexture)
+                    /*EncodeGroup(repeating: $laplacianPasses){
+                        ManualEncode{ device, passInfo in
+                            //print("draw frame")
+                            let l = MPSImageLaplacian(device: device)
+                            l.bias = laplacianBias
+                            l.encode(commandBuffer: passInfo.getCommandBuffer(),
+                                     inPlaceTexture: &(targetTexture.texture!), fallbackCopyAllocator: copyAllocator)
+                        }
+                    }*/
+                    ManualEncode{_,passInfo in
+                        let id = Int(uniforms.getFloat("texId")!)
+                        targetTexture.texture = autoTexs[id]!.texture
+                        
+                        let id1 = Int(uniforms.getFloat("texId1")!)
+                        previousTexture.texture = autoTexs[id1]!.texture
+                        
+//                        let buffer = passInfo.getCommandBuffer()
+//                        buffer.encodeSignalEvent(
+//                            event, value: UInt64(texCount*2+1)
+//                        )
+//                        buffer.encodeWaitForEvent(
+//                            event, value: UInt64(texCount*2+1)
+//                        )
+                    }
+                    
+                    FullScreenQuad(context: context,
+                                   fragmentShader:
+                        FragmentShader()
+                            .uniforms(uniforms)
+                            .argBuffer(argBufForAutomata, name: "textures", .init()
+                                .arrayOfTextures("textures", usage: .read)
+                            )
+//                            .texture(targetTexture, argument: .init(type: "float", access: "sample", name: "target"))
                             .body("""
                                 constexpr sampler s(address::clamp_to_edge, filter::linear);
-                                float3 inColor = textures.target.sample(s, in.uv).rgb;
-                                float3 imageColor = textures.image.sample(s, in.uv).rgb;
-                                float3 color = mix(inColor, imageColor, u.mix);
-                                out = float4(color, 1);
+                                float3 inColor = textures.textures[uint(u.texId)].sample(s, in.uv).rgb;
+                                                        
+                                out = float4(inColor, 1);
                             """)
-                    )
-                    /*Compute("postprocessKernel")
-                        .argBuffer(argBufForTextures, name: "textures", .init()
-                            .texture("image", usage: .read)
-                            .texture("target", usage: .read)
-                        )
-                        .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
-                        .uniforms(uniforms)
-                    //.gidIndexType(.uint)
+                    ).toTexture(targetTexture)
+                    
+                    Compute("copyToMono")
+                        .texture(targetTexture, argument: .init(type: "float", access: "sample", name: "in"))
+                        .texture(monoTexture, argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
+                       
+//                        .uniforms(uniforms)
                     .body("""
-                        //uint2 count = uint2(out.get_width(), out.get_height());
-                        //if(gid.x>=count.x||id.y>=count.y){ return; }
-                        float3 inColor = textures.target.read(gid).rgb;
-                        //float2 uv = float2(gid)/float2(gidCount);
-                        //constexpr sampler s(address::clamp_to_edge, filter::linear);
-                        float3 imageColor = textures.image.read(gid).rgb;
-                        float3 color = mix(inColor, imageColor, u.mix);
-                        out.write(float4(color, 1), gid);
-                    """)*/
+                        constexpr sampler s(address::clamp_to_edge, filter::linear);
+                        float2 uv = float2(gid)/float2(gidCount);
+                        float3 c = in.sample(s, uv).rgb;
+                        float d = length(c)>1. ? 1. : 0.;
+                        out.write(float4(d, 0, 0, 1), gid);
+                    """)
+                    
+                    EncodeGroup(repeating: $laplacianPasses){
+                        MPSUnary{MPSImageAreaMax(device: $0,
+                                             kernelWidth: dilateSize,
+                                             kernelHeight: dilateSize)}
+                            .source(monoTexture)
+                            .value(.init(get: {Float(dilateSize)}, set: {_ in}), for: "kernelWidth")
+                            .value(.init(get: {Float(dilateSize)}, set: {_ in}), for: "kernelHeight")
+                        ManualEncode{ device, passInfo in
+                            //print("draw frame")
+                            let l = MPSImageLaplacian(device: device)
+                            l.bias = 1
+                            l.encode(commandBuffer: passInfo.getCommandBuffer(),
+                                     inPlaceTexture: &(monoTexture.texture!),
+                                     fallbackCopyAllocator: copyAllocator)
+//                            l.encode(commandBuffer: passInfo.getCommandBuffer(),
+//                                     sourceTexture: targetTexture.texture!,
+//                                     destinationTexture: monoTexture.texture!)
+                        }
+                    }
+                    
+                    SDF(context: context,
+                        monoTexture: monoTexture,
+                        sdf: sdf)
+                    LightRenderer(context: context,
+                                  sdfTexture: sdf,
+                                  colorTexture: targetTexture,
+                                  uniforms: uniforms)
+//                    Compute("postprocessKernel")
+//                        .texture(monoTexture, argument: .init(type: "float", access: "sample", name: "sdfTex"))
+//                        .texture(targetTexture, argument: .init(type: "float", access: "sample", name: "in"))
+//                        .drawableTexture(argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
+//                        .uniforms(uniforms)
+//                    //.gidIndexType(.uint)
+//                    .body("""
+//                        constexpr sampler s(address::clamp_to_edge, filter::linear);
+//                        float2 uv = float2(gid)/float2(gidCount);
+//                        float sdf = sdfTex.sample(s, uv).r;
+//                        float3 c = in.sample(s, uv).rgb;
+//                        float3 color = c*pow(mix(float3(1), float3(sdf*10.+0.5), u.cMix), 100.);
+//                        color = sdf;
+//                        out.write(float4(color, 1), gid);
+//                    """)
                     //let _ = print("compile")
                 }
             }
@@ -369,78 +559,84 @@ struct ContentView: View {
 //            }
             .onResize{ _ in
                 //if !asyncGroupInfo.busy.wrappedValue{
-                    print("run on resize")
-                    try! asyncGroupInfo.run()
+                   // print("run on resize")
+//                    try! asyncGroupInfo.run()
                 //}
             }
             if showUniforms{
-                UniformsView(uniforms)
-            }
-            HStack{
-                Button {
-                    showUniforms.toggle()
-                } label: {
-                    Text("Show Uniforms")
-                        .foregroundColor(Color.white)
-                        .padding()
-                        .background(Color.blue)
-                }
-                Spacer()
-                Button {
-                    self.json = uniforms.json
-                } label: {
-                    Text("Save Uniforms")
-                        .foregroundColor(Color.white)
-                        .padding()
-                        .background(Color.blue)
-                }
-                
-                Button {
-                    if let json = json {
-                        showUniforms = false
-                        uniforms.import(json: json)
-                        DispatchQueue.main.asyncAfter(deadline: .now()+0.01) {
-                            showUniforms = true
+                ScrollView{
+                    UniformsView(uniforms)
+                    HStack{
+                        
+                        Spacer()
+                        Button {
+                            self.json = uniforms.json
+                        } label: {
+                            Text("Save Uniforms")
+                                .foregroundColor(Color.white)
+                                .padding()
+                                .background(Color.blue)
                         }
-                    }
-                } label: {
-                    Text("Load Uniforms")
-                        .foregroundColor(Color.white)
-                        .padding()
-                        .background(Color.blue)
-                }
+                        
+                        Button {
+                            if let json = json {
+                                showUniforms = false
+                                uniforms.import(json: json)
+                                DispatchQueue.main.asyncAfter(deadline: .now()+0.01) {
+                                    showUniforms = true
+                                }
+                            }
+                        } label: {
+                            Text("Load Uniforms")
+                                .foregroundColor(Color.white)
+                                .padding()
+                                .background(Color.blue)
+                        }
 
+                    }
+        //            Slider(value: $visibleTex, in: 1...Float(texCount))
+        //                .onChange(of: automataIterations) { newVal in
+        //                    print("currentTex: \(newVal)")
+        //                }
+                    //Slider(value: $blurRadius, in: 0...5)
+                        
+                    Slider(value: $fDilate, in: 0...10)
+                        .onChange(of: fDilate) { newValue in
+                            dilateSize = Int(fDilate*10)*2+1
+                        }
+                    HStack{
+                        Stepper("Number of passes for effects: \(n)") {
+                            n += 1
+                        } onDecrement: {
+                            if n>0{
+                                n -= 1
+                            }
+                        }
+                        Stepper("Number of passes for laplacian: \(laplacianPasses)") {
+                            laplacianPasses += 1
+                        } onDecrement: {
+                            if laplacianPasses>0{
+                                laplacianPasses -= 1
+                            }
+                        }
+                    }.padding([.trailing], 100)
+                }
             }
-            Slider(value: $automataIterations, in: 1...2000)
-                .onChange(of: automataIterations) { newVal in
-                    print("run async for value: \(newVal)")
-                    try! asyncGroupInfo.run()
-                }
-            Slider(value: $blurRadius, in: 0...5)
-                
-            Slider(value: $fDilate, in: 0...10)
-                .onChange(of: fDilate) { newValue in
-                    dilateSize = Int(fDilate*10)*2+1
-                }
-            Slider(value: $laplacianBias.binding, in: 0...1)
-            Slider(value: $particleScale.binding, in: 0...10)
+            
             HStack{
-                Stepper("Number of passes for effects: \(n)") {
-                    n += 1
-                } onDecrement: {
-                    if n>0{
-                        n -= 1
-                    }
-                }
-                Stepper("Number of passes for laplacian: \(laplacianPasses)") {
-                    laplacianPasses += 1
-                } onDecrement: {
-                    if laplacianPasses>0{
-                        laplacianPasses -= 1
+                Spacer()
+                VStack{
+                    Spacer()
+                    Button {
+                        showUniforms.toggle()
+                    } label: {
+                        Image(systemName: "gear")
+                            .foregroundColor(Color.white)
+                            .padding()
+                        //.background(Color.blue)
                     }
                 }
             }
-
         }
     }
 }

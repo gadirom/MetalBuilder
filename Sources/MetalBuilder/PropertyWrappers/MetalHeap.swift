@@ -45,12 +45,14 @@ public final class MTLHeapContainer{
     public var label: String?
     
     /// Creates a resource heap to store textures
-    func create(device: MTLDevice, descriptors: [MTLTextureDescriptor?]) throws{
+    func create(device: MTLDevice,
+                descriptors: [MTLTextureDescriptor?],
+                hazardTracking: MTLHazardTrackingMode) throws{
         
         let heapDescriptor = MTLHeapDescriptor()
         heapDescriptor.storageMode = .private
         heapDescriptor.size =  0
-        heapDescriptor.hazardTrackingMode = .tracked
+        heapDescriptor.hazardTrackingMode = hazardTracking
 
         // Build a descriptor for each texture and calculate the size required to store all textures in the heap
         for i in 0..<descriptors.count{
