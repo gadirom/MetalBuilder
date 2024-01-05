@@ -25,9 +25,8 @@ struct LightRenderer: MetalBuildingBlock, Renderable {
             .float("wosSamples", range: 0...50, value: 1)
             .float("wosSteps", range: 0...50, value: 1)
             .float("wosEpsilon", range: 0...5, value: 0.01)
-            .float("Line", range: 0...0.5, value: 0.1)
             
-            .float("black", range: 0...100, value: 1)
+            .float("rot", range: 0...1, value: 0.1)
             .float("adjustE", range: 0...0.1, value: 0.001)
             .float("distrib", range: 0...1, value: 1.0)
                        
@@ -47,6 +46,13 @@ struct LightRenderer: MetalBuildingBlock, Renderable {
     int   randi(thread int &seed)  { seed = seed*0x343fd+0x269ec3; return (seed>>16)&32767; }
     float randf(thread int &seed)  { return float(randi(seed))/32767.0; }
     float2  randOnCircle(thread int &seed) { float an=6.2831853*randf(seed); return float2(cos(an),sin(an)); }
+    float2  rotate(float2 n, float an)
+    {
+        float si = sin(an);
+        float co = cos(an);
+        float2x2 rot = float2x2(co, -si, si, co);
+        return rot*n;
+    }
     float2  randRotate(float2 n, thread int &seed, float distrib)
     {
         float a = (randf(seed) - 0.5)*2.;
@@ -119,17 +125,19 @@ struct LightRenderer: MetalBuildingBlock, Renderable {
                 {
                     float2 q = float2(id);
                     float2 n = getNormal(q*pixel, sdf, s, u.adjustE);
-
+                    float a = 0.;
                     //float R;
                     for( int i=0; i<kNumSteps; i++ )
                     {
+                        
                         r = sdf.sample(s, q*pixel).r;
                         //if(i==0) R = r;
                         if( r<kEpsilon ) break;
                         
-                        float2 nRot = i == 0 ? randOnCircle(seed) : randRotate(n, seed, u.distrib);
+                        float2 nRot = i == 0 ? n : randRotate(rotate(n, a), seed, u.distrib);//randOnCircle(seed) : randRotate(n, seed, u.distrib);
                         //float2 nRot = randRotate(n, seed, u.distrib);
                         q += r*nRot;
+                        a += u.rot;
                     }
                     //if(r < u.edge_s){
                         color += boundary.sample(s, q*pixel).rgb;

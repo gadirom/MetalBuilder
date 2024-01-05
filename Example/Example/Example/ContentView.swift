@@ -34,6 +34,7 @@ var uniDesc: UniformsDescriptor{
         .float("texId1", range: 0...Float(maxTexCount-1), value: 0.5)
         .float("mix", range: 0...1, value: 0.5)
         .float("cMix", range: 0...1, value: 0.5)
+        .float("invertSDF", range: 0...1, value: 0.0)
     LightRenderer.addUniforms(&uniDesc)
     return uniDesc
 }
@@ -128,7 +129,6 @@ struct ContentView: View {
     }
     
     @State var blurRadius: Float = 2.5
-    @State var automataIterations: Float = 10
     @State var fDilate: Float = 3
     @MetalState var dilateSize = 3
     @MetalState var laplacianBias: Float = 0.5
@@ -192,6 +192,8 @@ struct ContentView: View {
     
     @MetalState var event: MTLEvent!
     
+    @MetalState var invertSDF = false
+    
     var body: some View {
         ZStack{
             MetalBuilderView(isDrawing: $isDrawing,
@@ -210,8 +212,6 @@ struct ContentView: View {
 
                    .asyncContent {
                        ManualEncode{device, _ in
-                           print("Start running for value: \(automataIterations)")
-                           iterations = Int(automataIterations)*2
                            
                            try! createdParticlesBuffer.create(device: device)
                            //createParticles(particlesBuf: createdParticlesBuffer,
@@ -471,6 +471,8 @@ struct ContentView: View {
                         let id1 = Int(uniforms.getFloat("texId1")!)
                         previousTexture.texture = autoTexs[id1]!.texture
                         
+                        invertSDF = uniforms.getFloat("invertSDF")!>0
+                        
 //                        let buffer = passInfo.getCommandBuffer()
 //                        buffer.encodeSignalEvent(
 //                            event, value: UInt64(texCount*2+1)
@@ -531,7 +533,7 @@ struct ContentView: View {
                     
                     SDF(context: context,
                         monoTexture: monoTexture,
-                        sdf: sdf)
+                        sdf: sdf, invert: $invertSDF)
                     LightRenderer(context: context,
                                   sdfTexture: sdf,
                                   colorTexture: targetTexture,
