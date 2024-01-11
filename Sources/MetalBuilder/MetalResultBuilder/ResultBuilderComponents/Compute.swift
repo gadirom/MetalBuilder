@@ -53,7 +53,7 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
                                     indexType: indexType, 
                                     gidCountBufferIndex: argumentsContainer.buffersAndBytesContainer.indexCounter)
         let strArgs = stringArguments.joined(separator: ", ")
-        let kernelDecl = "kernel void \(kernel) (\(arg) \(strArgs)){"
+        let kernelDecl = "kernel void \(kernel) (\(arg), \(strArgs)){"
         return librarySource + kernelDecl + gridCheck + bodySource + "}"
     }
     mutating func setupGrid() throws{

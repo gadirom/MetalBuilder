@@ -14,6 +14,7 @@ public extension ReceiverOfArgumentsContainer{
         var c = self
         c.gridFit = c.argumentsContainer.argumentBufferToKernel(argBuffer, name: name,
                                                                 space: space, useResources)
+            ?? self.gridFit
         return c
     }
     /// Passes a buffer to the compute kernel.

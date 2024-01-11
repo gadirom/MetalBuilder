@@ -254,7 +254,9 @@ public final class MTLBufferContainer<T>: BufferContainer{
         elementSize = MemoryLayout<T>.stride
         var count = count
         if count == nil {
-            count = self.count
+            if fromArray == nil{
+                count = self.count
+            }
         }else{
             self._count = count
         }
@@ -266,7 +268,9 @@ public final class MTLBufferContainer<T>: BufferContainer{
         }
         let length: Int
         if let array{
-            length = elementSize!*array.count
+            let c = count ?? array.count
+            self.count = c
+            length = elementSize! * c
             buffer = device.makeBuffer(bytes: array, length: length, options: bufferOptions)
             self.fromArray = nil
         }else{
