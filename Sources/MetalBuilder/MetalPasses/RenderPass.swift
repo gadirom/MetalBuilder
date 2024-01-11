@@ -262,6 +262,10 @@ final class RenderPass: MetalPass{
             ,stages: .vertex
         )
         
+        if let additionalEncodeClosure = component.additionalEncodeClosure?.wrappedValue{
+            additionalEncodeClosure(renderPassEncoder)
+        }
+        
         if component.indexedPrimitives{
             if let instanceCount = component.instanceCount{
                 renderPassEncoder.drawIndexedPrimitives(type: component.type,
@@ -290,10 +294,6 @@ final class RenderPass: MetalPass{
                                     vertexStart: component.vertexOffset.wrappedValue,
                                     vertexCount: component.vertexCount.wrappedValue)
             }
-        }
-        
-        if let additionalEncodeClosure = component.additionalEncodeClosure?.wrappedValue{
-            additionalEncodeClosure(renderPassEncoder)
         }
         
         if !encoderIsExternal || component.renderableData.lastPass{

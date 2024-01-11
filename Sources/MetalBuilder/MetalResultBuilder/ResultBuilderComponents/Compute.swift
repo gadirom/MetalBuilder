@@ -11,6 +11,8 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
     
     var kernel: String
     
+    var stringArguments: [String] = []
+    
     var drawableTextureIndex: Int?
     var indexType: IndexType = .ushort
     var threadsPerThreadgroup: MetalBinding<MTLSize>?
@@ -50,7 +52,8 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
             .computeKernelArguments(bodyCode: bodySource,
                                     indexType: indexType, 
                                     gidCountBufferIndex: argumentsContainer.buffersAndBytesContainer.indexCounter)
-        let kernelDecl = "kernel void \(kernel) (\(arg)){"
+        let strArgs = stringArguments.joined(separator: ", ")
+        let kernelDecl = "kernel void \(kernel) (\(arg) \(strArgs)){"
         return librarySource + kernelDecl + gridCheck + bodySource + "}"
     }
     mutating func setupGrid() throws{
@@ -208,6 +211,11 @@ public extension Compute{
     func gidIndexType(_ type: IndexType) -> Compute{
         var c = self
         c.indexType = type
+        return c
+    }
+    func argument(_ string: String)->Compute{
+        var c = self
+        c.stringArguments.append(string)
         return c
     }
 }

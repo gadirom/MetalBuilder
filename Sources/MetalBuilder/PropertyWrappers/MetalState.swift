@@ -41,7 +41,7 @@ public struct MetalBinding<T>{
         self.metalName = metalName
     }
     public init(binding: Binding<T>,
-                metalType: String?, metalName: String?){
+                metalType: String?=nil, metalName: String?=nil){
         self.binding = binding
         self.metalType = metalType
         self.metalName = metalName

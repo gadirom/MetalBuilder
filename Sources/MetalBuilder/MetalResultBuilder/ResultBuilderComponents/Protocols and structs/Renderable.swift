@@ -255,18 +255,18 @@ public extension MetalBuilderComponent where Self: Renderable{
                           texture: MTLTextureContainer? = nil,
                           loadAction: MTLLoadAction? = nil,
                           storeAction: MTLStoreAction? = nil,
-                          clearColor: Color? = nil) -> Self{
+                          clearColor: Color) -> Self{
         var _clearColor: MTLClearColor? = nil
-        if let color = clearColor{
-            if let cgC = UIColor(color).cgColor.components{
+        //if let color = clearColor{
+            if let cgC = UIColor(clearColor).cgColor.components{
                 _clearColor = MTLClearColor(red:   cgC[0],
                                             green: cgC[1],
                                             blue:  cgC[2],
                                             alpha: cgC[3])
             }else{
-                print("Could not get color components for color: ", color)
+                print("Could not get color components for color: ", clearColor)
             }
-        }
+        //}
         return colorAttachement(index,
                                 texture: texture,
                                 loadAction: loadAction,
