@@ -232,9 +232,11 @@ struct RenderData{
 //                data.addTextures(newTexs: groupData.textures)
 //                data.addBuffers(newBuffs: groupData.buffers)
                 
-                let groupPass = EncodeGroupPass(groupData.passes,
-                                                repeating: encodeGroupComponent.repeating,
-                                                active: encodeGroupComponent.active)
+                let groupPass = EncodeGroupPass(
+                    groupData.passes,
+                    repeating: encodeGroupComponent.repeating.binding,
+                    active: encodeGroupComponent.active.binding
+                )
                 
                 data.passes.append(groupPass)
                 

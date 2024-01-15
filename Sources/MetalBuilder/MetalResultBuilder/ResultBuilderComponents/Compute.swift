@@ -52,8 +52,11 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
             .computeKernelArguments(bodyCode: bodySource,
                                     indexType: indexType, 
                                     gidCountBufferIndex: argumentsContainer.buffersAndBytesContainer.indexCounter)
-        let strArgs = stringArguments.joined(separator: ", ")
-        let kernelDecl = "kernel void \(kernel) (\(arg), \(strArgs)){"
+        var strArgs = stringArguments.joined(separator: ", ")
+        if strArgs != ""{
+            strArgs = ", " + strArgs
+        }
+        let kernelDecl = "kernel void \(kernel) (\(arg)\(strArgs)){"
         return librarySource + kernelDecl + gridCheck + bodySource + "}"
     }
     mutating func setupGrid() throws{

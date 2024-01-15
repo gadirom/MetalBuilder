@@ -5,7 +5,7 @@ import SwiftUI
 public struct AsyncBlock: MetalBuildingBlock {
     public init(context: MetalBuilderRenderingContext,
                 asyncGroupInfo: AsyncGroupInfo,
-                isDrawing: Binding<Bool> = .constant(true)
+                isDrawing: MetalBinding<Bool> = .constant(true)
 //                predicate: @escaping () -> (Bool) = { true }
     ) {
         self.context = context
@@ -23,7 +23,7 @@ public struct AsyncBlock: MetalBuildingBlock {
     var _asyncContent: (()->MetalContent)?
     var _processResultContent: (()->MetalContent)?
     
-    @Binding var isDrawing: Bool
+    @MetalBinding var isDrawing: Bool
     
     let asyncGroupInfo: AsyncGroupInfo
     

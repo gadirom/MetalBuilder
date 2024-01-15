@@ -8,7 +8,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     
     public let librarySource: String
     public let helpers: String
-    @Binding public var isDrawing: Bool
+    @MetalBinding public var isDrawing: Bool
     @MetalResultBuilder public let metalContent: MetalBuilderContent
     
     var viewSettings = MetalBuilderViewSettings()
@@ -28,7 +28,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     ///   
     public init(librarySource: String = "",
                 helpers: String = "",
-                isDrawing: Binding<Bool>?=nil,
+                isDrawing: MetalBinding<Bool>?=nil,
                 viewSettings: MetalBuilderViewSettings?=nil,
                 @MetalResultBuilder metalContent: @escaping MetalBuilderContent){
         self.librarySource = librarySource
@@ -36,7 +36,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         if let isDrawing = isDrawing{
             self._isDrawing = isDrawing
         }else{
-            self._isDrawing = Binding<Bool>.constant(true)
+            self._isDrawing = MetalBinding<Bool>.constant(true)
         }
         self.metalContent = metalContent
         if let viewSettings = viewSettings{
@@ -46,7 +46,7 @@ public struct MetalBuilderView: UIViewRepresentable {
     
     public func makeCoordinator() -> Coordinator {
         //print("make coordinator")
-        return Coordinator()
+        return Coordinator(isDrawing: self.$isDrawing)
     }
     public func makeUIView(context: Context) -> UIView {
  
@@ -110,7 +110,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         var wasInitialized = false
         
-        var isDrawing = false
+        @MetalBinding var isDrawing: Bool
         var onResizeCode: ((CGSize)->())?
         var setupFunction: (()->())?
         var startupFunction: ((MTLDevice)->())?
@@ -119,7 +119,8 @@ public struct MetalBuilderView: UIViewRepresentable {
         
         var background = false
         
-        override init(){
+        init(isDrawing: MetalBinding<Bool>){
+            self._isDrawing = isDrawing
             super.init()
             
         }
