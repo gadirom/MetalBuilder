@@ -63,10 +63,27 @@ extension MetalBuilderRenderer{
 public extension MetalBuilderRenderer{
     
     convenience init(renderInfo: GlobalRenderInfo,
+                     librarySource: String = "",
+                     helpers: String = "",
+                     options: MetalBuilderCompileOptions = .default,
+                     setupFunction: (()->())? = nil,
+                     startupFunction: ((MTLDevice)->())? = nil,
+                     @MetalResultBuilder renderingContent: MetalBuilderContent) throws{
+        try self.init(renderInfo: renderInfo,
+                  librarySource: librarySource,
+                  helpers: helpers,
+                  options: options,
+                  renderingContent: renderingContent,
+                  setupFunction: setupFunction,
+                  startupFunction: startupFunction)
+        
+    }
+    
+    convenience init(renderInfo: GlobalRenderInfo,
                      librarySource: String,
                      helpers: String,
                      options: MetalBuilderCompileOptions = .default,
-                     renderingContent: MetalBuilderContent,
+                     @MetalResultBuilder renderingContent: MetalBuilderContent,
                      setupFunction: (()->())?,
                      startupFunction: ((MTLDevice)->())?) throws{
         
@@ -93,7 +110,7 @@ public extension MetalBuilderRenderer{
             fatalError(error.localizedDescription) 
         }
     }
-    func draw(drawable: CAMetalDrawable,
+    func draw(drawable: CAMetalDrawable?,
               renderPassDescriptor: MTLRenderPassDescriptor) throws{
        
         commandBuffer = try startEncode()

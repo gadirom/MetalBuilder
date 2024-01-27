@@ -34,7 +34,7 @@ public struct MetalBinding<T>{
     var metalType: String?
     var metalName: String?
     
-    public init(get: @escaping ()->T, set: @escaping (T)->(),
+    public init(get: @escaping ()->T, set: @escaping (T)->() = {_ in },
                 metalType: String?=nil, metalName: String?=nil){
         self.binding = Binding(get: get, set: set)
         self.metalType = metalType

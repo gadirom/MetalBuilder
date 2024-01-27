@@ -27,16 +27,23 @@ public struct AsyncBlock: MetalBuildingBlock {
     
     let asyncGroupInfo: AsyncGroupInfo
     
-//    let predicate: ()->(Bool)
+    func onCompleteAsync(){
+        print("async: drawing = true")
+        self.isDrawing = true
+    }
+    
+    public func setup() {
+        asyncGroupInfo.completion = onCompleteAsync
+    }
     
     @MetalState var readyToSetReady = false
     
     public var metalContent: MetalContent{
         AsyncGroup(info: asyncGroupInfo) {
             EncodeGroup(metalContent: _asyncContent!)
-            ManualEncode{_,_ in
-                isDrawing = true
-            }
+//            ManualEncode{_,_ in
+//                isDrawing = true
+//            }
         }
         EncodeGroup(active: asyncGroupInfo.complete) {
             ManualEncode{device,_ in
@@ -47,6 +54,7 @@ public struct AsyncBlock: MetalBuildingBlock {
 //                        print("rerun for predicate")
 //                        try! asyncGroupInfo.run()
 //                    }
+                    print("async block: drawing = false")
                     isDrawing = false
                     asyncGroupInfo.setReady()
                     return

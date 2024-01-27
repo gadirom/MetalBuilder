@@ -14,7 +14,7 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
     var stringArguments: [String] = []
     
     var drawableTextureIndex: Int?
-    var indexType: IndexType = .ushort
+    var indexType: IndexType = .uint
     var threadsPerThreadgroup: MetalBinding<MTLSize>?
     
     public var gridFit: GridFit?

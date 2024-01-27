@@ -12,10 +12,12 @@ public func not(_ arg: MetalBinding<Bool>) -> MetalBinding<Bool>{
 public class AsyncGroupInfo{
     public init(label: String = "Async Queue",
                 runOnStartup: Bool=false,
-                rerun: Bool=true){ //rerun if called when busy(e.g. to match probable changed value)
+                rerun: Bool=true,
+                completion: @escaping ()->() = {}){ //rerun if called when busy(e.g. to match probable changed value)
         self.label = label
         self.runOnStartup = runOnStartup
         self.rerunIfCalledWhenBusy = rerun
+        self.completion = completion
         busy = MetalBinding<Bool>.init{
             self._busy
         } set: {
@@ -36,6 +38,9 @@ public class AsyncGroupInfo{
     public var busy: MetalBinding<Bool>!
     public var complete: MetalBinding<Bool>!
     public var wasCompleteOnce: MetalBinding<Bool>!
+    
+    public var completion: ()->()
+    
     public func setReady(){
         complete.wrappedValue = false
     }
@@ -71,6 +76,8 @@ public class AsyncGroupInfo{
     var label: String
     var commandBuffer: MTLCommandBuffer!
     var pass: AsyncGroupPass!
+    
+    let completedGPUWorkSemaphore = DispatchSemaphore(value: 1)
     
     public func run(once: Bool=false) throws{
         functionCheckQueue.async(flags: .barrier) { [weak self] in
@@ -111,9 +118,17 @@ public class AsyncGroupInfo{
                 try! self.restartEncode(commandBuffer: self.commandBuffer)
             }
             
+            print("async work: waiting for result to copy")
+            
             try! self.pass.encode(passInfo: passInfo)
             
             self.endEncode(commandBuffer: self.commandBuffer)
+            
+            print("async work: ended encoding")
+            
+            completedGPUWorkSemaphore.wait()
+            
+            print("async work: ended GPU work")
             
             self.functionCheckQueue.async(flags: .barrier) { [weak self] in
                 guard let self = self else { return }
@@ -122,6 +137,7 @@ public class AsyncGroupInfo{
                     try! self.dispatch(once: false)
                 }else{
                     self._complete = true
+                    completion()
                 }
             }
         }
@@ -144,6 +160,8 @@ extension AsyncGroupInfo{
         commandBuffer.commit()
 
         commandBuffer.waitUntilCompleted()
+        
+        self.completedGPUWorkSemaphore.signal()
     }
     func restartEncode(commandBuffer: MTLCommandBuffer) throws{
         endEncode(commandBuffer: commandBuffer)

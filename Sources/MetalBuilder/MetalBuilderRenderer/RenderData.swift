@@ -234,8 +234,7 @@ struct RenderData{
                 
                 let groupPass = EncodeGroupPass(
                     groupData.passes,
-                    repeating: encodeGroupComponent.repeating.binding,
-                    active: encodeGroupComponent.active.binding
+                    component: encodeGroupComponent
                 )
                 
                 data.passes.append(groupPass)

@@ -73,8 +73,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         let renderInfo = GlobalRenderInfo(device: mtkView.device!,
                                           depthPixelFormat: viewSettings.depthPixelFormat,
                                           stencilPixelFormat: viewSettings.stencilPixelFormat,
-                                          pixelFormat: mtkView.colorPixelFormat,
-                                          supportsFamily4: mtkView.device!.supportsFamily(.apple4))
+                                          pixelFormat: mtkView.colorPixelFormat)
         
         context.coordinator.setupRenderer(librarySource: librarySource,
                                           helpers: helpers,

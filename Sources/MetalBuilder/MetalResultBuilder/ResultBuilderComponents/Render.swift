@@ -85,8 +85,8 @@ public struct Render: MetalBuilderComponent, Renderable {
     var vertexOffset: MetalBinding<Int> = .constant(0)
     var vertexCount: MetalBinding<Int> = .constant(0)
     
-    var vertex_id: IndexType = .ushort
-    var instance_id: IndexType = .ushort
+    var vertex_id: IndexType = .uint
+    var instance_id: IndexType = .uint
     
     var indexCount: MetalBinding<Int> = MetalBinding<Int>.constant(0)
     var indexBufferOffset: MetalBinding<Int> = .constant(0)
@@ -183,6 +183,7 @@ public struct Render: MetalBuilderComponent, Renderable {
         let fragmentArgumentsDict: [String: MetalFunctionArgument] =
         [
             "primitive_id"   : .custom("uint primitive_id [[primitive_id]]"),
+            "point_coord"   : .custom("float2 point_coord [[point_coord]]")
         ]
         for arg in fragmentArgumentsDict{
             if isThereIdentifierInCode(code: source,

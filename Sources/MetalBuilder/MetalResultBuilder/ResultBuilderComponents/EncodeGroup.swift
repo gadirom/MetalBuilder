@@ -5,6 +5,7 @@ public struct EncodeGroup: MetalBuilderComponent{
     
     var repeating: MetalBinding<Int>
     var active: MetalBinding<Bool>
+    var once: Bool
     //public let librarySource: String?
     @MetalResultBuilder public let metalContent: MetalContent
     
@@ -15,11 +16,13 @@ public struct EncodeGroup: MetalBuilderComponent{
     ///   - metalContent: The ResultBuilder closure containing MetalBuilder components.
     public init(repeating: MetalBinding<Int> = .constant(1),
                 active: MetalBinding<Bool> = .constant(true),
+                once: Bool = false,
                 //librarySource: String? = nil,
                 @MetalResultBuilder metalContent: ()->MetalContent) {
         self.metalContent = metalContent()
         self.repeating = repeating
         self.active = active
+        self.once = once
     }
     
     /// Creates a group component.
