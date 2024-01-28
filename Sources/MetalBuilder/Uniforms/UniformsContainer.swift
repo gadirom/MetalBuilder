@@ -9,7 +9,7 @@ public final class UniformsContainer: ObservableObject{
     @Published var bufferAllocated = false
     
     var dict: OrderedDictionary<String, Property>
-    var mtlBuffer: MTLBuffer!
+    public var mtlBuffer: MTLBuffer!
     var pointer: UnsafeRawPointer?
     var metalDeclaration: MetalTypeDeclaration
     var metalType: String?
