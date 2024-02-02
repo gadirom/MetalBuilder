@@ -6,12 +6,12 @@ public struct UniformsView: View {
     
     /// Creates a uniforms view.
     /// - Parameter uniforms: The uniforms container.
-    public init(_ uniforms: UniformsContainer, onChange: @escaping ()->()={}){
+    public init(_ uniforms: UniformsContainer, onChange: @escaping (String?)->()={_ in}){
         self.uniforms = uniforms
         self.onChange = onChange
     }
     
-    let onChange: ()->()
+    let onChange: (String?)->()
     
     @ObservedObject public var uniforms: UniformsContainer
     
@@ -39,7 +39,7 @@ public struct UniformsView: View {
                                                   range: property.range ?? (0...1),
                                                   initialValue: value[0]){
                             uniforms.setFloat($0, for: name)
-                            onChange()
+                            onChange(property.group)
                             //saveToDefaults(value: [$0], name: name)
                         }
                         default: MultiSlider(label: name,
@@ -52,7 +52,7 @@ public struct UniformsView: View {
                                 case 4: uniforms.setFloat4(value, for: name)
                                 default: break
                                 }
-                            onChange()
+                            onChange(property.group)
                             }
                         }
                     }

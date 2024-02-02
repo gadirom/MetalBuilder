@@ -14,8 +14,12 @@ public final class MetalTexture{
         self.wrappedValue = wrappedValue
     }
     
-    public init(_ descriptor: TextureDescriptor, label: String?=nil, fromImage: ImageForTexture? = nil){
-        self.wrappedValue = MTLTextureContainer(descriptor, label: label, fromImage: fromImage)
+    public init(_ descriptor: TextureDescriptor=TextureDescriptor().manual(),
+                label: String?=nil,
+                fromImage: ImageForTexture? = nil){
+        self.wrappedValue = MTLTextureContainer(descriptor,
+                                                label: label,
+                                                fromImage: fromImage)
     }
 }
 

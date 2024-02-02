@@ -72,7 +72,6 @@ public struct FullScreenQuad: MetalBuildingBlock, Renderable {
               float3 pos = float3(p.coord.xy, 1);
               out.position = float4(pos.xy, 0, 1);
               out.uv = p.uv;
-              return out;
         """))
             .fragment(quadFragmentShader)
     }

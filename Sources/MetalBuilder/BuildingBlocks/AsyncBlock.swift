@@ -2,9 +2,9 @@ import MetalKit
 import SwiftUI
 
 /// Building block for async dispatch
-public struct AsyncBlock: MetalBuildingBlock {
+public struct AsyncBlock<T: AsyncParameters>: MetalBuildingBlock {
     public init(context: MetalBuilderRenderingContext,
-                asyncGroupInfo: AsyncGroupInfo,
+                asyncGroupInfo: AsyncGroupInfo<T>,
                 isDrawing: MetalBinding<Bool> = .constant(true)
 //                predicate: @escaping () -> (Bool) = { true }
     ) {
@@ -25,7 +25,7 @@ public struct AsyncBlock: MetalBuildingBlock {
     
     @MetalBinding var isDrawing: Bool
     
-    let asyncGroupInfo: AsyncGroupInfo
+    let asyncGroupInfo: AsyncGroupInfo<T>
     
     func onCompleteAsync(){
         print("async: drawing = true")
@@ -33,7 +33,9 @@ public struct AsyncBlock: MetalBuildingBlock {
     }
     
     public func setup() {
-        asyncGroupInfo.completion = onCompleteAsync
+        asyncGroupInfo.completion = {_ in
+            onCompleteAsync()
+        }
     }
     
     @MetalState var readyToSetReady = false

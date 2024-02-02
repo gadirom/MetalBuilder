@@ -1,14 +1,17 @@
 import MetalKit
 import SwiftUI
 
-// MPSUnaryPass
-class AsyncGroupPass{
+//protocol AsyncGroupPassProtocol{
+//    
+//}
+
+public class AsyncGroupPass: MetalPass{
     
     var libraryContainer: LibraryContainer?
     let passes: [MetalPass]
-    let info: AsyncGroupInfo
+    let info: AsyncGroupInfoProtocol
     
-    init(_ passes: [MetalPass], info: AsyncGroupInfo){
+    init(_ passes: [MetalPass], info: AsyncGroupInfoProtocol){
         self.passes = passes
         self.info = info
         info.pass = self

@@ -9,7 +9,11 @@ public final class UniformsContainer: ObservableObject{
     @Published var bufferAllocated = false
     
     var dict: OrderedDictionary<String, Property>
-    public var mtlBuffer: MTLBuffer!
+    public var mtlBuffer: MTLBuffer!{
+        didSet{
+            pointer = UnsafeRawPointer(mtlBuffer.contents())
+        }
+    }
     var pointer: UnsafeRawPointer?
     var metalDeclaration: MetalTypeDeclaration
     var metalType: String?
@@ -97,12 +101,11 @@ public extension UniformsContainer{
     
     /// Setups Uniforms Container before rendering
     /// - Parameter device: Metal device.
-    func setup(device: MTLDevice){
+    public func setup(device: MTLDevice){
         print("Uniforms Container Setup")
         if pointer == nil{
             var bytes = dict.values.flatMap{ $0.initValue }
             mtlBuffer = device.makeBuffer(bytes: &bytes, length: length)
-            pointer = UnsafeRawPointer(mtlBuffer.contents())
             
             if saveToDefaults{
                 print("load Defaults")
@@ -284,9 +287,9 @@ public extension UniformsContainer{
 //        let pointer = mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: indices.count)
 //        return indices.map{ pointer[$0] }
     }
-    func getFloat(_ key: String)->Float?{
-        guard let property = dict[key]
-        else{ return nil }
+    func getFloat(_ key: String)->Float{
+        guard let property = dict[key], mtlBuffer != nil
+        else{ return 0 }
         return mtlBuffer.contents().advanced(by: property.offset).bindMemory(to: Float.self, capacity: 1).pointee
     }
 }

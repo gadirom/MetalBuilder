@@ -57,7 +57,7 @@ extension ArgumentsData{
     mutating func addUniforms(newUni: [UniformsContainer]){
         let newUniforms = newUni.compactMap{ $0 }
             .filter{ newUniforms in
-                !textures.contains{ oldUniforms in
+                !uniforms.contains{ oldUniforms in
                     newUniforms === oldUniforms
                 }
             }.noDublicates()

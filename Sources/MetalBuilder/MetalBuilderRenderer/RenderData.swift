@@ -12,7 +12,7 @@ struct RenderData{
     
     var passes: [MetalPass] = []
     
-    var asyncPasses: [AsyncGroupPass] = []
+    var asyncPasses: [MetalPass] = []
     
     var texturesCreated = false
 

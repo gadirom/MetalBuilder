@@ -9,15 +9,28 @@ public func not(_ arg: MetalBinding<Bool>) -> MetalBinding<Bool>{
     }
 }
 
-public class AsyncGroupInfo{
+public protocol AsyncParameters{
+    static var nothing: Self { get }
+    mutating func add(_ new: Self?)
+}
+
+public protocol AsyncGroupInfoProtocol: class{
+    func startup(_ device: MTLDevice)
+    var pass: AsyncGroupPass? { get set }
+    var commandQueue: MTLCommandQueue? { get set }
+}
+
+public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
     public init(label: String = "Async Queue",
                 runOnStartup: Bool=false,
                 rerun: Bool=true,
-                completion: @escaping ()->() = {}){ //rerun if called when busy(e.g. to match probable changed value)
+                completion: @escaping (T)->() = {_ in }){ //rerun if called when busy(e.g. to match probable changed value)
         self.label = label
         self.runOnStartup = runOnStartup
         self.rerunIfCalledWhenBusy = rerun
         self.completion = completion
+        //self.whenBusy = whenBusy
+        
         busy = MetalBinding<Bool>.init{
             self._busy
         } set: {
@@ -39,7 +52,7 @@ public class AsyncGroupInfo{
     public var complete: MetalBinding<Bool>!
     public var wasCompleteOnce: MetalBinding<Bool>!
     
-    public var completion: ()->()
+    public var completion: (T)->()
     
     public func setReady(){
         complete.wrappedValue = false
@@ -68,24 +81,29 @@ public class AsyncGroupInfo{
     var wasCalledWhenBusy: Bool = false
     
     //var renderInfo: GlobalRenderInfo!
-    var commandQueue: MTLCommandQueue!{
+    public var commandQueue: MTLCommandQueue?{
         didSet{
-            commandQueue.label = self.label
+            commandQueue!.label = self.label
         }
     }
     var label: String
     var commandBuffer: MTLCommandBuffer!
-    var pass: AsyncGroupPass!
+    public var pass: AsyncGroupPass?
+    
+    var tempParameters = T.nothing
+    public var parameters = T.nothing
     
     let completedGPUWorkSemaphore = DispatchSemaphore(value: 1)
     
-    public func run(once: Bool=false) throws{
+    public func run(_ parameters: T?=nil, once: Bool=false) throws{
         functionCheckQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
             
             guard !self.busy.wrappedValue
             else {
                 print("running: busy")
+                self.tempParameters.add(parameters)
+                //self.whenBusy(parameters)
                 if !once {
                     self.wasCalledWhenBusy = true
                 }
@@ -93,12 +111,15 @@ public class AsyncGroupInfo{
             }
             
             self._busy = true
+            self.tempParameters.add(parameters)
+            self.parameters = tempParameters
+            tempParameters = .nothing
             
             try! self.dispatch(once: once)
         }
     }
     
-    func startup(_ device: MTLDevice){
+    public func startup(_ device: MTLDevice){
         _busy = false
         if runOnStartup{
             try! dispatch(once: true)
@@ -120,7 +141,7 @@ public class AsyncGroupInfo{
             
             print("async work: waiting for result to copy")
             
-            try! self.pass.encode(passInfo: passInfo)
+            try! self.pass!.encode(passInfo: passInfo)
             
             self.endEncode(commandBuffer: self.commandBuffer)
             
@@ -137,7 +158,7 @@ public class AsyncGroupInfo{
                     try! self.dispatch(once: false)
                 }else{
                     self._complete = true
-                    completion()
+                    completion(self.parameters)
                 }
             }
         }
@@ -148,7 +169,7 @@ extension AsyncGroupInfo{
         self.commandBuffer
     }
     func startEncode() throws -> MTLCommandBuffer{
-        guard let commandBuffer = commandQueue.makeCommandBuffer()
+        guard let commandBuffer = commandQueue!.makeCommandBuffer()
         else{
             throw MetalBuilderRendererError
                 .noCommandBuffer
@@ -172,7 +193,7 @@ extension AsyncGroupInfo{
 /// Encodes a group of components for async dispatch.
 public struct AsyncGroup: MetalBuilderComponent{
     
-    var info: AsyncGroupInfo
+    var info: AsyncGroupInfoProtocol
     //public let librarySource: String?
     @MetalResultBuilder public let metalContent: MetalContent
     
@@ -180,7 +201,7 @@ public struct AsyncGroup: MetalBuilderComponent{
     /// - Parameters:
     ///   - info: reference to the object that contains data for controlling the group's dispatch.
     ///   - metalContent: The ResultBuilder closure containing MetalBuilder components.
-    public init(info: AsyncGroupInfo,
+    public init(info: AsyncGroupInfoProtocol,
                 //librarySource: String? = nil,
                 @MetalResultBuilder metalContent: ()->MetalContent) {
         self.info = info
