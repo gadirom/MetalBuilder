@@ -135,7 +135,7 @@ public struct MetalBufferArgument{
         SwiftTypeToMetal(swiftType: swiftType,
                          metalType: type)
     }
-    var metalDeclaration: MetalTypeDeclaration?{
+    var metalDeclaration: [MetalTypeDeclaration]{
         let type = swiftTypeToMetal
         return metalTypeDeclaration(from: type.swiftType,
                                     name: type.metalType)
@@ -211,9 +211,9 @@ public struct MetalBytesArgument{
     var index: Int?
     var forArgBuffer: Bool
     let swiftType: Any.Type
-    var metalDeclaration: MetalTypeDeclaration?{
+    var metalDeclaration: [MetalTypeDeclaration]{
         if let decl = _metalDeclaration{
-            return decl
+            return [decl]
         }else{
             let type = swiftTypeToMetal
             return metalTypeDeclaration(from: type.swiftType,

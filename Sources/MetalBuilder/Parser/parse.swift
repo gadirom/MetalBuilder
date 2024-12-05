@@ -35,15 +35,16 @@ func parse(library: inout String,
                     funcArguments[funcAndArgID]
                         .arguments[argID] = argNew
                 }
-                let metalDeclaration = buf.metalDeclaration
-                if let metalDeclaration{
-                    if !metalTypeNames.contains(metalDeclaration.typeName) {
-                        metalTypeNames.append(metalDeclaration.typeName)
-                        structDeclarations += metalDeclaration.declaration
+                let metalDeclarations = buf.metalDeclaration
+                if !metalDeclarations.isEmpty{
+                    for metalDeclaration in metalDeclarations.reversed(){
+                        if !metalTypeNames.contains(metalDeclaration.typeName) {
+                            metalTypeNames.append(metalDeclaration.typeName)
+                            structDeclarations += metalDeclaration.declaration
+                        }
                     }
-                        
                         if buf.type == nil{// add type name to function declaration if there was no type set in the component
-                            changeBufArgument(type: metalDeclaration.typeName)
+                            changeBufArgument(type: metalDeclarations.first!.typeName)
                         }
                 }
                 if let structName = buf.passAs.structName{
@@ -52,7 +53,7 @@ func parse(library: inout String,
                     if !metalTypeNames.contains(structName) {
                         metalTypeNames.append(structName)
                         
-                        let type = metalDeclaration?.typeName ?? buf.type
+                        let type = metalDeclarations.first?.typeName ?? buf.type
                         guard let type
                         else{
                             throw MetalBuilderParserError
@@ -82,14 +83,17 @@ func parse(library: inout String,
                     funcArguments[funcAndArgID]
                        .arguments[argID] = argNew
                 }
-                if let metalDeclaration = bytes.metalDeclaration{
-                    if !metalTypeNames.contains(metalDeclaration.typeName) {
-                        metalTypeNames.append(metalDeclaration.typeName)
-                        structDeclarations += metalDeclaration.declaration
+                let metalDeclarations = bytes.metalDeclaration
+                if !metalDeclarations.isEmpty{
+                    for metalDeclaration in metalDeclarations.reversed(){
+                        if !metalTypeNames.contains(metalDeclaration.typeName) {
+                            metalTypeNames.append(metalDeclaration.typeName)
+                            structDeclarations += metalDeclaration.declaration
+                        }
                     }
                     
                     if bytes.type == nil{// add type name to function declaration if there was no type set in the component
-                        changeBytesArgument(type: metalDeclaration.typeName)
+                        changeBytesArgument(type: metalDeclarations.first!.typeName)
                     }
                 }else{
                     if bytes.type == nil{// if no type provided trying to assess an ordinary type (float, int, ect.)

@@ -1,10 +1,16 @@
 
 import MetalKit
 
+/// A struct containing an information on the C-type declaration
+struct MetalTypeDeclaration{
+    let typeName: String
+    let declaration: String
+}
+
 /// Returns a C-struct declaration corresponding to the given Swift type.
-public func metalTypeDeclaration<T>(from swiftType: T, name: String?) -> MetalTypeDeclaration?{
+func metalTypeDeclaration<T>(from swiftType: T, name: String?) -> [MetalTypeDeclaration]{
     guard let type = swiftType as? MetalStruct.Type
-    else{ return nil }
+    else{ return [] }
     let mirror = Mirror(reflecting: type.init())
     var metalName: String
     if let name = name{
@@ -12,28 +18,36 @@ public func metalTypeDeclaration<T>(from swiftType: T, name: String?) -> MetalTy
     }else{
         metalName = String(describing: mirror.subjectType)
     }
+    var declarations: [MetalTypeDeclaration] = []
     var s = "struct " + metalName + "{\n"
     for child in mirror.children {
         if let label = child.label{
-            guard let metalType = metalType(for: Swift.type(of: child.value))
-            else{
-                print("invalid type: ", type)
-                return nil
+            var metal_type: String
+            if let mt = metalType(for: Swift.type(of: child.value)){
+                metal_type = mt
+            }else{
+                let d = metalTypeDeclaration(from: Swift.type(of: child.value),
+                                             name: nil)
+                if !d.isEmpty{
+                    metal_type = d.first!.typeName
+                    declarations += d
+                }else{
+                    print("invalid type: ", type)
+                    return []
+                }
             }
+            
             s += "   "
-            s += metalType + " "
+            s += metal_type + " "
             s += String(describing: label) + ";\n"
         }
     }
     s += "};\n"
-    return MetalTypeDeclaration(typeName: metalName, declaration: s)
+    declarations = [MetalTypeDeclaration(typeName: metalName, declaration: s)] + declarations
+    return declarations
 }
 
-/// A struct containing an information on the C-type declaration
-public struct MetalTypeDeclaration{
-    let typeName: String
-    let declaration: String
-}
+
 
 //typealias simd_half1 = Float16
 //typealias simd_half2 = SIMD2<Float16>
@@ -41,7 +55,7 @@ public struct MetalTypeDeclaration{
 //typealias simd_half4 = SIMD4<Float16>
 
 /// Returns a string with the Metal type corresponding to the given Swift type.
-public func metalType(for swiftType: Any.Type)->String?{
+func metalType(for swiftType: Any.Type)->String?{
     
     switch swiftType {
         
