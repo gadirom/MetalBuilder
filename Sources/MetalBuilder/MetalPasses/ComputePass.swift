@@ -26,7 +26,15 @@ func encodeGIDCount(encoder: MTLComputeCommandEncoder,
     
     func encodeSize<T>(bytes: SIMD3<T>){
         var bytes = bytes
-        encoder.setBytes(&bytes, length: MemoryLayout<T>.stride*dim, index: bufferIndex)
+        
+        let length = switch dim{
+        case 1:  MemoryLayout<T>.stride
+        case 2:  MemoryLayout<SIMD2<T>>.stride
+        case 3:  MemoryLayout<SIMD3<T>>.stride
+        default: 0
+        }
+        
+        encoder.setBytes(&bytes, length:length, index: bufferIndex)
     }
     
     switch indexType{

@@ -52,12 +52,12 @@ public final class MTLTextureContainer{
     }
     
     //creates or loads the texture
-    func initialize(device: MTLDevice,
+    public func initialize(device: MTLDevice,
                     viewportSize: simd_uint2,
                     pixelFormat: MTLPixelFormat?) throws{
+        self.device = device
         if !descriptor.manualCreation{
             if let image{
-                self.device = device
                 try loadImage(image)
             }else{
                 try create(device: device,
@@ -67,14 +67,21 @@ public final class MTLTextureContainer{
         }
     }
     
-    public func create(device: MTLDevice, drawable: CAMetalDrawable, newDescriptor: TextureDescriptor?=nil) throws{
+    public func create(device: MTLDevice, drawable: CAMetalDrawable?=nil, newDescriptor: TextureDescriptor?=nil) throws{
         if let desc = newDescriptor{
             self.descriptor = desc
         }
-        try create(device: device,
-               viewportSize: simd_uint2(x: UInt32(drawable.texture.width),
-                                        y: UInt32(drawable.texture.height)),
-               pixelFormat: drawable.texture.pixelFormat)
+        if let drawable{
+            try create(device: device,
+                       viewportSize: simd_uint2(x: UInt32(drawable.texture.width),
+                                                y: UInt32(drawable.texture.height)),
+                       pixelFormat: drawable.texture.pixelFormat)
+        }else{
+            try create(device: device,
+                       viewportSize: simd_uint2(x: 1,
+                                                y: 1),
+                       pixelFormat: .rgba8Unorm)
+        }
     }
     
     //pixel format should not be from drawable
@@ -187,7 +194,7 @@ public extension MTLTextureContainer{
 }
 
 public enum TextureSize{
-case fixed(MTLSize), fromViewport(Double)
+    case fixed(MTLSize), fromViewport(simd_double2)
 }
 
 public enum TexturePixelFormat{
@@ -204,7 +211,7 @@ public struct TextureDescriptor{
     
     public var storageMode: MTLStorageMode = .private
     
-    public var mipmapLevelCount: Int = 1
+    public var mipmapLevelCount: Int = 1 // if below zero calculate max levels
     
     public var sampleCount: Int = 1
     
@@ -212,11 +219,11 @@ public struct TextureDescriptor{
     
     public init() {}
     
-    mutating func mtlTextureDescriptor(viewportSize: simd_uint2 = [0,0],
-                                       drawablePixelFormat: MTLPixelFormat? = nil)->MTLTextureDescriptor?{
+    mutating public func mtlTextureDescriptor(viewportSize: simd_uint2 = [0,0],
+                                              drawablePixelFormat: MTLPixelFormat? = nil)->MTLTextureDescriptor?{
         
         let d = MTLTextureDescriptor()
-        d.mipmapLevelCount = mipmapLevelCount
+    
         d.textureType = type
         d.arrayLength = arrayLength
         d.usage = usage
@@ -225,12 +232,12 @@ public struct TextureDescriptor{
         
         //Determine size
         var s: MTLSize?
-        if size == nil{ size = .fromViewport(1) }
+        if size == nil{ size = .fromViewport(.init(x: 1, y: 1)) }
         switch size! {
         case .fixed(let size): s = size
         case .fromViewport(let scale):
-            s = MTLSize(width: Int(Double(viewportSize.x)*scale),
-                        height: Int(Double(viewportSize.y)*scale),
+            s = MTLSize(width: Int(Double(viewportSize.x)*scale.x),
+                        height: Int(Double(viewportSize.y)*scale.y),
                         depth: 1)
         }
         guard let size = s
@@ -250,6 +257,10 @@ public struct TextureDescriptor{
             pf = drawablePixelFormat
         }
         d.pixelFormat = pf
+        
+        d.mipmapLevelCount = mipmapLevelCount<0 ? calculateMaxMipmapLevels(
+            width: size.width, height: size.height) : mipmapLevelCount
+        
         return d
     }
 }
@@ -284,9 +295,21 @@ public extension TextureDescriptor{
         d.pixelFormat = .fromDrawable
         return d
     }
+    func fixedSize(_ squareSize: Int) -> TextureDescriptor {
+        var d = self
+        let mtlSize = MTLSize(width: squareSize, height: squareSize, depth: 1)
+        d = fixedSize(mtlSize)
+        return d
+    }
     func fixedSize(_ size: CGSize) -> TextureDescriptor {
         var d = self
         let mtlSize = MTLSize(width: Int(size.width), height: Int(size.height), depth: 1)
+        d = fixedSize(mtlSize)
+        return d
+    }
+    func fixedSize(_ size: (Int, Int)) -> TextureDescriptor {
+        var d = self
+        let mtlSize = MTLSize(width: size.0, height: size.1, depth: 1)
         d = fixedSize(mtlSize)
         return d
     }
@@ -295,9 +318,14 @@ public extension TextureDescriptor{
         d.size = .fixed(mtlSize)
         return d
     }
-    func sizeFromViewport(scaled: Double = 1) -> TextureDescriptor {
+    func sizeFromViewport(scaled: simd_double2) -> TextureDescriptor {
         var d = self
         d.size = .fromViewport(scaled)
+        return d
+    }
+    func sizeFromViewport(scaled: Double = 1) -> TextureDescriptor {
+        var d = self
+        d.size = .fromViewport(.init(x: scaled, y: scaled))
         return d
     }
     func storageMode(_ storageMode: MTLStorageMode) -> TextureDescriptor {
@@ -308,6 +336,11 @@ public extension TextureDescriptor{
     func mipmaps(_ mipmapLevelCount: Int) -> TextureDescriptor {
         var d = self
         d.mipmapLevelCount = mipmapLevelCount
+        return d
+    }
+    func mipmapsAll() -> TextureDescriptor {
+        var d = self
+        d.mipmapLevelCount = -1
         return d
     }
     func manual() -> TextureDescriptor {
@@ -321,4 +354,13 @@ public extension MTLTexture{
     var mtlSize: MTLSize{
         .init(width: self.width, height: self.height, depth: self.depth)
     }
+}
+
+func calculateMaxMipmapLevels(width: Int, height: Int) -> Int{
+
+    let heightLevels = ceil(log2(Double(height)))
+    let widthLevels = ceil(log2(Double(width)))
+    let mipCount = (heightLevels > widthLevels) ? heightLevels : widthLevels
+
+    return Int(mipCount)
 }

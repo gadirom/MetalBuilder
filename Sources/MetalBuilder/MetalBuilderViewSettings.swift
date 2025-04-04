@@ -12,7 +12,10 @@ public struct MetalBuilderViewSettings{
                 clearColor: MTLClearColor? = nil,
                 framebufferOnly: Bool? = nil,
                 preferredFramesPerSecond: Int? = nil,
-                sampleCount: Int? = nil) {
+                sampleCount: Int? = nil,
+                useEDR: Bool = false,
+                pixelFormat: MTLPixelFormat? = nil,
+                toneMapping: Bool=false) {
         self.depthPixelFormat = depthPixelFormat
         self.stencilPixelFormat = stencilPixelFormat
         self.clearDepth = clearDepth
@@ -23,6 +26,9 @@ public struct MetalBuilderViewSettings{
         self.framebufferOnly = framebufferOnly
         self.preferredFramesPerSecond = preferredFramesPerSecond
         self.sampleCount = sampleCount
+        self.useEDR = useEDR
+        self.pixelFormat = pixelFormat
+        self.toneMapping = toneMapping
     }
     var depthPixelFormat: MTLPixelFormat?
     var clearDepth: Double?
@@ -38,10 +44,16 @@ public struct MetalBuilderViewSettings{
     var preferredFramesPerSecond: Int?
     
     var sampleCount: Int?
+    
+    var useEDR: Bool
+    
+    var pixelFormat: MTLPixelFormat?
+    
+    var toneMapping: Bool
 }
 
 extension MetalBuilderViewSettings{
-    func apply(toView view: MTKView){
+    func apply(toView view: MTKView) -> MTLPixelFormat?{
         
         if let preferredFramesPerSecond = self.preferredFramesPerSecond{
             view.preferredFramesPerSecond = preferredFramesPerSecond
@@ -80,5 +92,42 @@ extension MetalBuilderViewSettings{
         if let sampleCount = self.sampleCount{
             view.sampleCount = sampleCount
         }
+        
+        return setupEDR(view: view,
+                        pixelFormat: pixelFormat,
+                        toneMapping: toneMapping
+        )
+    }
+    func setupEDR(view: MTKView,
+                  pixelFormat: MTLPixelFormat?,
+                  toneMapping: Bool) -> MTLPixelFormat?{
+        
+        if let l = view.layer as? CAMetalLayer, let sc = l.colorspace{
+            if useEDR{
+                print("setting EDR")
+                l.wantsExtendedDynamicRangeContent = true
+                
+                let extCS = CGColorSpaceCreateExtendedLinearized(sc)
+                //let linearColorSpace = CGColorSpace.extendedLinearDisplayP3
+                //let edrMaxLinear = cgcolorcreat
+                l.colorspace = extCS
+                
+                if toneMapping, CAEDRMetadata.isAvailable{
+                    print("tone mapping: hlg")
+                    l.edrMetadata = .hlg // ??
+                }
+            }
+            
+            print("was pixelFormat: \(l.pixelFormat.rawValue)")
+            //.bgr10a2Unorm
+            if let pixelFormat{
+                print("pixelFormat: \(pixelFormat.rawValue)")
+                l.pixelFormat = pixelFormat
+            }
+            
+            return l.pixelFormat
+        }
+        return nil
+//        renderData.context.potentialEDRHeadroom = Float(view.window?.screen.potentialEDRHeadroom ?? 1)
     }
 }

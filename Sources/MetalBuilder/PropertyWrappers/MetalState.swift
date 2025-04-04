@@ -1,6 +1,4 @@
 
-import SwiftUI
-
 @propertyWrapper
 public final class MetalState<T>{
     public var wrappedValue: T
@@ -13,6 +11,8 @@ public final class MetalState<T>{
     }
     var metalType: String?
     var metalName: String?
+    
+    public var onChange: (()->())?
    
     public init(wrappedValue: T, metalType: String?=nil, metalName: String?=nil){
         self.wrappedValue = wrappedValue

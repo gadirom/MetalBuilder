@@ -24,6 +24,9 @@ public final class MetalBuilderRenderingContext{
     /// ```
     @MetalState(metalName: "viewportToDeviceTransform") public var viewportToDeviceTransform = simd_float3x3()
     
+    @MetalState(metalName: "currentEDRHeadroom") public var currentEDRHeadroom: Float = 1
+    @MetalState(metalName: "potentialEDRHeadroom") public var potentialEDRHeadroom: Float = 1
+    
     @MetalState public var firstFrame = true
     
     public let device: MTLDevice

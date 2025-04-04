@@ -88,7 +88,7 @@ public struct FragmentShader: ShaderProtocol{
         let (type, decl) = try getFragmentOut(label: label)
         let fragmentName = fragmentNameFromLabel(label)
         
-        var args = "\(vertexOut) in [[stage_in]]"
+        let args = "\(vertexOut) in [[stage_in]]"
         
         return """
                 \(decl) fragment \(type) \(fragmentName)(\(args)){

@@ -169,7 +169,7 @@ struct ContentView: View {
     
     @State var json: Data?
     
-    let asyncGroupInfo = AsyncGroupInfo(runOnStartup: false)
+    let asyncGroupInfo = AsyncGroupInfo<NoAsyncParameters>(runOnStartup: false)
     
     var viewSettings: MetalBuilderViewSettings{
         MetalBuilderViewSettings(depthPixelFormat: nil,

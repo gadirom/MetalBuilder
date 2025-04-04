@@ -1,12 +1,13 @@
 import SwiftUI
 import MetalKit
 
-public func gpuStartCapture(){
+public func gpuStartCapture(_ object: Any?=nil){
     // capture
-    let device = MTLCreateSystemDefaultDevice()
+    
+    let object = object != nil ? object : MTLCreateSystemDefaultDevice()
 
     let captureDescriptor = MTLCaptureDescriptor()
-    captureDescriptor.captureObject = device
+    captureDescriptor.captureObject = object
     // destination is developerTools by default
 
     try? MTLCaptureManager.shared().startCapture(with: captureDescriptor)
@@ -31,7 +32,12 @@ public protocol AsyncParameters{
     mutating func add(_ new: Self?)
 }
 
-public protocol AsyncGroupInfoProtocol: class{
+public struct NoAsyncParameters: AsyncParameters{
+    public static var nothing: NoAsyncParameters{ .init() }
+    public mutating func add(_ new: NoAsyncParameters?) {}
+}
+
+public protocol AsyncGroupInfoProtocol: AnyObject{
     func startup(_ device: MTLDevice)
     var pass: AsyncGroupPass? { get set }
     var commandQueue: MTLCommandQueue? { get set }
@@ -39,12 +45,14 @@ public protocol AsyncGroupInfoProtocol: class{
 
 public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
     public init(label: String = "Async Queue",
-                runOnStartup: Bool=false,
+                startupParameters: T? = nil,
                 rerun: Bool=true,
+                captureAsyncOnStartup: Bool = false,
                 completion: @escaping (T)->() = {_ in }){ //rerun if called when busy(e.g. to match probable changed value)
         self.label = label
-        self.runOnStartup = runOnStartup
+        self.startupParameters = startupParameters
         self.rerunIfCalledWhenBusy = rerun
+        self.captureAsyncOnStartup = captureAsyncOnStartup
         self.completion = completion
         //self.whenBusy = whenBusy
         
@@ -87,7 +95,7 @@ public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
     }
     var _busy: Bool = true
     
-    var runOnStartup: Bool
+    var startupParameters: T?
     var rerunIfCalledWhenBusy: Bool
     
     private let functionCheckQueue = DispatchQueue(label: "Metal Builder async group check queue",
@@ -96,6 +104,8 @@ public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
                                               //qos: .background,
                                               attributes: .concurrent)
     var wasCalledWhenBusy: Bool = false
+    
+    var captureAsyncOnStartup: Bool
     
     //var renderInfo: GlobalRenderInfo!
     public var commandQueue: MTLCommandQueue?{
@@ -112,14 +122,17 @@ public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
     
     let completedGPUWorkSemaphore = DispatchSemaphore(value: 1)
     
-    public func run(_ parameters: T?=nil, once: Bool=false) throws{
+    public func run(_ parameters: T?=nil, once: Bool=false, captureAsync: Bool=false) throws{
+        
+        print("run!!!!")
+        
         functionCheckQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
             
             guard !self.busy.wrappedValue
             else {
                 print("running: busy")
-                print("adding updates: ", parameters)
+                print("adding updates: ", parameters as Any)
                 self.tempParameters.add(parameters)
                 //self.whenBusy(parameters)
                 if !once {
@@ -130,24 +143,29 @@ public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
             
             self._busy = true
             print("accumulated tempParameters was: ", self.tempParameters)
-            print("new parameters are: ", parameters)
+            print("new parameters are: ", parameters as Any)
             self.tempParameters.add(parameters)
             self.parameters = tempParameters
             tempParameters = .nothing
             
-            try! self.dispatch(once: once)
+            try! self.dispatch(once: once, capture: captureAsync)
         }
     }
     
     public func startup(_ device: MTLDevice){
         _busy = false
-        if runOnStartup{
-            try! dispatch(once: true)
+        if let startupParameters{
+            try! run(startupParameters, once: true, captureAsync: captureAsyncOnStartup)
         }
     }
     
-    func dispatch(once: Bool) throws{
+    func dispatch(once: Bool, capture: Bool) throws{
         functionQueue.sync{
+            
+            if capture{
+                gpuStartCapture(commandQueue)
+            }
+            
             self.commandBuffer = try! self.startEncode()
             
             let renderPassDescriptor = MTLRenderPassDescriptor()
@@ -161,17 +179,17 @@ public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
             
             print("async work: waiting for result to copy")
             
-            //gpuStartCapture()
-            
             try! self.pass!.encode(passInfo: passInfo)
             
             self.endEncode(commandBuffer: self.commandBuffer)
             
-            //gpuStopCapture()
-            
             print("async work: ended encoding")
             
             completedGPUWorkSemaphore.wait()
+            
+            if capture{
+                gpuStopCapture()
+            }
             
             print("async work: ended GPU work")
             
@@ -186,9 +204,10 @@ public class AsyncGroupInfo<T: AsyncParameters>: AsyncGroupInfoProtocol{
                     self.parameters = tempParameters
                     tempParameters = .nothing
                     
-                    try! self.dispatch(once: false)
+                    try! self.dispatch(once: false, capture: capture)
                 }else{
                     self._complete = true
+                    self.startupParameters = nil
                     completion(self.parameters)
                 }
             }

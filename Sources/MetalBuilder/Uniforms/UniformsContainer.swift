@@ -1,7 +1,7 @@
 import MetalKit
 import SwiftUI
 import OrderedCollections
-import CoreMedia
+//import CoreMedia
 
 /// The type for an object that contains uniforms values.
 public final class UniformsContainer: ObservableObject{
@@ -23,8 +23,10 @@ public final class UniformsContainer: ObservableObject{
     let saveToDefaults: Bool
     let packed: Bool
     
-    var pointerBinding: Binding<UnsafeRawPointer?>{
-        Binding<UnsafeRawPointer?>(
+    @Published var groupState: OrderedDictionary<String, Bool> = [:]
+    
+    var pointerBinding: MetalBinding<UnsafeRawPointer?>{
+        .init(
             get: { self.pointer }, set: { _ in })
     }
     
@@ -45,6 +47,13 @@ public final class UniformsContainer: ObservableObject{
         self.length = length
         self.saveToDefaults = saveToDefaults
         self.packed = packed
+        
+        self.groupState = .init(uniqueKeysWithValues: dict.compactMap{ d in
+            d.value.group
+        }.noDublicates().map{ ($0, false) })
+        
+        print(dict)
+        
     }
 }
 extension UniformsContainer: Equatable{
@@ -102,7 +111,7 @@ public extension UniformsContainer{
     
     /// Setups Uniforms Container before rendering
     /// - Parameter device: Metal device.
-    public func setup(device: MTLDevice){
+    func setup(device: MTLDevice){
         print("Uniforms Container Setup")
         self.device = device
         if pointer == nil{

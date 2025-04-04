@@ -59,6 +59,10 @@ public class ArgumentBuffer{
     
     static var argumentBuffersSingleton: [ArgumentBuffer] = []
     
+    static func clearAll(){
+        Self.argumentBuffersSingleton = []
+    }
+    
     let name: String
     let type: String
     var descriptor: ArgumentBufferDescriptor!

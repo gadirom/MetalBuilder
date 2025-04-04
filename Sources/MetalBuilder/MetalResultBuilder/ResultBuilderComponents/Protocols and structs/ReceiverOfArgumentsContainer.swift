@@ -194,4 +194,14 @@ public extension ReceiverOfArgumentsContainer{
         }
         return c
     }
+    func drawableTexture(argument: MetalTextureArgument,
+                         fitThreads: Bool = true,
+                         gridScale: MBGridScale?=nil)->Self{
+        var c = self
+        _=c.argumentsContainer.drawable(argument: argument)
+        if fitThreads || gridScale != nil{
+            c.gridFit = .drawable(argument.name, gridScale ?? (1,1,1))
+        }
+        return c
+    }
 }

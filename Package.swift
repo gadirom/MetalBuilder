@@ -6,7 +6,7 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "MetalBuilder",
-    platforms: [.iOS(.v16)],
+    platforms: [.macOS(.v11), .iOS(.v17), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
@@ -15,13 +15,15 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
+        //.package(path: "MetalBuilderMacros"),
         .package(url: "https://github.com/apple/swift-collections", from: "1.0.2"),
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
+        .package(url: "https://github.com/apple/swift-syntax", from: "510.0.0"),
     ],
     targets: [
         .macro(
             name: "MetalBuilderMacros",
             dependencies: [
+                //.product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
             ]
@@ -29,7 +31,12 @@ let package = Package(
         
         .target(
             name: "MetalBuilder",
-            dependencies: [.product(name: "OrderedCollections", package: "swift-collections")]),
+            dependencies: [.product(name: "OrderedCollections", package: "swift-collections"),
+                           "MetalBuilderMacros",
+                          ]),
+        
+        
+        
         .testTarget(
             name: "MetalBuilderTests",
             dependencies: ["MetalBuilder"]),

@@ -16,6 +16,10 @@ extension MetalBuilderRendererError: LocalizedError{
 
 public final class MetalBuilderRenderer{
     
+    init(){
+        ArgumentBuffer.clearAll()
+    }
+    
     var renderData: RenderData!
     
     unowned var device: MTLDevice!
@@ -114,9 +118,6 @@ public extension MetalBuilderRenderer{
               renderPassDescriptor: MTLRenderPassDescriptor) throws{
        
         commandBuffer = try startEncode()
-        
-        timer.count()
-        renderData.context.time = timer.time
         
         for pass in renderData.passes{
             

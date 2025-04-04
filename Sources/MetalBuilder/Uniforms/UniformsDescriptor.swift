@@ -42,6 +42,11 @@ public extension UniformsDescriptor{
         u.currentGroup = group
         return u
     }
+    func clearCurrentGroup()->UniformsDescriptor{
+        var u = self
+        u.currentGroup = nil
+        return u
+    }
     
     func float(_ name: String, range: ClosedRange<Float>? = nil, value: Float = 0, show: Bool=true, group: String?=nil)->UniformsDescriptor{
         var u = self
@@ -76,7 +81,7 @@ public extension UniformsDescriptor{
         var u = self
         let _ = desc.dict.map{ key, value in
             var value = value
-            if let currentGroup{
+            if let currentGroup, value.group == nil{
                 value.group = currentGroup
             }
             u.dict[key] = value

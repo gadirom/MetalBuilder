@@ -1,6 +1,6 @@
 import MetalPerformanceShaders
 
-extension MTLSize: Equatable{
+extension MTLSize: @retroactive Equatable{
     public static func == (lhs: MTLSize, rhs: MTLSize) -> Bool {
         lhs.width == rhs.width && lhs.height == rhs.height && lhs.depth == rhs.depth
     }

@@ -94,7 +94,7 @@ extension MTLPackedFloat3{
     }
 }
 
-extension MTLPackedFloat3: ExpressibleByArrayLiteral
+extension MTLPackedFloat3: @retroactive ExpressibleByArrayLiteral
 {
     public init(arrayLiteral: Float...)
    {

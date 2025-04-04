@@ -1,4 +1,5 @@
 import MetalKit
+import OrderedCollections
 
 ///Make a struct conform to this protocol if you want it to be automatically declared in Metal library source
 ///when using this type for buffer and bytes arguments in Metal functions
@@ -11,4 +12,18 @@ import MetalKit
 ///hence only one scalar type is allowed: Float
 public protocol MetalStruct{
     init()
+    var dict: OrderedDictionary<String, (FieldStyle, String, Int, Bool)>{ get }
+    subscript(key: String, index: Int) -> any BinaryFloatingPoint { get set }
+}
+public extension MetalStruct{
+    var dict: OrderedDictionary<String, (FieldStyle, String, Int, Bool)>{
+        [:]
+    }
+    subscript(key: String, index: Int) -> any BinaryFloatingPoint {
+        get{ 0 }
+        set{     }
+    }
+//    static var storedState: StoredMetalState<Self>{
+//        StoredMetalState(wrappedValue: Self.init())
+//    }
 }

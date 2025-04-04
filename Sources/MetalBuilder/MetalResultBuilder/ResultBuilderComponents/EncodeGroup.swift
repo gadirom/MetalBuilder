@@ -25,6 +25,17 @@ public struct EncodeGroup: MetalBuilderComponent{
         self.once = once
     }
     
+    public init(repeating: MetalBinding<Int> = .constant(1),
+                active: MetalBinding<Bool> = .constant(true),
+                once: Bool = false,
+                //librarySource: String? = nil,
+                metalContent: MetalContent) {
+        self.metalContent = metalContent
+        self.repeating = repeating
+        self.active = active
+        self.once = once
+    }
+    
     /// Creates a group component.
     /// - Parameters:
     ///   - repeating: Number of repeated passes for the group.

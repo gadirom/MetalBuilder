@@ -9,12 +9,12 @@ import SwiftUI
 /// You should clear them all to avoid flickering or other artifacts.
 /// To clear all the drawables the ClearRender component should be active for several frames.
 public struct ClearRender: MetalBuilderComponent, Renderable{
+    public init(_ label: String, renderableData: RenderableData = RenderableData()) {
+        self.label = label
+        self.renderableData = renderableData
+    }
     
     let label: String
     
-    public var renderableData = RenderableData()
-    
-    public init(_ label: String){
-        self.label = label
-    }
+    public var renderableData: RenderableData
 }

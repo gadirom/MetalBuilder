@@ -82,7 +82,7 @@ protocol BytesProtocol{
 }
 
 struct RawBytes: BytesProtocol{
-    let binding: Binding<UnsafeRawPointer?>
+    let binding: MetalBinding<UnsafeRawPointer?>
     let length: Int
     var index: Int
 

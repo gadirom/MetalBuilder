@@ -37,21 +37,29 @@ public struct UniformsView: View {
                         }
                     }
                 }
-                ForEach(values.indices, id:\.self){ id in
-                    let value = values[id]
-                    let (name, property) = uniforms.dict.elements[id]
-                    if property.show{
-                        switch property.type{
-                        case .float: SingleSlider(label: name,
-                                                  range: property.range ?? (0...1),
-                                                  initialValue: value[0]){
-                            uniforms.setFloat($0, for: name)
-                            onChange(property.group)
-                            //saveToDefaults(value: [$0], name: name)
-                        }
-                        default: MultiSlider(label: name,
-                                             range: property.range ?? (0...1),
-                                             initialValue: value) { value in
+                ForEach(uniforms.groupState.keys + ["__Nill_Group__"], id:\.self){ group in
+                    if group != "__Nill_Group__"{
+                        GroupTitleView(group: group, groupState: $uniforms.groupState)
+                    }
+                    ForEach(values.indices, id:\.self){ id in
+                        let value = values[id]
+                        let (name, property) = uniforms.dict.elements[id]
+                        
+                        let groupCheck = property.group == group
+                        let visibility = (groupCheck && uniforms.groupState[group]!) || (property.group == nil && group == "__Nill_Group__")
+                        
+                        if property.show && visibility {
+                            switch property.type{
+                            case .float: SingleSlider(label: name,
+                                                      range: property.range ?? (0...1),
+                                                      initialValue: value[0]){
+                                uniforms.setFloat($0, for: name)
+                                onChange(property.group)
+                                //saveToDefaults(value: [$0], name: name)
+                            }
+                            default: MultiSlider(label: name,
+                                                 range: property.range ?? (0...1),
+                                                 initialValue: value) { value in
                                 //saveToDefaults(value: value, name: name)
                                 switch value.count{
                                 case 2: uniforms.setFloat2(value, for: name)
@@ -59,7 +67,8 @@ public struct UniformsView: View {
                                 case 4: uniforms.setFloat4(value, for: name)
                                 default: break
                                 }
-                            onChange(property.group)
+                                onChange(property.group)
+                            }
                             }
                         }
                     }
@@ -97,6 +106,55 @@ extension UniformsView{
         values = []
         DispatchQueue.main.asyncAfter(deadline: .now()+0.05){
             loadValues()
+        }
+    }
+}
+
+struct GroupTitleView: View {
+    
+    let group: String
+    @Binding var groupState: OrderedDictionary<String, Bool>
+    
+    @State var rotation: CGFloat = 0
+    
+    func changeRotation(){
+            rotation = groupState[group]! ? .pi/2 : 0
+    }
+    
+    func changeGroupState(){
+        withAnimation(.easeOut) {
+            groupState[group]?.toggle()
+            changeRotation()
+        }
+    }
+    
+    var body: some View {
+        HStack{
+            Button {
+                changeGroupState()
+            } label: {
+                Image(systemName: "arrowtriangle.right")
+                    .rotationEffect(.init(radians: rotation))
+            }
+            VStack{
+                Divider()
+            }
+            Button {
+                changeGroupState()
+            } label: {
+                Text(group)
+            }
+            VStack{
+                Divider()
+            }
+            Button {
+                changeGroupState()
+            } label: {
+                Image(systemName: "arrowtriangle.left")
+                    .rotationEffect(.init(radians: -rotation))
+            }
+        }.onAppear{
+            changeRotation()
         }
     }
 }

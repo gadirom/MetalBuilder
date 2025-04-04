@@ -48,7 +48,7 @@ class BlitTexturePass: MetalPass{
                                      destinationSlice: destinationSlice!,
                                      destinationLevel: 0,
                                      sliceCount: component.sliceCount.wrappedValue,
-                                     levelCount: 1)
+                                     levelCount: component.mipmapsCount.wrappedValue)
             blitTextureEncoder?.endEncoding()
         }
     }

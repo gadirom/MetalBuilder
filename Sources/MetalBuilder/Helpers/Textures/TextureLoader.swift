@@ -4,6 +4,7 @@ import MetalKit
 public struct ImageForTexture{
     let url: URL
     let sRGB: Bool
+    //let mipmapsLevel: Int?
     let generateMipmaps: Bool
     let origin: MTKTextureLoader.Origin?
     /// Creates the image descriptor
@@ -14,10 +15,12 @@ public struct ImageForTexture{
     ///   - origin: the is flipped upon load according to this option.
     public init(url: URL,
                 sRGB: Bool = true,
+                //mipmapsLevel: Int? = nil,
                 generateMipmaps: Bool = false,
                 origin: MTKTextureLoader.Origin? = nil) {
         self.url = url
         self.sRGB = sRGB
+        //self.mipmapsLevel = mipmapsLevel
         self.generateMipmaps = generateMipmaps
         self.origin = origin
     }

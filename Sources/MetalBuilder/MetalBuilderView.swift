@@ -70,10 +70,19 @@ public struct MetalBuilderView: UIViewRepresentable {
         context.coordinator.viewSettings = viewSettings
         //context.coordinator.mtkView = mtkView
         
+        let pixelFormat =
+        if let pixelFormat = viewSettings.apply(toView: mtkView){
+            pixelFormat
+        }else{
+            mtkView.colorPixelFormat
+        }
+        
+        print("color pixel format: \(pixelFormat.rawValue)")
+        
         let renderInfo = GlobalRenderInfo(device: mtkView.device!,
                                           depthPixelFormat: viewSettings.depthPixelFormat,
                                           stencilPixelFormat: viewSettings.stencilPixelFormat,
-                                          pixelFormat: mtkView.colorPixelFormat)
+                                          pixelFormat: pixelFormat)
         
         context.coordinator.setupRenderer(librarySource: librarySource,
                                           helpers: helpers,
@@ -141,10 +150,12 @@ public struct MetalBuilderView: UIViewRepresentable {
         }
         
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-            viewSettings.apply(toView: view)
+            //
 //            if wasInitialized{
 //                renderer?.setDepthStencilTexture(view.depthStencilTexture)
 //            }
+//            print("'mtkView': pixel format: \(view.colorPixelFormat.rawValue)")
+            
             renderer?.setSize(size: size)
             renderer?.setScaleFactor(view.contentScaleFactor)
             onResizeCode?(size)
@@ -164,10 +175,20 @@ public struct MetalBuilderView: UIViewRepresentable {
             guard let renderPassDescriptor = view.currentRenderPassDescriptor
             else { return }
             
-            renderer?.setDepthStencilTexture(view.depthStencilTexture)
+//            if(renderer!.timer.time == 0){
+//                print("'draw': pixel format: \(view.colorPixelFormat.rawValue)")
+//            }
+            
+            renderer!.setDepthStencilTexture(view.depthStencilTexture)
+            
+            renderer!.renderData.context.currentEDRHeadroom = Float(view.window?.screen.currentEDRHeadroom ?? 1)
+            renderer!.renderData.context.potentialEDRHeadroom = Float(view.window?.screen.potentialEDRHeadroom ?? 1)
+            
+            renderer!.timer.count()
+            renderer!.renderData.context.time = renderer!.timer.time
             
             do {
-                try renderer?.draw(drawable: drawable,
+                try renderer!.draw(drawable: drawable,
                                    renderPassDescriptor: renderPassDescriptor)
             } catch { fatalError(error.localizedDescription)  }
         }
@@ -180,3 +201,5 @@ public struct MetalBuilderView: UIViewRepresentable {
         }
     }
 }
+
+

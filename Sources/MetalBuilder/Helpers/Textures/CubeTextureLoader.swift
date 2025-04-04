@@ -30,6 +30,8 @@ public extension MTKTextureLoader{
         
         let texture = try self.newTexture(URL: URL, options: options)
         
+        //print(texture.pixelFormat.rawValue)
+        
         let faceSide = texture.height/3
         
         mipmapped = mipmapped || generateMipmaps

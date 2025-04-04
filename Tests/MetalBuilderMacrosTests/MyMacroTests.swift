@@ -8,13 +8,80 @@ import XCTest
 import MetalBuilderMacros
 
 let testMacros: [String: Macro.Type] = [
-    "UniformsStruct": UniformsStructMacro.self
+    "Field": FieldMacro.self,
+    "DictionarySubscript": DictionarySubscriptMacro.self
+    //"UniformsStruct": UniformsStructMacro.self
 ]
 //#endif
 
 final class MyMacroTests: XCTestCase {
+    
+    func testNewMacro() {
+                assertMacroExpansion(
+                """
+                @DictionarySubscript
+                struct X: MetalStruct{
+                    @Field("hide")
+                    var x: Float = 0
+                    var dict: [String: String] {
+                        []
+                    }
 
-    func testUniformsStructMacro() {
+                    subscript(key: String) -> Any {
+                        get {
+                            switch key {
+
+                            default:
+                                fatalError("Invalid key: \(key)")
+                            }
+                        }
+                        set {
+                            switch key {
+
+                            default:
+                                fatalError("Invalid key: \(key)")
+                            }
+                        }
+                    }
+                }
+                """,
+                expandedSource:
+                """
+                struct UniformsForBlock{
+                    var property1 = Uniform(simd_float2([1, 0]),     range: 0...1, editable: false)
+                    var property2 = Uniform(simd_uint3 ([3, 2, 1]),  range: 0...10)
+                
+                    init(buffer: MTLBufferContainer<UInt8>, setOffset: (Int) -> ()) {
+                        var offset = 0
+                        property1 = Uniform(binding: Binding<simd_float2>(get: {
+                                                            buffer.getUniformValue(offset: offset)
+                                                        }, set: { value in
+                                                            buffer.setUniformValue(value, offset: offset)
+                                                        }),
+                                             range: 0 ... 1,
+                                             initValue: simd_float2([1, 0]),
+                                             editable: false,
+                                             offset: offset)
+                        offset += MemoryLayout.stride(ofValue: simd_float2([1, 0]))
+                        property2 = Uniform(binding: Binding<simd_uint3 >(get: {
+                                                            buffer.getUniformValue(offset: offset)
+                                                        }, set: { value in
+                                                            buffer.setUniformValue(value, offset: offset)
+                                                        }),
+                                             range: 0 ... 10,
+                                             initValue: simd_uint3 ([3, 2, 1]),
+                                             editable: true,
+                                             offset: offset)
+                        offset += MemoryLayout.stride(ofValue: simd_uint3 ([3, 2, 1]))
+                        setOffset(offset)
+                    }
+                }
+                """,
+                    macros: testMacros
+                )
+            }
+
+/*    func testUniformsStructMacro() {
             assertMacroExpansion(
             """
             @UniformsStruct
@@ -58,5 +125,5 @@ final class MyMacroTests: XCTestCase {
                 macros: testMacros
             )
         }
+ */
 }
-

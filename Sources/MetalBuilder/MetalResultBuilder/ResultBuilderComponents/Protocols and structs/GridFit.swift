@@ -64,7 +64,12 @@ extension GridFit{
             throw MetalBuilderComputeError
                 .gridFitTextureIsNil("fitTextrure \(container.label ?? "") for threads dispatching for a kernel is nil!")
         }
-        return MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
+        
+        if container.descriptor.type == .typeCube{
+            return MTLSize(width: texture.width, height: texture.height, depth: 6)
+        }else{
+            return MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
+        }
     }
     func fitBuf(buf: BufferContainer) throws -> MTLSize{
         guard let count = buf.count
@@ -180,9 +185,9 @@ extension GridFit{
                 2
             }
         case .typeCube:
-            2// ???
+            3
         case .typeCubeArray:
-            2// ???
+            3// ???
         case .type3D:
             3
         case nil:
@@ -196,7 +201,9 @@ extension GridFit{
 }
 
 func isThereIdentifierInCode(code: String, identifier: String) -> Bool{
-    let regX = try! Regex("\\b\(identifier)\\b")
+    //let regX = try! Regex("\\b\(identifier)\\b")
+    
+    let regX = try! Regex("(^|[^a-zA-Z0-9_])(\(identifier))([^a-zA-Z0-9_]|$)")
     return code.contains(regX)
 }
 

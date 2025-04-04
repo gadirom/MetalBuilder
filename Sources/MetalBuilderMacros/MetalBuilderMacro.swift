@@ -3,9 +3,13 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+// Compiler plugin
 @main
-struct MetalBuilderMacroPlugin: CompilerPlugin {
+struct AutoInheritPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
-        UniformsStructMacro.self,
+        FieldMacro.self,
+        EditableMacro.self
+        //AutoInheritMacro.self,
+        //PropertyCollectorMacro.self
     ]
 }

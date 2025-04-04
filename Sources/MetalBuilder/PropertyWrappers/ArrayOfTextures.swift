@@ -55,11 +55,13 @@ public final class ArrayOfTexturesContainer{
     
     var heap: MTLHeapContainer?
     
+    //var useHeap = true
+    
     var _texturesCount: Int = 0
     
     var descriptor: MTLTextureDescriptor?
     
-    var textures: [MTLTextureContainer] = []// hold textures from the array
+    public private(set) var textures: [MTLTextureContainer] = []// hold textures from the array
     
     public subscript(id: Int) -> MTLTextureContainer?{
         textures[id]
@@ -74,7 +76,6 @@ public final class ArrayOfTexturesContainer{
 //    }
     
 }
-
 
 public extension ArrayOfTexturesContainer{
     
@@ -181,6 +182,24 @@ public extension ArrayOfTexturesContainer{
             texture.label = container.label
             container.texture = texture
         }
+        textures.append(container)
+    }
+    
+    
+    func addTextures(containers: [MTLTextureContainer]) throws{
+        textures = []
+        for c in containers{
+            try addTexture(container: c)
+        }
+        //useHeap = false
+    }
+    private func addTexture(container: MTLTextureContainer) throws{
+        
+        container.argBufferInfo = self.argBufferInfo.withArrayIndex(textures.count)
+                
+        container.label = "\(self.label ?? "unlabeledArrayOfTextures") \(self.textures.count)"
+        //container.texture!.label = container.label
+        
         textures.append(container)
     }
 }
