@@ -105,18 +105,19 @@ public struct ColorAttachment{
 
 /// default color attachments
 public var defaultColorAttachments: [Int: ColorAttachment] =
-[:]
-//0: ColorAttachment(texture: nil,
-//                       loadAction: Binding<MTLLoadAction>(
-//                        get: { .clear },
-//                        set: { _ in }),
-//                       storeAction: Binding<MTLStoreAction>(
-//                        get: { .store },
-//                        set: { _ in }),
-//                       clearColor: Binding<MTLClearColor>(
-//                        get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
-//                        set: { _ in } )
-//                       )]
+[
+    0: ColorAttachment(texture: nil,
+                           loadAction: MetalBinding<MTLLoadAction>(
+                            get: { .clear },
+                            set: { _ in }),
+                           storeAction: MetalBinding<MTLStoreAction>(
+                            get: { .store },
+                            set: { _ in }),
+                           clearColor: MetalBinding<MTLClearColor>(
+                            get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
+                            set: { _ in } )
+                           )
+]
 
 /// Stencil attachment
 public struct StencilAttachment{

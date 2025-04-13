@@ -3,9 +3,6 @@ import MetalPerformanceShaders
 
 public struct CVPixelBufferNonplanarToTexture: MetalBuildingBlock{
     public var context: MetalBuilderRenderingContext
-    public var helpers = ""
-    public var librarySource = ""
-    public var compileOptions: MetalBuilderCompileOptions? = nil
     
     @MetalBinding var buffer: CVPixelBuffer?
     @MetalBinding var newTextureIsNeeded: Bool
@@ -13,10 +10,12 @@ public struct CVPixelBufferNonplanarToTexture: MetalBuildingBlock{
     let texture: MTLTextureContainer
     let pixelFormat: MTLPixelFormat
     
-    @MetalState var ready = false
-    @MetalState var cacheCreated = false
+    @MetalTexture(.init().manual()) var tempTexture
     
-    @MetalState var textureCache: CVMetalTextureCache!
+    @MetalState private var ready = false
+    @MetalState private var cacheCreated = false
+    
+    @MetalState private var textureCache: CVMetalTextureCache!
     
     public init(context: MetalBuilderRenderingContext,
                 buffer: MetalBinding<CVPixelBuffer?>,
@@ -40,10 +39,10 @@ public struct CVPixelBufferNonplanarToTexture: MetalBuildingBlock{
                                   height: CVPixelBufferGetHeight(pixelBuffer))
                 print(size)
                 
-                let tempTexture = MTLTextureContainer(pixelTextureDesc
+                tempTexture.descriptor = pixelTextureDesc
                     .pixelFormat(pixelFormat)
                     .usage([.shaderRead, .shaderWrite])
-                    .fixedSize(size))
+                    .fixedSize(size)
                 try? tempTexture.create(device: device, drawable: passInfo.drawable!)
                 
                 if let texture = tempTexture.texture{

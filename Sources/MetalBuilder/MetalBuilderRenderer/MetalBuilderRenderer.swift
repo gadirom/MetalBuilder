@@ -152,6 +152,9 @@ public extension MetalBuilderRenderer{
     func setSize(size: CGSize){
         renderData.setViewport(size: size, device: device)
     }
+    func setPixelFormat(_ pixelFormat: MTLPixelFormat){
+        try? renderData.setPixelFormat(pixelFormat, device: device)
+    }
     func setDepthStencilTexture(_ texture: MTLTexture?){
         depthStencilTexture = texture
     }

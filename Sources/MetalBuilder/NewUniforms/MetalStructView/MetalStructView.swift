@@ -28,22 +28,26 @@ public class MetalStructViewFonts: ObservableObject{
 
 public struct MetalStructView<T: MetalStruct>: View {
     public init(_ state: StoredMetalState<T>, title: String?=nil,
+                convertToColorSpace: Color.RGBColorSpace = .displayP3,
                 onChange: (()->())?=nil){
         //self._state = ObservedObject(initialValue: state)
         self.state = state
         self.title = title
         self.state.onChange = onChange
+        self.convertToColorSpace = convertToColorSpace
     }
     
     let title: String?
     let state: StoredMetalState<T>
+    
+    let convertToColorSpace: Color.RGBColorSpace
     
     public var content: some View{
         ForEach(state.state.dict.elements, id: \.key){ (key, arg) in
             
             let info: EditableFieldInfo = arg
             let binding = state.valueBinding(key)
-            FieldView(binding: binding, info: info)
+            FieldView(binding: binding, info: info, convertToColorSpace: convertToColorSpace)
                 //.padding([.top, .bottom])
         }
     }
@@ -67,6 +71,8 @@ struct FieldView: View{
     let binding: ValueBinding
     let info: EditableFieldInfo
     
+    let convertToColorSpace: Color.RGBColorSpace
+    
     var body: some View {
         switch info.style {
         case .value(let valueStyle):
@@ -75,7 +81,8 @@ struct FieldView: View{
                             count: info.count,
                             title: info.title)
         case .color:
-            ColorPickerView(binding: binding, count: info.count, title: info.title)
+            ColorPickerView(binding: binding, count: info.count, title: info.title,
+                            convertToColorSpace: convertToColorSpace)
         case .choice(let array, let style):
             ChoiceView(binding: binding, choices: array,
                        style: style, count: info.count, title: info.title)

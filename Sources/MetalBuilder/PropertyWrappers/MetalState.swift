@@ -79,3 +79,19 @@ public extension BytesDescriptor{
     }
 }
 
+import SwiftUI
+
+public extension Binding{
+    var metalBinding: MetalBinding<Value>{
+        .init(get: { self.wrappedValue },
+              set: { self.wrappedValue = $0 })
+    }
+}
+
+
+public extension MetalBinding{
+    var swiftUIBinding: Binding<T>{
+        .init(get: self.get, set: self.set)
+    }
+}
+

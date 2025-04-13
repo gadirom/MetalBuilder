@@ -360,6 +360,14 @@ struct RenderData{
         }catch{ fatalError(error.localizedDescription) }
     }
     
+    mutating func setPixelFormat(_ pixelFormat: MTLPixelFormat, device: MTLDevice) throws{
+        if renderInfo.pixelFormat != pixelFormat{
+            renderInfo.pixelFormat = pixelFormat
+            try updateTextures(device: device)
+        }
+        
+    }
+    
     func createTextures(device: MTLDevice) throws{
         //create textures
         for tex in argumentsData.textures{

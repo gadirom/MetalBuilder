@@ -5,21 +5,20 @@ let pixelTextureDesc = TextureDescriptor()
 
 public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
     public var context: MetalBuilderRenderingContext
-    public var helpers = ""
-    public var librarySource = ""
-    public var compileOptions: MetalBuilderCompileOptions? = nil
     
     @MetalBinding var buffer: CVPixelBuffer?
     @MetalBinding var newTextureIsNeeded: Bool
     let texture: MTLTextureContainer
     
-    @MetalTexture(pixelTextureDesc) var textureY
-    @MetalTexture(pixelTextureDesc) var textureCbCr
+    @MetalTexture(.init().manual()) private var tempTexture
     
-    @MetalState var ready = false
-    @MetalState var cacheCreated = false
+    @MetalTexture(pixelTextureDesc) private var textureY
+    @MetalTexture(pixelTextureDesc) private var textureCbCr
     
-    @MetalState var textureCache: CVMetalTextureCache!
+    @MetalState private var ready = false
+    @MetalState private var cacheCreated = false
+    
+    @MetalState private var textureCache: CVMetalTextureCache!
     
     public init(context: MetalBuilderRenderingContext,
                 buffer: MetalBinding<CVPixelBuffer?>,
@@ -40,9 +39,9 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
                                   height: CVPixelBufferGetHeight(pixelBuffer))
                 print(size)
                 
-                let tempTexture = MTLTextureContainer(pixelTextureDesc
-                                                    .usage([.shaderRead, .shaderWrite])
-                                                    .fixedSize(size))
+                tempTexture.descriptor = pixelTextureDesc
+                        .usage([.shaderRead, .shaderWrite])
+                        .fixedSize(size)
                 try? tempTexture.create(device: device, drawable: passInfo.drawable!)
                 
                 if let texture = tempTexture.texture{
@@ -68,15 +67,11 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
                 .texture(textureY, argument: .init(type: "float", access: "sample", name: "textureY"))
                 .texture(textureCbCr, argument: .init(type: "float", access: "sample", name: "textureCbCr"))
                 .texture(texture, argument: .init(type: "float", access: "write", name: "out"), fitThreads: true)
-                .source("""
-                kernel void convertCVPixelBufferPlanesToTexture(uint2 gid [[thread_position_in_grid]],
-                                                                  uint2 size [[threads_per_grid]]){
+                .body("""
                 
-                    float2 uv = float2(gid)/float2(size);
+                    float2 uv = float2(gid)/float2(gidCount);
                     
-                    constexpr sampler colorSampler(mip_filter::linear,
-                                                   mag_filter::linear,
-                                                   min_filter::linear);
+                    constexpr sampler colorSampler(filter::linear);
                     
                     const float4x4 ycbcrToRGBTransform = float4x4(
                         float4(+1.0000f, +1.0000f, +1.0000f, +0.0000f),
@@ -92,7 +87,7 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
                     // Return converted RGB color
                     float4 col = ycbcrToRGBTransform * ycbcr;
                     out.write(col, gid);
-                }
+
                 """)
         }
     }

@@ -350,11 +350,30 @@ public extension TextureDescriptor{
     }
 }
 
+public func mipmapDimension(_ level: Int, baseWidth: Int, baseHeight: Int) -> (width: Int, height: Int) {
+
+    // Calculate the width and height for the given level
+    let width = max(baseWidth >> level, 1)  // Right shift to halve the size for each level
+    let height = max(baseHeight >> level, 1)  // Right shift to halve the size for each level
+    
+    return (width, height)
+}
+
 public extension MTLTexture{
+    func mipmapDimension(_ level: Int) -> (width: Int, height: Int){
+        MetalBuilder.mipmapDimension(level, baseWidth: width, baseHeight: height)
+    }
+    var size2D: (Int, Int){
+        (width, height)
+    }
+    var size_uint2: simd_uint2{
+        [UInt32(width), UInt32(height)]
+    }
     var mtlSize: MTLSize{
-        .init(width: self.width, height: self.height, depth: self.depth)
+        .init(width: width, height: height, depth: depth)
     }
 }
+
 
 func calculateMaxMipmapLevels(width: Int, height: Int) -> Int{
 

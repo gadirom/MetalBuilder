@@ -8,11 +8,15 @@
 import SwiftUI
 import MetalKit
 
+// This color picker always gives rgb values in pickerColorSpace
+// ignoring settings in SwiftUI's ColorPicker view
 struct ColorPickerView: View{
     
     let binding: ValueBinding
     let count: Int
     let title: String
+    
+    let convertToColorSpace: Color.RGBColorSpace
     
     @State var color: Color = .black
     
@@ -23,7 +27,14 @@ struct ColorPickerView: View{
             SubtitleView(text: title)
         }
         .onChange(of: color, initial: false){
-            if let rgba = color.float4{
+            print("Color: \(color)")
+            
+            let outColor = color.cgColor?.converted(
+                to: convertToColorSpace.cgColorSpace,
+                intent: .absoluteColorimetric,
+                options: nil)
+            
+            if let rgba = outColor?.float4{
                 binding.set(0, rgba.x)
                 binding.set(1, rgba.y)
                 binding.set(2, rgba.z)
@@ -42,10 +53,23 @@ struct ColorPickerView: View{
             if supportsOpacity{
                 let a = Float(binding.get(3))
                 let rgba = simd_float4(rgb, a)
-                color = rgba.color
+                color = rgba.color(convertToColorSpace)
             }else{
-                color = rgb.color
+                color = rgb.color(convertToColorSpace)
             }
+        }
+    }
+}
+
+extension Color.RGBColorSpace{
+    var cgColorSpace: CGColorSpace{
+        switch self {
+        case .sRGB:
+            CGColorSpace(name: CGColorSpace.sRGB)!
+        case .sRGBLinear:
+            CGColorSpace(name: CGColorSpace.linearSRGB)!
+        case .displayP3:
+            CGColorSpace(name: CGColorSpace.displayP3)!
         }
     }
 }

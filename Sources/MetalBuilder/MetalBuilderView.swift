@@ -70,12 +70,7 @@ public struct MetalBuilderView: UIViewRepresentable {
         context.coordinator.viewSettings = viewSettings
         //context.coordinator.mtkView = mtkView
         
-        let pixelFormat =
-        if let pixelFormat = viewSettings.apply(toView: mtkView){
-            pixelFormat
-        }else{
-            mtkView.colorPixelFormat
-        }
+        let pixelFormat = viewSettings.apply(toView: mtkView)
         
         print("color pixel format: \(pixelFormat.rawValue)")
         
@@ -166,6 +161,17 @@ public struct MetalBuilderView: UIViewRepresentable {
             guard wasInitialized
             else{ return }
             
+            renderer!.setDepthStencilTexture(view.depthStencilTexture)
+            
+            if viewSettings.edrSettingsChanged{
+                let pixelFormat = viewSettings.setupEDR(view: view)
+                renderer!.setPixelFormat(pixelFormat)
+                viewSettings.edrSettingsChanged = false
+            }
+            
+            renderer!.renderData.context.currentEDRHeadroom = Float(view.window?.screen.currentEDRHeadroom ?? 1)
+            renderer!.renderData.context.potentialEDRHeadroom = Float(view.window?.screen.potentialEDRHeadroom ?? 1)
+            
             guard isDrawing
             else{ return }
             
@@ -179,10 +185,7 @@ public struct MetalBuilderView: UIViewRepresentable {
 //                print("'draw': pixel format: \(view.colorPixelFormat.rawValue)")
 //            }
             
-            renderer!.setDepthStencilTexture(view.depthStencilTexture)
             
-            renderer!.renderData.context.currentEDRHeadroom = Float(view.window?.screen.currentEDRHeadroom ?? 1)
-            renderer!.renderData.context.potentialEDRHeadroom = Float(view.window?.screen.potentialEDRHeadroom ?? 1)
             
             renderer!.timer.count()
             renderer!.renderData.context.time = renderer!.timer.time

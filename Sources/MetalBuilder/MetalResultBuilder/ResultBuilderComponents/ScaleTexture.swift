@@ -8,7 +8,7 @@ public enum ScaleMethod{
         case bilinear
 }
 
-public enum ScaleType{
+public enum ScaleType: CaseIterable{
         case fit
         case fill
         case `default`
