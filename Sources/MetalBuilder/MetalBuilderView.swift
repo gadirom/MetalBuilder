@@ -118,10 +118,12 @@ public struct MetalBuilderView: UIViewRepresentable {
         var setupFunction: (()->())?
         var startupFunction: ((MTLDevice)->())?
         
+        @MainActor
         var viewSettings = MetalBuilderViewSettings()
         
         var background = false
         
+        @MainActor
         init(isDrawing: MetalBinding<Bool>){
             self._isDrawing = isDrawing
             super.init()

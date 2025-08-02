@@ -13,4 +13,8 @@ public struct ManualEncode: MetalBuilderComponent{
     public init(code: @escaping (MTLDevice, MetalPassInfo) -> ()) {
         self.code = code
     }
+    
+    public init(code: @escaping () -> ()) {
+        self.code = { _, _ in code() }
+    }
 }

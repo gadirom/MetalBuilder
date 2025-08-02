@@ -124,7 +124,7 @@ struct ContentView: View {
     
     var argBufForAutomata: ArgumentBuffer{
         .new("texAuto", desc: .init()
-            .arrayTextures(autoTexs, type: "float", access: "sample", name: "textures")
+            .arrayOfTextures(autoTexs, type: "float", access: "sample", name: "textures")
         )
     }
     

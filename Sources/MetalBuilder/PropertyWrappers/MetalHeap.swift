@@ -49,8 +49,16 @@ public final class MTLHeapContainer{
                 descriptors: [MTLTextureDescriptor?],
                 hazardTracking: MTLHazardTrackingMode) throws{
         
+        let storageMode: MTLStorageMode = descriptors.compactMap{ $0 }.reduce(.private) { partialResult, desc in
+            if desc.storageMode == .shared || partialResult == .shared{
+                .shared
+            }else{
+                .private
+            }
+        }
+        
         let heapDescriptor = MTLHeapDescriptor()
-        heapDescriptor.storageMode = .private
+        heapDescriptor.storageMode = storageMode
         heapDescriptor.size =  0
         heapDescriptor.hazardTrackingMode = hazardTracking
 

@@ -63,9 +63,12 @@ extension ArgumentsData{
             }.noDublicates()
         uniforms.append(contentsOf: newUniforms)
     }
+    
     func createUniforms(device: MTLDevice){
-        _ = uniforms.map{ u in
-            u.setup(device: device)
+        uniforms.forEach{ u in
+            //DispatchQueue.main.async{
+                u.setup(device: device)
+            //}
         }
     }
 }

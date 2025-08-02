@@ -9,14 +9,14 @@ import SwiftUI
 
 struct ValueView: View {
     
-    @EnvironmentObject var fonts: MetalStructViewFonts
+    @Environment(MetalStructViewFonts.self) var fonts
     
     let value: Double
     let integer: Bool
     
     var body: some View {
         if integer{
-            Text(value, format: .number.rounded(increment: 1))
+            Text(value.rounded(.towardZero), format: .number.rounded(increment: 1))
                 .font(fonts.valueFont)
                 .monospaced()
         }else{

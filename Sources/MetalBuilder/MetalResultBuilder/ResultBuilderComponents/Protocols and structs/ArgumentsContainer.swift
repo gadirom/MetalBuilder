@@ -168,7 +168,7 @@ extension ArgumentsContainer{
         
         self.separateShaderArguments.append(arg)
     }
-    mutating func uniforms(_ uniforms: UniformsContainer, name: String?){
+    @MainActor mutating func uniforms(_ uniforms: UniformsContainer, name: String?){
         self.uniforms.append(uniforms)
         let argument = MetalBytesArgument(uniformsContainer: uniforms, name: name)
         checkForSameNames(name: argument.name)

@@ -7,17 +7,21 @@
 import MetalKit
 import OrderedCollections
 
-public protocol EnumForPicker: CaseIterable, RawRepresentable where RawValue == UInt8{}
+public typealias EnumForPickerRawValue = UInt8
+
+public protocol EnumForPicker: CaseIterable, RawRepresentable where RawValue == EnumForPickerRawValue{
+    typealias Dict = OrderedDictionary<String, EnumForPickerRawValue>
+}
 public extension EnumForPicker{
-    static var all: [String]{
-        Self.allCases.map{ String(describing: $0) }
+    static var all: Dict{
+        .init(uniqueKeysWithValues: Self.allCases.map{ (String(describing: $0), $0.rawValue) })
     }
 }
-
-enum PickerVariants: UInt8, EnumForPicker{
-    case first
-    case second
-}
+//
+//enum PickerVariants: UInt8, EnumForPicker{
+//    case first
+//    case second
+//}
 /*
 @Editable
 struct X: MetalStruct{

@@ -53,11 +53,15 @@ public final class ArrayOfTexturesContainer{
     var maxCount: Int
     public var label: String?
     
-    var heap: MTLHeapContainer?
+    public var mtlTextures: [MTLTexture]{
+        self.textures.map{ $0.texture! }
+    }
+    
+    public var heap: MTLHeapContainer?
     
     //var useHeap = true
     
-    var _texturesCount: Int = 0
+    //var _texturesCount: Int = 0
     
     var descriptor: MTLTextureDescriptor?
     
@@ -78,6 +82,11 @@ public final class ArrayOfTexturesContainer{
 }
 
 public extension ArrayOfTexturesContainer{
+    
+    func clearAll(){
+        self.heap?.heap = nil
+        self.textures = []
+    }
     
     func create(textures inTextures: [MTLTexture?], 
                 usage: MTLTextureUsage = [.shaderRead, .shaderWrite],

@@ -7,34 +7,41 @@
 
 import SwiftUI
 import MetalKit
+import OrderedCollections
 
-typealias EditableFieldInfo = (style: FieldStyle,
-                               title: String,
-                               count: Int,
-                               integer: Bool)
-
-public class MetalStructViewFonts: ObservableObject{
-    public init(titleFont: Font = .title2, subtitleFont: Font = .title2, valueFont: Font = .title2.monospacedDigit()) {
+@Observable
+public class MetalStructViewFonts{
+    public init(titleFont: Font = .title2,
+                subtitleFont: Font = .title2,
+                valueFont: Font = .title2.monospacedDigit()) {
         self.titleFont = titleFont
         self.subtitleFont = subtitleFont
         self.valueFont = valueFont
     }
     public init(){}
     
-    @Published var titleFont: Font = .title2
-    @Published var subtitleFont: Font = .title2
-    @Published var valueFont: Font = .title2.monospacedDigit()
+    var titleFont: Font = .title2
+    var subtitleFont: Font = .title2
+    var valueFont: Font = .title2.monospacedDigit()
 }
 
 public struct MetalStructView<T: MetalStruct>: View {
-    public init(_ state: StoredMetalState<T>, title: String?=nil,
+    public init(_ state: StoredMetalState<T>,
+                title: String?=nil,
+                collapsable: Bool = true,
                 convertToColorSpace: Color.RGBColorSpace = .displayP3,
-                onChange: (()->())?=nil){
+                onChange: ((Bool)->())?=nil){
         //self._state = ObservedObject(initialValue: state)
         self.state = state
         self.title = title
-        self.state.onChange = onChange
+        self.collapsable = collapsable
+        //self.onChange = onChange
         self.convertToColorSpace = convertToColorSpace
+        
+        state.initForView(onChangeForUI: onChange)
+        //self.onChange = onChange
+        //self.helpers = state.getBindings(onChange: onChange ?? {_ in })
+        
     }
     
     let title: String?
@@ -42,54 +49,126 @@ public struct MetalStructView<T: MetalStruct>: View {
     
     let convertToColorSpace: Color.RGBColorSpace
     
+    let collapsable: Bool
+    
+    //@StateObject var updater = ViewUpdater()
+    
+    //var onChange: ((Bool)->())?
+    
+    //@State var initialized = false
+    
+//    func initialize(){
+//        //if !initialized{
+////            print("init: \(title)")
+//            state.generateHelpers(onChange: onChange ?? {_ in })
+//            
+//            state.onChange = { changedKeys in
+//                _=changedKeys.map{ key in
+//                    state.helpers[key]!.1.map{ helper in
+//                        helper.updateFromNonUI()
+//                    }
+//                }
+//                onChange?(false)
+//            }
+////        }else{
+////            print("tried to init twice: \(title)")
+////        }
+//        //initialized = true
+//    }
+    
+    //let helpers: OrderedDictionary<String, (EditableFieldInfo, [ObservableHelper])>
+    
+    //@State var wasInteraction = false
+    
+    //@State var interaction = false
+    
+//    func onStateChangeWithInteraction(){
+//        onChange?(true)
+//        //wasInteraction = false
+//    }
+//    func onStateChangeWithoutInteraction(){
+//        onChange?(false)
+//        //wasInteraction = false
+//    }
+    
     public var content: some View{
-        ForEach(state.state.dict.elements, id: \.key){ (key, arg) in
-            
-            let info: EditableFieldInfo = arg
-            let binding = state.valueBinding(key)
-            FieldView(binding: binding, info: info, convertToColorSpace: convertToColorSpace)
-                //.padding([.top, .bottom])
+        Group{
+            //        ForEach(Array(state.state.dict.elements.enumerated()), id: \.element.key){ a in
+            //if initialized{
+                ForEach(state.helpers.elements, id: \.key){ a in
+                    
+                    FieldView(info: a.value.0, values: a.value.1, convertToColorSpace: convertToColorSpace)
+                    //.environment(updater)
+                    // .id(updater.id(i))
+                    //.padding([.top, .bottom])
+                }
+            //}
         }
     }
     
     public var body: some View {
         VStack{
-            Divider()
+            //Divider()
             if let title{
-                CollapsableTitle(title: title){
+                if collapsable{
+                    CollapsableTitle(title: title){
+                        content
+                    }
+                }else{
+                    TitleView(text: title)
                     content
                 }
             }else{
                 content
             }
         }
+        .onAppear{
+            //self.initialize()
+//            self.state.forceUpdateView = self.updater.forceUpdateView
+//            self.updater.onChange = self.onChange
+        }
+//        .onChange(of: interaction){
+//            //if wasInteraction{
+//                onStateChange()
+//            //}
+//        }
     }
 }
 
 struct FieldView: View{
     
-    let binding: ValueBinding
+//    @Environment(ViewUpdater.self) var updater
+    
     let info: EditableFieldInfo
+    let values: [ObservableValue]
     
     let convertToColorSpace: Color.RGBColorSpace
     
+    //@Binding var updateToggle: Bool
+    
     var body: some View {
-        switch info.style {
-        case .value(let valueStyle):
-            ValueEditorView(binding: binding,
-                            style: valueStyle,
-                            count: info.count,
-                            title: info.title)
-        case .color:
-            ColorPickerView(binding: binding, count: info.count, title: info.title,
-                            convertToColorSpace: convertToColorSpace)
-        case .choice(let array, let style):
-            ChoiceView(binding: binding, choices: array,
-                       style: style, count: info.count, title: info.title)
-        case .toggle(let toggleStyle):
-            ToggleView(binding: binding, style: toggleStyle,
-                       count: info.count, title: info.title)
-        }
+        //Group{
+            switch info.style {
+            case .value(let valueStyle):
+                ValueEditorView(values: values,
+                                style: valueStyle,
+                                count: info.count,
+                                title: info.title)
+            
+            case .color:
+                ColorPickerView(values: values, count: info.count, title: info.title,
+                                convertToColorSpace: convertToColorSpace)
+            case .choice(let dict, let style):
+                ChoiceView(values: values, choices: dict,
+                           style: style, count: info.count, title: info.title)
+            case .toggle(let toggleStyle):
+                ToggleView(values: values, style: toggleStyle,
+                           count: info.count, title: info.title)
+            }
+        //}
+//        .onChange(of: updater.toggle){
+//            print("change!!")
+//        }
     }
 }
 

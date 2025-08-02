@@ -10,7 +10,7 @@ import MetalKit
 
 struct ValueEditorView: View{
     
-    let binding: ValueBinding
+    let values: [ObservableValue]
     let style: ValueStyle
     let count: Int
     let title: String
@@ -20,12 +20,14 @@ struct ValueEditorView: View{
             //TitleView(text: title)
             switch style {
             case .slider(let range):
-                SlidersView(binding: binding, range: range, count: count, title: title)
-            case .picker(let values):
-                ValuePickersView(binding: binding, values: values, count: count, title: title)
+                SlidersView(values: values, range: range, count: count, title: title)
+            case .picker(let choice):
+                ValuePickersView(values: values, choice: choice, count: count, title: title)
             case .stepper(let stepSize, let range):
-                SteppersView(binding: binding, stepSize: stepSize, range: range,
+                SteppersView(values: values, stepSize: stepSize, range: range,
                              count: count, title: title)
+            case .manual(let range):
+                ManualValuesView(values: values, range: range, count: count, title: title)
             }
         }
     }
@@ -33,27 +35,24 @@ struct ValueEditorView: View{
 
 struct SlidersView: View{
     
-    let binding: ValueBinding
+    let values: [ObservableValue]
     let range: ClosedRange<Double>
     let count: Int
     let title: String
     
     var body: some View {
             if count == 1{
-                SliderView(binding: binding,
+                SliderView(value: values.first!,
                            range: range,
-                           index: 0,
                            title: title)
             }else{
                 VStack{
                     SubtitleView(text: title)
-                    let components = ["x", "y", "z", "w"]
                     ForEach(0..<count){ i in
                         HStack{
-                            SliderView(binding: binding,
+                            SliderView(value: values[i],
                                        range: range,
-                                       index: i,
-                                       title: components[i])
+                                       title: componentTitle(i))
                         }
                 }
             }
@@ -63,57 +62,52 @@ struct SlidersView: View{
 
 struct SliderView: View{
     
-    let binding: ValueBinding
+    var value: ObservableValue
+    
     let range: ClosedRange<Double>
-    let index: Int
     let title: String
     
-    @State var value: Double = 0
+   // @State var wasNonUIUpdate = false
     
     var body: some View {
         VStack{
             HStack{
                 SubtitleView(text: title)
                 Spacer()
-                ValueView(value: value, integer: binding.integer)
+                ValueView(value: value.doubleBinding.wrappedValue, integer: value.isInteger)
             }
-            Slider(value: $value, in: range)
-                .onChange(of: value, initial: false) {
-                    binding.set(index, value)
-                }
-                .onAppear{
-                    value = Double(binding.get(index))
-                }
+            Slider(value: value.doubleBinding, in: range)
+//            .onAppear{
+//                //helper.value = helper.getValue()
+//            }
         }
     }
 }
 
 struct ValuePickersView: View{
     
-    let binding: ValueBinding
-    let values: [Double]
+    let values: [ObservableValue]
+    let choice: [Double]
     let count: Int
     let title: String
     
     var body: some View {
         HStack{
-            let components = ["x", "y", "z", "w"]
+            
             if count == 1{
                 HStack{
                     SubtitleView(text: title)
                     Spacer()
-                    ValuePickerView(binding: binding,
-                                    values: values,
-                                    index: 0)
+                    ValuePickerView(value: values.first!,
+                                    choice: choice)
                 }
             }else{
                 ForEach(0..<count){ i in
                     HStack{
-                        SubtitleView(text: components[i]+":")
+                        SubtitleView(text: componentTitle(i))
                         Spacer()
-                        ValuePickerView(binding: binding,
-                                        values: values,
-                                        index: i)
+                        ValuePickerView(value: values[i],
+                                        choice: choice)
                     }
                 }
             }
@@ -123,32 +117,22 @@ struct ValuePickersView: View{
 
 struct ValuePickerView: View{
     
-    let binding: ValueBinding
-    let values: [Double]
-    let index: Int
-    
-    @State var value: Float = 0
+    var value: ObservableValue
+    let choice: [Double]
     
     var body: some View {
-        Picker("", selection: $value){
-            ForEach(values, id: \.self){ v in
+        Picker("", selection: value.doubleBinding){
+            ForEach(choice, id: \.self){ v in
                 let fv = Float(v)
-                ValueView(value: v, integer: binding.integer).tag(fv)
+                ValueView(value: v, integer: value.isInteger).tag(fv)
             }
         }
-        .onChange(of: value, initial: false) {
-                binding.set(index, value)
-            }
-            .onAppear{
-                value = Float((binding.get(index) as! Double))
-                print(value)
-            }
     }
 }
 
 struct SteppersView: View{
     
-    let binding: ValueBinding
+    let values: [ObservableValue]
     let stepSize: Double
     let range: ClosedRange<Double>
     let count: Int
@@ -160,10 +144,9 @@ struct SteppersView: View{
             Spacer()
             VStack{
                 ForEach(0..<count){ i in
-                    StepperView(binding: binding,
+                    StepperView(value: values[i],
                                 stepSize: stepSize,
-                                range: range,
-                                index: i)
+                                range: range)
                 }
             }
         }
@@ -172,33 +155,112 @@ struct SteppersView: View{
 
 struct StepperView: View{
     
-    let binding: ValueBinding
+    var value: ObservableValue
     let stepSize: Double
     let range: ClosedRange<Double>
-    let index: Int
-    
-    @State var value: Double = 0
     
     var body: some View {
         VStack{
             Stepper(label: {
-                ValueView(value: value, integer: binding.integer)
+                ValueView(value: value.doubleBinding.wrappedValue, integer: value.isInteger)
             }, onIncrement: {
-                value += stepSize
-                if value>range.upperBound{ value = range.upperBound }
-                binding.set(index, value)
-            },
-                    onDecrement: {
-                value -= stepSize
-                if value<range.lowerBound{ value = range.lowerBound }
-                binding.set(index, value)
+                var newValue = value.doubleBinding.wrappedValue + stepSize
+                if newValue>range.upperBound{ newValue = range.upperBound }
+                value.doubleBinding.wrappedValue = newValue
+            }, onDecrement: {
+                var newValue = value.doubleBinding.wrappedValue - stepSize
+                if newValue<range.lowerBound{ newValue = range.lowerBound }
+                value.doubleBinding.wrappedValue = newValue
             })
-            .onChange(of: value, initial: false) {
-                    binding.set(index, value)
+        }
+    }
+}
+
+struct ManualValuesView: View{
+    
+    let values: [ObservableValue]
+    let range: ClosedRange<Double>
+    let count: Int
+    let title: String
+    
+    var body: some View {
+        VStack{
+            SubtitleView(text: title)
+            //Spacer()
+            VStack{
+                ForEach(0..<count){ i in
+                    //HStack{
+//                        SubtitleView(text: componentTitle(i))
+                        ManualValueView(value: values[i],
+                                        range: range,
+                                        title: componentTitle(i))
+                    //}
                 }
-            .onAppear{
-                value = Double(binding.get(index))
             }
         }
     }
+}
+
+struct ManualValueView: View{
+    
+    var value: ObservableValue
+    let range: ClosedRange<Double>
+    let title: String
+    
+    var body: some View {
+        //VStack{
+        DoubleInputView(value: value.doubleBinding, title: title, range: range)
+            
+        //}
+    }
+}
+
+struct DoubleInputView: View {
+    @Binding var value: Double
+    let title: String
+    
+    // Optional parameters with default values
+    var format: String = "%.2f"
+    var keyboardType: UIKeyboardType = .decimalPad
+    
+    let range: ClosedRange<Double>
+    
+    @State private var textValue: String = ""
+    
+    init(value: Binding<Double>, title: String, format: String = "%.2f", keyboardType: UIKeyboardType = .decimalPad, range: ClosedRange<Double>) {
+        self._value = value
+        self.title = title
+        self.format = format
+        self.keyboardType = keyboardType
+        self.range = range
+        self._textValue = State(initialValue: String(format: format, value.wrappedValue))
+    }
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.headline)
+                //.padding(.bottom, 4)
+            
+            TextField("", text: $textValue)
+                .keyboardType(keyboardType)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+                .onSubmit { //newValue in
+                    if let doubleValue = Double(textValue.replacingOccurrences(of: ",", with: ".")) {
+                        value = min(max(doubleValue, range.lowerBound), range.upperBound)
+                    }
+                }
+                .onChange(of: value) { newValue in
+                    textValue = String(format: format, newValue)
+                }
+        }
+        //.padding(.vertical, 8)
+    }
+}
+
+func componentTitle(_ i: Int) -> String{
+    let components = ["x", "y", "z", "w"]
+    return components[i]+":"
 }

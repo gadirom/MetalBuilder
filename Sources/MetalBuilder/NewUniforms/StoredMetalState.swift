@@ -3,17 +3,33 @@ import MetalKit
 import SwiftUI
 import OrderedCollections
 
-typealias ValueBinding = (get: (Int)->(any BinaryFloatingPoint),
-                          set: (Int, any BinaryFloatingPoint)->(),
-                          defaultValue: (Int)->(any BinaryFloatingPoint),
-                          integer: Bool)
+typealias EditableFieldInfo = (style: FieldStyle,
+                               title: String,
+                               count: Int,
+                               integer: Bool)
 
 public final class StoredMetalState<T: MetalStruct>{
-    public var state: T
+    
+    private var _state: T
+    
+    public var state: T{
+        set{
+            if let onChange{
+                let changed = whatValuesWereChanged(newValue)
+                _state = newValue
+                onChange(changed)
+            }else{
+                _state = newValue
+            }
+        }
+        get{
+            _state
+        }
+    }
     public var binding: MetalBinding<T>{
         MetalBinding<T>(
-            get: { self.state },
-            set: { self.state = $0 },
+            get: { self._state },
+            set: { self._state = $0 },
             metalType: metalType,
             metalName: metalName)
     }
@@ -26,18 +42,37 @@ public final class StoredMetalState<T: MetalStruct>{
     var containerName: String
     var saveToDefaults: Bool
     
-    var onChange: (()->())?
+    var onChange: (([String])->())? = nil
+    
+    var onChangeForUI: ((Bool)->())?
+    
+    func onChangeForHelpers(_ fromUI: Bool){
+        onChangeForUI?(fromUI)
+    }
+    
+    var wasInitForUI = false
+    
+    //var forceUpdateView: (()->())? = nil
+    var helpers: OrderedDictionary<String, (EditableFieldInfo, [ObservableValue])> = [:]
+    
+    func whatValuesWereChanged(_ newValue: T) -> [String]{
+        _state.dict.keys.filter{ key in
+            (0..<_state.dict[key]!.2).reduce(false, { dif, i  in
+                (_state[key, i] as! Double) != (newValue[key, i] as! Double) || dif
+            })
+        }
+    }
     
     func valueBinding(_ key: String) -> ValueBinding{
         (
-            get: { self.state[key, $0] },
+            get: { self._state[key, $0] },
             set: {
-                self.state[key, $0] = $1
-                self.onChange?()
+                self._state[key, $0] = $1
+                //self.onChange?()
                 self.saveToDefaults(index: $0, key: key, value: $1)
             },
             defaultValue: { self.defaultValue(key: key, index: $0) },
-            integer: self.state.dict[key]!.3
+            integer: self._state.dict[key]!.3
         )
     }
     
@@ -48,19 +83,59 @@ public final class StoredMetalState<T: MetalStruct>{
     public init(state: T?=nil,
                 metalType: String?=nil,
                 metalName: String?=nil,
-                onChange: (()->())?=nil,
+                //onChange: (([String])->())?=nil,
                 storeInDefaults: Bool = true,
                 containerName: String?=nil){
-        self.state = state ?? T()
+        self._state = state ?? T()
         self.metalType = metalType
         self.metalName = metalName
         
-        self.onChange = onChange
+        //self.onChange = onChange
         self.saveToDefaults = storeInDefaults
         self.containerName = containerName ?? StoredMetalState<T>.containerNameFromType
         
+        //self.generateHelpers()
+        
         if storeInDefaults{
             loadFomDefaults()
+        }
+    }
+}
+
+extension StoredMetalState{
+    func initForView(onChangeForUI: ((Bool)->())?){
+        if !wasInitForUI{
+            self.onChangeForUI = onChangeForUI
+            generateHelpers()
+            wasInitForUI = true
+        }
+    }
+    func generateHelpers(){
+        self.helpers = .init(uniqueKeysWithValues:
+            state.dict.elements.map{ key, element in
+                let b = valueBinding(key)
+                
+                let h: [ObservableValue] =
+                    (0..<element.2).map{ i in
+                            let binding: SingleValueBinding = (
+                                get: { b.get(i) },
+                                set: { b.set(i, $0) },
+                                defaultValue: { b.defaultValue(i) },
+                                integer: b.integer
+                            )
+                            return .init(binding: binding, onChange: onChangeForHelpers)
+                        }
+                
+                return (key, (element, h))
+            }
+        )
+        self.onChange = { changedKeys in
+            _=changedKeys.map{ key in
+                self.helpers[key]!.1.map{ helper in
+                    helper.updateFromNonUI()
+                }
+            }
+            self.onChangeForHelpers(false)
         }
     }
 }

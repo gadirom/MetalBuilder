@@ -1,5 +1,6 @@
 import MetalKit
 
+@preconcurrency
 public struct MetalBuilderCompileOptions{
     
     let mtlCompileOptions: MTLCompileOptions?

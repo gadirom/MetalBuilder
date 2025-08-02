@@ -39,7 +39,7 @@ public struct CVPixelBufferNonplanarToTexture: MetalBuildingBlock{
                                   height: CVPixelBufferGetHeight(pixelBuffer))
                 print(size)
                 
-                tempTexture.descriptor = pixelTextureDesc
+                tempTexture.descriptor = CVPixelBufferYCbCbToRGBTexture.pixelTextureDesc
                     .pixelFormat(pixelFormat)
                     .usage([.shaderRead, .shaderWrite])
                     .fixedSize(size)

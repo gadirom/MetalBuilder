@@ -10,7 +10,7 @@ import MetalKit
 
 struct ToggleView: View{
     
-    let binding: ValueBinding
+    let values: [ObservableValue]
     let style: ToggleStyle
     let count: Int
     let title: String
@@ -20,11 +20,11 @@ struct ToggleView: View{
             //TitleView(text: title)
             switch style {
             case .button:
-                ButtonTogglesView(binding: binding, count: count, title: title)
+                ButtonTogglesView(values: values, count: count, title: title)
             case .picker(let array):
                 EmptyView()
             case .switch:
-                SwitchTogglesView(binding: binding, count: count, title: title)
+                SwitchTogglesView(values: values, count: count, title: title)
             }
         }
     }
@@ -32,20 +32,20 @@ struct ToggleView: View{
 
 struct ButtonTogglesView: View{
     
-    let binding: ValueBinding
+    let values: [ObservableValue]
     let count: Int
     let title: String
     
     var body: some View {
         VStack{
             if count == 1{
-                ButtonToggleView(binding: binding, index: 0, title: title)
+                ButtonToggleView(value: values.first!, title: title)
             }else{
                 HStack{
                     SubtitleView(text: title)
                     let components = ["x", "y", "z", "w"]
                     ForEach(0..<count){ i in
-                        ButtonToggleView(binding: binding, index: i,
+                        ButtonToggleView(value: values[i],
                                          title: components[i])
                     }
                 }
@@ -56,41 +56,32 @@ struct ButtonTogglesView: View{
 
 struct ButtonToggleView: View{
     
-    let binding: ValueBinding
-    let index: Int
+    var value: ObservableValue
     let title: String
     
-    @State var value: Bool = false
-    
     var body: some View {
-        Toggle(isOn: $value) {
+        Toggle(isOn: value.boolBinding) {
             SubtitleView(text: title)
         }.toggleStyle(.button)
-            .onChange(of: value, initial: false){
-                binding.set(index, value ? 1 : 0)
-            }
-            .onAppear{
-                value = Int(binding.get(index)) == 1 
-            }
     }
 }
 
 struct SwitchTogglesView: View{
     
-    let binding: ValueBinding
+    let values: [ObservableValue]
     let count: Int
     let title: String
     
     var body: some View {
         VStack{
             if count == 1{
-                SwitchToggleView(binding: binding, index: 0, title: title)
+                SwitchToggleView(value: values.first!, title: title)
             }else{
                 VStack{
                     SubtitleView(text: title)
                     let components = ["x", "y", "z", "w"]
                     ForEach(0..<count){ i in
-                        SwitchToggleView(binding: binding, index: i,
+                        SwitchToggleView(value: values[i],
                                          title: components[i])
                     }
                 }
@@ -101,21 +92,12 @@ struct SwitchTogglesView: View{
 
 struct SwitchToggleView: View{
     
-    let binding: ValueBinding
-    let index: Int
+    var value: ObservableValue
     let title: String
     
-    @State var value: Bool = false
-    
     var body: some View {
-        Toggle(isOn: $value) {
+        Toggle(isOn: value.boolBinding) {
             SubtitleView(text: title)
         }.toggleStyle(.switch)
-            .onChange(of: value, initial: false){
-                binding.set(index, value ? 1 : 0)
-            }
-            .onAppear{
-                value = Int(binding.get(index)) == 1
-            }
     }
 }

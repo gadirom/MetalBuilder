@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -6,7 +6,7 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "MetalBuilder",
-    platforms: [.macOS(.v11), .iOS(.v17), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
+    platforms: [.macOS(.v11), .iOS(.v17), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13), .visionOS(.v2)],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(

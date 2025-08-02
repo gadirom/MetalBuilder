@@ -9,7 +9,7 @@ import SwiftUI
 
 struct TitleView: View{
     
-    @EnvironmentObject var fonts: MetalStructViewFonts
+    @Environment(MetalStructViewFonts.self) var fonts
     
     let text: String
     
@@ -22,7 +22,7 @@ struct TitleView: View{
 
 struct SubtitleView: View{
     
-    @EnvironmentObject var fonts: MetalStructViewFonts
+    @Environment(MetalStructViewFonts.self) var fonts
     
     let text: String
     

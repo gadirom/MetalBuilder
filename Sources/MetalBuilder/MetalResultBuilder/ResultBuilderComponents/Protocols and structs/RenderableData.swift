@@ -70,6 +70,25 @@ public extension RenderableData{
     }
 }
 
+public extension RenderableData{
+    nonisolated(unsafe)
+    static var defaultColorAttachments: [Int: ColorAttachment] =
+    [
+        0: ColorAttachment(
+            texture: nil,
+            loadAction: MetalBinding<MTLLoadAction>(
+                get: { .clear },
+                set: { _ in }),
+            storeAction: MetalBinding<MTLStoreAction>(
+                get: { .store },
+                set: { _ in }),
+            clearColor: MetalBinding<MTLClearColor>(
+                get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
+                set: { _ in } )
+        )
+    ]
+}
+
 /// pass color attachment with bindings
 public struct ColorAttachment{
     public var texture: MTLTextureContainer?
@@ -102,22 +121,6 @@ public struct ColorAttachment{
         }
     }
 }
-
-/// default color attachments
-public var defaultColorAttachments: [Int: ColorAttachment] =
-[
-    0: ColorAttachment(texture: nil,
-                           loadAction: MetalBinding<MTLLoadAction>(
-                            get: { .clear },
-                            set: { _ in }),
-                           storeAction: MetalBinding<MTLStoreAction>(
-                            get: { .store },
-                            set: { _ in }),
-                           clearColor: MetalBinding<MTLClearColor>(
-                            get: { MTLClearColorMake(0.0, 0.0, 0.0, 1.0)},
-                            set: { _ in } )
-                           )
-]
 
 /// Stencil attachment
 public struct StencilAttachment{

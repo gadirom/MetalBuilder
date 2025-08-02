@@ -57,6 +57,7 @@ extension MTLResourceContainer{
 
 public class ArgumentBuffer{
     
+    nonisolated(unsafe)
     static var argumentBuffersSingleton: [ArgumentBuffer] = []
     
     static func clearAll(){

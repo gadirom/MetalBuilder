@@ -1,8 +1,6 @@
 import SwiftUI
 import MetalPerformanceShaders
 
-let pixelTextureDesc = TextureDescriptor()
-
 public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
     public var context: MetalBuilderRenderingContext
     
@@ -10,7 +8,10 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
     @MetalBinding var newTextureIsNeeded: Bool
     let texture: MTLTextureContainer
     
-    @MetalTexture(.init().manual()) private var tempTexture
+    nonisolated(unsafe)
+    static var pixelTextureDesc = TextureDescriptor().manual()
+    
+    @MetalTexture(pixelTextureDesc) private var tempTexture
     
     @MetalTexture(pixelTextureDesc) private var textureY
     @MetalTexture(pixelTextureDesc) private var textureCbCr
@@ -39,7 +40,7 @@ public struct CVPixelBufferYCbCbToRGBTexture: MetalBuildingBlock{
                                   height: CVPixelBufferGetHeight(pixelBuffer))
                 print(size)
                 
-                tempTexture.descriptor = pixelTextureDesc
+                tempTexture.descriptor = Self.pixelTextureDesc
                         .usage([.shaderRead, .shaderWrite])
                         .fixedSize(size)
                 try? tempTexture.create(device: device, drawable: passInfo.drawable!)

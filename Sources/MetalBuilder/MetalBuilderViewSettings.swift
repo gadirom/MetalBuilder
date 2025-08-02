@@ -3,6 +3,16 @@ import SwiftUI
 import MetalKit
 
 public struct EDRSettings{
+    public init(useEDR: Bool = false,
+                  pixelFormat: MTLPixelFormat = .rgba16Float,
+                  toneMapping: Bool = false,
+                  colorSpace: CGColorSpace = .init(name: CGColorSpace.displayP3)!) {
+        self.useEDR = useEDR
+        self.pixelFormat = pixelFormat
+        self.toneMapping = toneMapping
+        self.colorSpace = colorSpace
+    }
+    
     public init(){}
     public var useEDR: Bool = false
     public var pixelFormat: MTLPixelFormat = .rgba16Float
@@ -10,6 +20,7 @@ public struct EDRSettings{
     public var colorSpace: CGColorSpace = .init(name: CGColorSpace.displayP3)!
 }
 
+@MainActor
 public class MetalBuilderViewSettings{
     public init(depthPixelFormat: MTLPixelFormat? = nil,
                 clearDepth: Double? = nil,

@@ -52,7 +52,7 @@ public extension ArgumentBufferDescriptor{
         d.indexCounter += 1
         return d
     }
-    func arrayTextures(_ array: ArrayOfTexturesContainer,
+    func arrayOfTextures(_ array: ArrayOfTexturesContainer,
                        type: String, access: String, name: String)->Self{
         var d = self
         var argument = MetalTextureArgument(type: type,

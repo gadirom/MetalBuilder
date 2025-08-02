@@ -6,6 +6,7 @@ final class LibraryContainer{
     var library: MTLLibrary?
 }
 
+@preconcurrency
 struct RenderData{
     
     var argumentsData = ArgumentsData()
@@ -29,8 +30,10 @@ struct RenderData{
     var startupFunctions: [(MTLDevice)->()] = []
     
     //hold hashes for librarySources of BuildingBlocks, Render and Compute components to eliminate dublicates
+    nonisolated(unsafe)
     static var librarySourceHashes: [Int] = []
     //hold hashes for helpers of BuildingBlocks to eliminate dublicates when librarySource is embedded into the components that constitute the given BuildingBlock
+    nonisolated(unsafe)
     static var helpersHashes: [Int] = []
     
     init(){}

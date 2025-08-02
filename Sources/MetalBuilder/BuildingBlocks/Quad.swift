@@ -1,10 +1,15 @@
 import MetalKit
 import SwiftUI
 
+public enum SamplingFilter{
+    case linear, nearest
+}
+
 public struct QuadRenderer: MetalBuildingBlock, Renderable {
    public init(renderableData: RenderableData = RenderableData(),
                context: MetalBuilderRenderingContext,
                sampleTexture: MTLTextureContainer? = nil,
+               filter: SamplingFilter = .linear,
                fragmentShader: FragmentShader? = nil,
                part: QuadPart
     ) {
@@ -19,7 +24,7 @@ public struct QuadRenderer: MetalBuildingBlock, Renderable {
         self.part = part
         
         if self.quadFragmentShader == nil{
-            self.quadFragmentShader = defaultFragmentShader
+            self.quadFragmentShader = defaultFragmentShader(filter: filter)
         }
     }
     
@@ -38,11 +43,11 @@ public struct QuadRenderer: MetalBuildingBlock, Renderable {
     
     var quadFragmentShader: FragmentShader!
     
-    var defaultFragmentShader: FragmentShader{
+    func defaultFragmentShader(filter: SamplingFilter) -> FragmentShader{
         FragmentShader()
             .body(
         """
-            constexpr sampler s(address::clamp_to_zero, filter::linear);
+            constexpr sampler s(address::clamp_to_zero, filter::\(String(describing: filter)));
             float4 color = inTexture.sample(s, in.uv);
             return color;
         """)
@@ -63,7 +68,7 @@ public struct QuadRenderer: MetalBuildingBlock, Renderable {
                renderableData: renderableData)
             .vertex(VertexShader()
                        .buffer(quadBuffer)
-                       .bytes(context.$viewportToDeviceTransform)
+                       //.bytes(context.$viewportToDeviceTransform)
                 .vertexOut("""
                 float4 position [[position]];
                 float2 uv;

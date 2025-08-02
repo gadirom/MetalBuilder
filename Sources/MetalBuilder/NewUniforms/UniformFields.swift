@@ -6,6 +6,7 @@
 //
 
 import MetalKit
+import OrderedCollections
 
 public protocol UniformFields: RawRepresentable where RawValue == Int{
     var index: Int { get }
@@ -24,6 +25,7 @@ public enum ValueStyle{
     case slider(ClosedRange<Double>)         // range of the slider
     case picker([Double])                    // picker variants
     case stepper(Double, ClosedRange<Double>)// step size and range
+    case manual(ClosedRange<Double>)         // enter manually, clamping to range
 }
 
 public enum ToggleStyle{
@@ -35,7 +37,7 @@ public enum ToggleStyle{
 public enum FieldStyle{
     case value(ValueStyle)
     case color
-    case choice([String], ChoiceStyle)
+    case choice(OrderedDictionary<String, UInt8>, ChoiceStyle)
     case toggle(ToggleStyle)
     //case hide - use no style attribute to hide from UI
 }

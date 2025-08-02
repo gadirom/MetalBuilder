@@ -44,19 +44,21 @@ class MPSUnaryPass: MetalPass{
             }
         }
     }
+    let copyAllocator: MPSCopyAllocator = { kernel, commandBuffer, texture in
+        var d = TextureDescriptor()
+            .type(.type2D)
+            .pixelFormat(texture.pixelFormat)
+            .fixedSize(CGSize(width: texture.width, height: texture.height))
+            .usage([.shaderWrite, .shaderRead, .renderTarget])
+        
+    //    d.textureType = .type2D
+    //    d.pixelFormat = texture.pixelFormat
+    //    d.width = texture.width
+    //    d.height = texture.height
+    //    d.usage = [.shaderWrite, .shaderRead]
+        return commandBuffer.device.makeTexture(descriptor: d.mtlTextureDescriptor(viewportSize:[0,0])!)!
+    }
 }
 
-public let copyAllocator: MPSCopyAllocator = { kernel, commandBuffer, texture in
-    var d = TextureDescriptor()
-        .type(.type2D)
-        .pixelFormat(texture.pixelFormat)
-        .fixedSize(CGSize(width: texture.width, height: texture.height))
-        .usage([.shaderWrite, .shaderRead, .renderTarget])
-    
-//    d.textureType = .type2D
-//    d.pixelFormat = texture.pixelFormat
-//    d.width = texture.width
-//    d.height = texture.height
-//    d.usage = [.shaderWrite, .shaderRead]
-    return commandBuffer.device.makeTexture(descriptor: d.mtlTextureDescriptor(viewportSize:[0,0])!)!
-}
+
+

@@ -152,6 +152,7 @@ public extension ReceiverOfArgumentsContainer{
 //                                          index: index)
 //        return bytes(binding, argument: argument)
 //    }
+    @MainActor
     func uniforms(_ uniforms: UniformsContainer,
                          name: String?=nil) -> Self{
         var c = self

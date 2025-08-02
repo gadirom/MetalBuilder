@@ -1,9 +1,9 @@
 
 import SwiftUI
 
-struct CollapsableTitle<T: View>: View {
+public struct CollapsableTitle<T: View>: View {
     
-    init(title: String, @ViewBuilder content: @escaping ()->(T)) {
+    public init(title: String, @ViewBuilder content: @escaping ()->(T)) {
         self.title = title
         self.content = content
         self.isCollapsed = UserDefaults.standard.bool(forKey: key)
@@ -25,7 +25,7 @@ struct CollapsableTitle<T: View>: View {
         "CollapsedState-\(title)"
     }
     
-    var body: some View {
+    public var body: some View {
         VStack{
             Button {
                 toggleCollapse()

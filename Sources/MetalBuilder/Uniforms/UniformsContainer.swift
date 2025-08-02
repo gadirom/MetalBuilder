@@ -4,8 +4,10 @@ import OrderedCollections
 //import CoreMedia
 
 /// The type for an object that contains uniforms values.
+//@MainActor
 public final class UniformsContainer: ObservableObject{
     
+    @MainActor
     @Published var bufferAllocated = false
     
     var dict: OrderedDictionary<String, Property>
@@ -56,7 +58,7 @@ public final class UniformsContainer: ObservableObject{
         
     }
 }
-extension UniformsContainer: Equatable{
+extension UniformsContainer: @preconcurrency Equatable{
     public static func == (lhs: UniformsContainer, rhs: UniformsContainer) -> Bool {
         lhs === rhs
     }
@@ -125,8 +127,8 @@ public extension UniformsContainer{
             }else{
                 loadInitialValues()
             }
-            DispatchQueue.main.async { [unowned self] in
-                self.bufferAllocated = true
+            Task.detached { @MainActor in
+                //self.bufferAllocated = true
             }
         }
     }

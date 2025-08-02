@@ -268,6 +268,7 @@ public struct MetalBytesArgument{
         self.init(swiftType: T.self, space: space, type: t, name: n, index: index,
                   forArgBuffer: forArgBuffer)
     }
+    @MainActor
     init(uniformsContainer: UniformsContainer, name: String?){
         let type = uniformsContainer.metalType
         let metalDeclaration = uniformsContainer.metalDeclaration

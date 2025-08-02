@@ -54,7 +54,7 @@ public final class MTLTextureContainer{
     //creates or loads the texture
     public func initialize(device: MTLDevice,
                     viewportSize: simd_uint2,
-                    pixelFormat: MTLPixelFormat?) throws{
+                    pixelFormat: MTLPixelFormat?=nil) throws{
         self.device = device
         if !descriptor.manualCreation{
             if let image{
@@ -82,6 +82,12 @@ public final class MTLTextureContainer{
                                                 y: 1),
                        pixelFormat: .rgba8Unorm)
         }
+    }
+    
+    public func create(device: MTLDevice, size2D: simd_uint2, pixelFormat: MTLPixelFormat?=nil) throws{
+        try create(device: device,
+                   mtlSize: .init(width: Int(size2D.x), height: Int(size2D.y), depth: 1),
+                   pixelFormat: pixelFormat)
     }
     
     //pixel format should not be from drawable

@@ -21,7 +21,7 @@ public extension MetalStruct{
     }
     subscript(key: String, index: Int) -> any BinaryFloatingPoint {
         get{ 0 }
-        set{     }
+        set{   }
     }
 //    static var storedState: StoredMetalState<Self>{
 //        StoredMetalState(wrappedValue: Self.init())
