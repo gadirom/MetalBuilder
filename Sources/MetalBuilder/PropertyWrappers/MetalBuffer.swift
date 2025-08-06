@@ -355,13 +355,13 @@ public extension MTLBufferContainer{
         let length = elementSize*count
         if !create{
 //            for i in 0..<count{
-//                data.copyBytes(
-//                    to: self.buffer!.contents()
-//                        .advanced(by: <#T##Int#>)
-//                        .assumingMemoryBound(to: UInt8.self),
-//                    
-//                        count: length
-//                )
+                data.copyBytes(
+                    to: self.buffer!.contents()
+                        //.advanced(by: <#T##Int#>)
+                        .assumingMemoryBound(to: UInt8.self),
+                    
+                        count: length
+                )
 //            }
                 
         }else{
