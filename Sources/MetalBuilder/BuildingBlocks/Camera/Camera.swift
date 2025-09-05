@@ -1,5 +1,5 @@
 import AVFoundation
-
+#if(!os(visionOS))
 class CameraConfiguration{
     internal init(){}
     var position: AVCaptureDevice.Position?
@@ -92,3 +92,4 @@ public struct Camera: MetalBuildingBlock{
         }
     }
 }
+#endif

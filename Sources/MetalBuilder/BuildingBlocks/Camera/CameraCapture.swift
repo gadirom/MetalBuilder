@@ -2,6 +2,8 @@
 import MetalKit
 import AVFoundation
 
+#if(!os(visionOS))
+
 public class CameraCapture: NSObject{
     
     public var pixelBuffer: CVPixelBuffer?
@@ -57,3 +59,5 @@ extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
         self.pixelBuffer = pixelBuffer
     }
 }
+
+#endif
