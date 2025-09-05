@@ -171,8 +171,11 @@ public struct MetalBuilderView: UIViewRepresentable {
                 viewSettings.edrSettingsChanged = false
             }
             
+#if(!os(visionOS))
+            
             renderer!.renderData.context.currentEDRHeadroom = Float(view.window?.screen.currentEDRHeadroom ?? 1)
             renderer!.renderData.context.potentialEDRHeadroom = Float(view.window?.screen.potentialEDRHeadroom ?? 1)
+#endif
             
             guard isDrawing
             else{ return }
