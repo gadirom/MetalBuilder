@@ -47,15 +47,18 @@ public final class MTLHeapContainer{
     /// Creates a resource heap to store textures
     func create(device: MTLDevice,
                 descriptors: [MTLTextureDescriptor?],
-                hazardTracking: MTLHazardTrackingMode) throws{
+                hazardTracking: MTLHazardTrackingMode,
+                storageMode: MTLStorageMode?) throws{
         
-        let storageMode: MTLStorageMode = descriptors.compactMap{ $0 }.reduce(.private) { partialResult, desc in
-            if desc.storageMode == .shared || partialResult == .shared{
-                .shared
-            }else{
-                .private
+        let storageMode: MTLStorageMode = storageMode ?? (
+            descriptors.compactMap{ $0 }.reduce(.private) { partialResult, desc in
+                if desc.storageMode == .shared || partialResult == .shared{
+                    .shared
+                }else{
+                    .private
+                }
             }
-        }
+        )
         
         let heapDescriptor = MTLHeapDescriptor()
         heapDescriptor.storageMode = storageMode
