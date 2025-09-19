@@ -10,10 +10,12 @@ public final class ArrayOfTextures{
         self
     }
     
-    public init(type: MTLTextureType, maxCount: Int, label: String?=nil){
+    public init(type: MTLTextureType, maxCount: Int, label: String?=nil,
+                useHeap: Bool = true){
         wrappedValue = ArrayOfTexturesContainer(type: type,
                                                 maxCount: maxCount,
-                                                label: label)
+                                                label: label,
+                                                useHeap: useHeap)
     }
     
 //    public init(fromImages: [ImageForTexture]? = nil){
@@ -42,11 +44,13 @@ extension ArrayOfTexturesContainerError: LocalizedError{
 }
 
 public final class ArrayOfTexturesContainer{
-    internal init(type: MTLTextureType, maxCount: Int, label: String? = nil){
+    internal init(type: MTLTextureType, maxCount: Int, label: String? = nil,
+                  useHeap: Bool){
         self.type = type
         self.maxCount = maxCount
         self.label = label
         self.heap = MTLHeapContainer()
+        self.useHeap = useHeap
     }
     
     internal var type: MTLTextureType
@@ -58,12 +62,11 @@ public final class ArrayOfTexturesContainer{
     }
     
     public var heap: MTLHeapContainer?
-    
-    //var useHeap = true
+    public var useHeap: Bool
     
     //var _texturesCount: Int = 0
     
-    var descriptor: MTLTextureDescriptor?
+    //var descriptor: MTLTextureDescriptor?
     
     public private(set) var textures: [MTLTextureContainer] = []// hold textures from the array
     
@@ -172,24 +175,29 @@ public extension ArrayOfTexturesContainer{
             throw ArrayOfTexturesContainerError
                 .noHeap(label)
         }
-        try heap.create(device: device, descriptors: descriptors,
-                        hazardTracking: hazardTracking,
-                        storageMode: heapStorageMode)
+        if useHeap{
+            try heap.create(device: device, descriptors: descriptors,
+                            hazardTracking: hazardTracking,
+                            storageMode: heapStorageMode)
+        }
         self.textures = []
         for desc in descriptors {
-            try self.createTexture(descriptor: desc)
+            try self.createTexture(descriptor: desc, device: device)
         }
     }
     //without check for heap!!
     //should run from other function after heap creation
-    private func createTexture(descriptor: MTLTextureDescriptor?) throws{
+    private func createTexture(descriptor: MTLTextureDescriptor?,
+                               device: MTLDevice) throws{
         let container = MTLTextureContainer()
         
         container.argBufferInfo = self.argBufferInfo.withArrayIndex(textures.count)
                 
         container.label = "\(self.label ?? "unlabeledArrayOfTextures") \(self.textures.count)"
         if let descriptor{
-            guard let texture = heap!.heap!.makeTexture(descriptor: descriptor)
+            guard let texture = useHeap ?
+                    heap!.heap!.makeTexture(descriptor: descriptor) :
+                         device.makeTexture(descriptor: descriptor)
             else{
                 throw ArrayOfTexturesContainerError
                     .textureWasNotCreated(textures.count, label)
@@ -208,6 +216,7 @@ public extension ArrayOfTexturesContainer{
         }
         //useHeap = false
     }
+    
     private func addTexture(container: MTLTextureContainer) throws{
         
         container.argBufferInfo = self.argBufferInfo.withArrayIndex(textures.count)
