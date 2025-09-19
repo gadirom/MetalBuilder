@@ -96,9 +96,22 @@ public extension ArrayOfTexturesContainer{
                 device: MTLDevice, commandBuffer: MTLCommandBuffer,
                 hazardTracking: MTLHazardTrackingMode,
                 heapStorageMode: MTLStorageMode? = nil) throws{
+        
+        guard useHeap
+        else{
+            let containers = inTextures.map{ t in
+                let container = MTLTextureContainer()
+                container.texture = t
+                return container
+            }
+            try addTextures(containers: containers)
+            return
+        }
+        
         let descriptors: [MTLTextureDescriptor?] = inTextures.map {
             if let t = $0{
-                let desc = newDescriptorFromTexture(texture: t)
+                let desc = newDescriptorFromTexture(texture: t,
+                                                    storageMode: heapStorageMode)
                 desc.usage = usage
                 return desc
             }else{
@@ -228,7 +241,8 @@ public extension ArrayOfTexturesContainer{
     }
 }
 
-func newDescriptorFromTexture(texture: MTLTexture) -> MTLTextureDescriptor{
+func newDescriptorFromTexture(texture: MTLTexture,
+                              storageMode: MTLStorageMode?) -> MTLTextureDescriptor{
         let descriptor = MTLTextureDescriptor()
 
         descriptor.textureType      = texture.textureType
@@ -240,7 +254,7 @@ func newDescriptorFromTexture(texture: MTLTexture) -> MTLTextureDescriptor{
         descriptor.arrayLength      = texture.arrayLength
         descriptor.sampleCount      = texture.sampleCount
     
-        descriptor.storageMode      = .private
+        descriptor.storageMode      = storageMode ?? texture.storageMode // .private
 
         return descriptor
 }
