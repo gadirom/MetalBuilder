@@ -44,8 +44,8 @@ extension ArrayOfTexturesContainerError: LocalizedError{
 }
 
 public final class ArrayOfTexturesContainer{
-    internal init(type: MTLTextureType, maxCount: Int, label: String? = nil,
-                  useHeap: Bool){
+    public init(type: MTLTextureType, maxCount: Int, label: String? = nil,
+                useHeap: Bool){
         self.type = type
         self.maxCount = maxCount
         self.label = label
