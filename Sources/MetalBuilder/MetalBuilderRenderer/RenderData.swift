@@ -360,15 +360,16 @@ struct RenderData{
                 }
                 startupFunctions = []
                 
-                for rf in onResizeFunctions{
-                    //DispatchQueue.main.async{
-                        rf(context)
-                    //}
-                }
-                
             }else{
                 try updateTextures(device: device)
             }
+            
+            for rf in onResizeFunctions{
+                //DispatchQueue.main.async{
+                    rf(context)
+                //}
+            }
+            
         }catch{ fatalError(error.localizedDescription) }
     }
     
