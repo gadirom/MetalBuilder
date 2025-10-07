@@ -13,13 +13,13 @@ public protocol MetalBuildingBlock: MetalBuilderComponent{
     @MetalResultBuilder var metalContent: MetalContent{ get }
     func setup()
     func startup(device: MTLDevice)
+    func onResize(context: MetalBuilderRenderingContext)
 }
 
 public extension MetalBuildingBlock{
-    func setup(){
-    }
-    func startup(device: MTLDevice){
-    }
+    func setup(){}
+    func startup(device: MTLDevice){}
+    func onResize(context: MetalBuilderRenderingContext){}
     
     var helpers: String { "" }
     var librarySource: String { "" }

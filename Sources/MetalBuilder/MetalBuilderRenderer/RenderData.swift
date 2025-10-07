@@ -29,6 +29,8 @@ struct RenderData{
     //(actually, when rendering is already started since some textures cannot be created before you get a drawable)
     var startupFunctions: [(MTLDevice)->()] = []
     
+    var onResizeFunctions: [(MetalBuilderRenderingContext)->()] = []
+    
     //hold hashes for librarySources of BuildingBlocks, Render and Compute components to eliminate dublicates
     nonisolated(unsafe)
     static var librarySourceHashes: [Int] = []
@@ -313,6 +315,7 @@ struct RenderData{
                 }
                 
                 data.append(blockData)
+                data.onResizeFunctions.append(buildingBlockComponent.onResize)
                 data.setupFunctions.append(buildingBlockComponent.setup)
                 data.startupFunctions.append(buildingBlockComponent.startup)
             }
@@ -356,6 +359,12 @@ struct RenderData{
                     //}
                 }
                 startupFunctions = []
+                
+                for rf in onResizeFunctions{
+                    //DispatchQueue.main.async{
+                        rf(context)
+                    //}
+                }
                 
             }else{
                 try updateTextures(device: device)
@@ -440,6 +449,7 @@ struct RenderData{
         
         argumentsData.appendContents(of: data.argumentsData)
     
+        onResizeFunctions.append(contentsOf: data.onResizeFunctions)
         setupFunctions.append(contentsOf: data.setupFunctions)
         startupFunctions.append(contentsOf: data.startupFunctions)
     }
