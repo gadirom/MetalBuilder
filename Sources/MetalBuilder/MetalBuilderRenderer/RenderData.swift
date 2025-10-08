@@ -74,9 +74,9 @@ struct RenderData{
             self.startupFunctions.append(startupFunction)
         }
         
-        setupFunctions    = setupFunctions.noDuplicatesViaString()
-        startupFunctions  = startupFunctions.noDuplicatesViaString()
-        onResizeFunctions = onResizeFunctions.noDuplicatesViaString()
+//        setupFunctions    = setupFunctions.noDuplicatesViaString()
+//        startupFunctions  = startupFunctions.noDuplicatesViaString()
+//        onResizeFunctions = onResizeFunctions.noDuplicatesViaString()
         
         for sf in setupFunctions {
             sf()
