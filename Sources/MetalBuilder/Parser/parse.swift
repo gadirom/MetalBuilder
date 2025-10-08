@@ -126,6 +126,18 @@ func parse(library: inout String,
     #endif
 }
 
+//extension Array where Element: AnyObject{
+//    func noDublicates()->[Element]{
+//        var out: [Element] = []
+//        for f in self{
+//            if !out.contains(where: { $0 === f }){
+//                out.append(f)
+//            }
+//        }
+//        return out
+//    }
+//}
+
 extension Array where Element: Equatable{
     func noDublicates()->[Element]{
         var out: [Element] = []
@@ -152,5 +164,23 @@ extension Array where Element == BufferProtocol{
             }
         }
         return out
+    }
+}
+
+extension Array{
+    func noDuplicatesViaString() -> [Element] {
+        var seen = Set<String>()
+        var result: [Element] = []
+        
+        for e in self {
+            // Create a string representation of the closure
+            let closureString = String(describing: e)
+            if !seen.contains(closureString) {
+                seen.insert(closureString)
+                result.append(e)
+            }
+        }
+        
+        return result
     }
 }
