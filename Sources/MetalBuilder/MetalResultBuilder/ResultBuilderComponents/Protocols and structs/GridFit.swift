@@ -65,10 +65,14 @@ extension GridFit{
                 .gridFitTextureIsNil("fitTextrure \(container.label ?? "") for threads dispatching for a kernel is nil!")
         }
         
-        if container.descriptor.type == .typeCube{
-            return MTLSize(width: texture.width, height: texture.height, depth: 6)
-        }else{
-            return MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
+        switch container.descriptor.type{
+            case .typeCube:
+                return MTLSize(width: texture.width, height: texture.height, depth: 6)
+            case .type2DArray,
+                 .type2DMultisampleArray:
+                return MTLSize(width: texture.width, height: texture.height, depth: texture.arrayLength)
+            default:
+                return MTLSize(width: texture.width, height: texture.height, depth: texture.depth)
         }
     }
     func fitBuf(buf: BufferContainer) throws -> MTLSize{
@@ -143,16 +147,16 @@ extension GridFit{
             case .size1D(_):
                 1
             case .drawable(_, let mbGridScale):
-                if mbGridScale.2 > 1{
+                if mbGridScale.2 != 1{
                     3
                 }else{
                     2
                 }
             case .fitBuffer(_, _, let mbGridScale):
-                if mbGridScale.2 > 1{
+                if mbGridScale.2 != 1{
                     3
                 }else{
-                    if mbGridScale.1 > 1{
+                    if mbGridScale.1 != 1{
                         2
                     }else{
                         1
@@ -176,9 +180,7 @@ extension GridFit{
                 }
             }
         case    .type2D,
-                .type2DArray,
-                .type2DMultisample,
-                .type2DMultisampleArray:
+                .type2DMultisample:
             if mbGridScale.2 > 1{
                 3
             }else{
@@ -188,7 +190,9 @@ extension GridFit{
             3
         case .typeCubeArray:
             3// ???
-        case .type3D:
+        case .type3D,
+             .type2DArray,
+             .type2DMultisampleArray:
             3
         case nil:
             throw MetalBuilderComputeError

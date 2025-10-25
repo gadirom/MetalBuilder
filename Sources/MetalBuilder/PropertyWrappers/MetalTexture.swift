@@ -84,14 +84,16 @@ public final class MTLTextureContainer{
         }
     }
     
-    public func create(device: MTLDevice, size2D: simd_uint2, pixelFormat: MTLPixelFormat?=nil) throws{
+    public func create(device: MTLDevice, size2D: simd_uint2, arrayLength: Int=1, pixelFormat: MTLPixelFormat?=nil) throws{
         try create(device: device,
                    mtlSize: .init(width: Int(size2D.x), height: Int(size2D.y), depth: 1),
+                   arrayLength: arrayLength,
                    pixelFormat: pixelFormat)
     }
     
     //pixel format should not be from drawable
-    public func create(device: MTLDevice, mtlSize: MTLSize, pixelFormat: MTLPixelFormat?=nil) throws{
+    public func create(device: MTLDevice, mtlSize: MTLSize, arrayLength: Int=1, pixelFormat: MTLPixelFormat?=nil) throws{
+        self.descriptor.arrayLength = arrayLength
         self.descriptor.size = .fixed(mtlSize)
         if let pixelFormat{
             self.descriptor.pixelFormat = .fixed(pixelFormat)

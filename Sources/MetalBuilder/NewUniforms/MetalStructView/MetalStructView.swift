@@ -30,7 +30,7 @@ public struct MetalStructView<T: MetalStruct>: View {
                 title: String?=nil,
                 collapsable: Bool = true,
                 convertToColorSpace: Color.RGBColorSpace = .displayP3,
-                onChange: ((Bool)->())?=nil){
+                onChange: ((Bool)->())?=nil){// whether the change is from UI
         //self._state = ObservedObject(initialValue: state)
         self.state = state
         self.title = title
