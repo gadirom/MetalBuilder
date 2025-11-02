@@ -131,9 +131,13 @@ public extension MetalBuilderRenderer{
 //                }
 //            }
             
-            let passInfo = MetalPassInfo(getCommandBuffer: getCommandBuffer,
-                                         drawable: drawable, depthStencilTexture: depthStencilTexture,
-                                         renderPassDescriptor: renderPassDescriptor){
+            let passRenderPassDescriptor = renderPassDescriptor.copy() as! MTLRenderPassDescriptor
+            
+            let passInfo = MetalPassInfo(
+                getCommandBuffer: getCommandBuffer,
+                drawable: drawable,
+                depthStencilTexture: depthStencilTexture,
+                renderPassDescriptor: passRenderPassDescriptor){
                 try self.restartEncode(commandBuffer: self.commandBuffer,
                                        drawable: nil)
             }

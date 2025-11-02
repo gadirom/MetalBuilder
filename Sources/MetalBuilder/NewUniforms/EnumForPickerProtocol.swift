@@ -11,10 +11,14 @@ public typealias EnumForPickerRawValue = UInt8
 
 public protocol EnumForPicker: CaseIterable, RawRepresentable where RawValue == EnumForPickerRawValue{
     typealias Dict = OrderedDictionary<String, EnumForPickerRawValue>
+    var name: String{ get }
 }
 public extension EnumForPicker{
+    var name: String{
+        String(describing: self)
+    }
     static var all: Dict{
-        .init(uniqueKeysWithValues: Self.allCases.map{ (String(describing: $0), $0.rawValue) })
+        .init(uniqueKeysWithValues: Self.allCases.map{ ($0.name, $0.rawValue) })
     }
 }
 //

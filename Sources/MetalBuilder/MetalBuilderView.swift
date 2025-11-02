@@ -190,8 +190,6 @@ public struct MetalBuilderView: UIViewRepresentable {
 //                print("'draw': pixel format: \(view.colorPixelFormat.rawValue)")
 //            }
             
-            
-            
             renderer!.timer.count()
             renderer!.renderData.context.time = renderer!.timer.time
             
