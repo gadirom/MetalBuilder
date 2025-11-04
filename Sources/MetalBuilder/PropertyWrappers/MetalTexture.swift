@@ -56,6 +56,9 @@ public final class MTLTextureContainer{
                     viewportSize: simd_uint2,
                     pixelFormat: MTLPixelFormat?=nil) throws{
         self.device = device
+        if texture != nil{//texture already initialized!
+            return
+        }
         if !descriptor.manualCreation{
             if let image{
                 try loadImage(image)
