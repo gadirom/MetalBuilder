@@ -33,9 +33,6 @@ public struct QuadRenderer: MetalBuildingBlock, Renderable {
     //
     
     public var context: MetalBuilderRenderingContext
-    public var helpers = ""
-    public var librarySource = ""
-    public var compileOptions: MetalBuilderCompileOptions? = nil
     
     var sampleTexture: MTLTextureContainer! = nil
     
