@@ -25,7 +25,7 @@ public final class MetalTexture{
 
 enum MetalBuilderTextureError: Error {
 case textureNotCreated, noDescriptor, descriptorSizeContainsZero,
-    pixelFormatFromDrawable
+    pixelFormatFromDrawable, noDeviceProvided
 }
 
 public final class MTLTextureContainer{
@@ -154,9 +154,12 @@ extension MTLTextureContainer: MTLResourceContainer{
 
 //load image
 public extension MTLTextureContainer{
-    func loadImage(_ image: ImageForTexture, newDescriptor: TextureDescriptor? = nil) throws{
+    func loadImage(device: MTLDevice?=nil, _ image: ImageForTexture, newDescriptor: TextureDescriptor? = nil) throws{
         if let newDescriptor{
             self.descriptor = newDescriptor
+        }
+        if let device{
+            self.device = device
         }
         try image.loadInto(texture: self)
     }

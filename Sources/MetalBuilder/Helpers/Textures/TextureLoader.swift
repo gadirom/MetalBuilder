@@ -51,11 +51,17 @@ extension ImageForTexture{
 //work with MTLTextureContainer
 extension ImageForTexture{
     public func loadInto(texture: MTLTextureContainer) throws{
+        
+        guard let device = texture.device
+        else{
+            throw MetalBuilderTextureError.noDeviceProvided
+        }
+        
         let options = texture.descriptor.loaderOptions()
         if texture.descriptor.type == .typeCube{
-            texture.texture = try newCrossCube(options: options, device: texture.device!)
+            texture.texture = try newCrossCube(options: options, device: device)
         }else{
-            texture.texture = try new2DTexture(options: options, device: texture.device!)
+            texture.texture = try new2DTexture(options: options, device: device)
         }
     }
 }
