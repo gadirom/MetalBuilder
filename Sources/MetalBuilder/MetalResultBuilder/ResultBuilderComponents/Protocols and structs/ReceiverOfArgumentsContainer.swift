@@ -184,10 +184,16 @@ public extension ReceiverOfArgumentsContainer{
     /// This method adds a texture to the compute function and parses the Metal library code,
     /// automatically adding an argument declaration to the kernel function.
     /// Use this modifier if you do not want to declare the kernel's argument manually.
-    func texture(_ container: MTLTextureContainer,
+    func texture(_ container: MTLTextureContainer?,
                         argument: MetalTextureArgument,
                         fitThreads: Bool=false,
                         gridScale: MBGridScale?=nil)->Self{
+        guard let container
+        else{ return drawableTexture(argument: argument,
+                                     fitThreads: fitThreads,
+                                     gridScale: gridScale)
+        }
+        
         var c = self
         c.argumentsContainer.texture(container, argument: argument)
         if fitThreads || gridScale != nil{
