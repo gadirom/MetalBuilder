@@ -9,23 +9,16 @@ public class CameraCapture: NSObject{
     public var pixelBuffer: CVPixelBuffer?
     var session: AVCaptureSession?
     
-    public init(position: AVCaptureDevice.Position,
-                videoOrientation: AVCaptureVideoOrientation,
-                isVideoMirrored: Bool){
-        super.init()
+//    public init(){
+//        super.init()
+//    }
+}
+extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func setupCaptureSession(configuration: CameraConfiguration) {
         
-        setupCaptureSession(position: position,
-                            videoOrientation: videoOrientation,
-                            isVideoMirrored: isVideoMirrored)
-    }
-    
-    func setupCaptureSession(position: AVCaptureDevice.Position,
-                             videoOrientation: AVCaptureVideoOrientation,
-                             isVideoMirrored: Bool) {
-        
-        guard let captureDevice = AVCaptureDevice.default(.builtInWideAngleCamera,
-                                                          for: .video,
-                                                          position: position) else {
+        guard let captureDevice = AVCaptureDevice
+            .default(.builtInWideAngleCamera, for: .video,
+                     position: configuration.position) else {
             fatalError("Error getting AVCaptureDevice.")
         }
         guard let input = try? AVCaptureDeviceInput(device: captureDevice) else {
@@ -42,13 +35,11 @@ public class CameraCapture: NSObject{
             output.setSampleBufferDelegate(self, queue: .main)
             
             self.session?.addOutput(output)
-            output.connections.first?.videoOrientation = videoOrientation
-            output.connections.first?.isVideoMirrored = isVideoMirrored
+            output.connections.first?.videoOrientation = configuration.videoOrientation
+            output.connections.first?.isVideoMirrored = configuration.isVideoMirrored
             self.session?.startRunning()
         }
     }
-}
-extension CameraCapture: AVCaptureVideoDataOutputSampleBufferDelegate {
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
 
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return }

@@ -1,89 +1,78 @@
 import AVFoundation
 #if(!os(visionOS))
-class CameraConfiguration{
-    internal init(){}
-    var position: AVCaptureDevice.Position?
-    var videoOrientation: AVCaptureVideoOrientation?
-    
-    func changed(position: AVCaptureDevice.Position,
-                 videoOrientation: AVCaptureVideoOrientation)->Bool{
-        var changed = false
-        if self.position != position{
-            changed = true
-            self.position=position
-        }
-        if self.videoOrientation != videoOrientation{
-            changed = true
-            self.videoOrientation=videoOrientation
-        }
-        return changed
+final public class CameraConfiguration{
+    public init(){
     }
+    
+    public var position: AVCaptureDevice.Position = .back{
+        willSet{
+            if newValue != position{
+                changed = true
+            }
+        }
+    }
+    public var videoOrientation: AVCaptureVideoOrientation = .portrait{
+        willSet{
+            if newValue != videoOrientation{
+                changed = true
+            }
+        }
+    }
+    
+    @MetalState public var ready = false
+    
+    public var isVideoMirrored: Bool = false
+    
+    public var analysis: ((CVPixelBuffer) -> ())?
+    
+    private(set) var changed: Bool = true
+
 }
 
 public struct Camera: MetalBuildingBlock{
     public init(context: MetalBuilderRenderingContext,
                 texture: MTLTextureContainer,
-                position: MetalBinding<AVCaptureDevice.Position>,
-                videoOrientation: MetalBinding<AVCaptureVideoOrientation>,
-                isVideoMirrored: MetalBinding<Bool>,
-                ready: MetalBinding<Bool>,
-                analysis: @escaping (CVPixelBuffer) -> ()) {
+                configuration: CameraConfiguration) {
         self.context = context
         self.texture = texture
-        self._position = position
-        self._videoOrientation = videoOrientation
-        self._isVideoMirrored = isVideoMirrored
-        self.analysis = analysis
-        self._ready = ready
+        self.cameraConfiguration = configuration
     }
     
     public var context: MetalBuilderRenderingContext
-    public var helpers = ""
-    public var librarySource = ""
-    public var compileOptions: MetalBuilderCompileOptions? = nil
     
     //Parameters
     let texture: MTLTextureContainer
-    @MetalBinding var position: AVCaptureDevice.Position
-    @MetalBinding var videoOrientation: AVCaptureVideoOrientation
-    @MetalBinding var isVideoMirrored: Bool
-    @MetalBinding var ready: Bool
-    let analysis: (CVPixelBuffer)->()
     
     //Inner states
-    @MetalState var cameraCapture = false
-    @MetalState var createTexture = true
-    @MetalState var camera: CameraCapture?
-    @MetalState var pixelBuffer: CVPixelBuffer?
+    @MetalState private var cameraCapture = false
+    @MetalState private var createTexture = true
+    @MetalState private var pixelBuffer: CVPixelBuffer?
     
-    let cameraConfiguration = CameraConfiguration()
+    private let cameraConfiguration: CameraConfiguration
+    
+    private let camera = CameraCapture()
     
     public var metalContent: MetalContent{
-        EncodeGroup{//Setup Camera
-                ManualEncode{ device,_ in
-                    if cameraConfiguration.changed(position: position,
-                                                   videoOrientation: videoOrientation){
-                        camera = CameraCapture(position: position,
-                                               videoOrientation: videoOrientation,
-                                               isVideoMirrored: isVideoMirrored)
-                    
-                        cameraCapture = true
-                        createTexture = true
-                        ready = false
-                    }
+        ManualEncode{
+            if cameraConfiguration.changed{
+                camera.setupCaptureSession(configuration: cameraConfiguration)
+            
+                cameraCapture = true
+                createTexture = true
+                cameraConfiguration.ready = false
             }
         }
         EncodeGroup(active: $cameraCapture){
             ManualEncode{_,_ in
-                if let pixelBuffer = camera!.pixelBuffer{
+                if let pixelBuffer = camera.pixelBuffer{
                     self.pixelBuffer = pixelBuffer
-                    ready = true
+                    cameraConfiguration.ready = true
                 }
                 if let pixelBuffer = pixelBuffer{
-                    analysis(pixelBuffer)
+                    cameraConfiguration.analysis?(pixelBuffer)
                 }
             }
-            EncodeGroup(active: $ready){
+            EncodeGroup(active: cameraConfiguration.$ready){
                 CVPixelBufferYCbCbToRGBTexture(context: context,
                                        buffer: $pixelBuffer,
                                        texture: texture,
