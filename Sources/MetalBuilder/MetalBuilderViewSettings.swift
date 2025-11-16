@@ -15,9 +15,9 @@ public struct EDRSettings{
     
     public init(){}
     public var useEDR: Bool = false
-    public var pixelFormat: MTLPixelFormat = .rgba16Float
+    public var pixelFormat: MTLPixelFormat? = .rgba16Float
     public var toneMapping: Bool = false
-    public var colorSpace: CGColorSpace = .init(name: CGColorSpace.displayP3)!
+    public var colorSpace: CGColorSpace? = .init(name: CGColorSpace.displayP3)!
 }
 
 @MainActor
@@ -128,8 +128,11 @@ extension MetalBuilderViewSettings{
             //let edrMaxLinear = cgcolorcreat
             
             //let colorSpace = CGColorSpace.
-            print("colorSpace: \(edr.colorSpace.name)")
-            l.colorspace = edr.colorSpace
+        print("was colorSpace: \(l.colorspace)")
+        if let colorSpace = edr.colorSpace{
+            l.colorspace = edr.colorSpace //.init(name: CGColorSpace.sRGB)!
+            print("colorSpace changed to: \(l.colorspace)")
+        }
             
             if edr.toneMapping, CAEDRMetadata.isAvailable{
                 print("tone mapping: hlg")
@@ -143,8 +146,11 @@ extension MetalBuilderViewSettings{
         print("was pixelFormat: \(l.pixelFormat.rawValue)")
         //.bgr10a2Unorm
         //if let pixelFormat = edrSettings.pixelFormat{
-        print("pixelFormat: \(edr.pixelFormat.rawValue)")
-        l.pixelFormat = edr.pixelFormat
+        
+        if let pixelFormat = edr.pixelFormat{
+            l.pixelFormat = pixelFormat
+            print("changed to pixelFormat: \(l.pixelFormat.rawValue)")
+        }
         //}
         
         return l.pixelFormat
