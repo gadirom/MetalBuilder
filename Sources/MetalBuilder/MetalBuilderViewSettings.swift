@@ -4,9 +4,9 @@ import MetalKit
 
 public struct EDRSettings{
     public init(useEDR: Bool = false,
-                  pixelFormat: MTLPixelFormat = .rgba16Float,
+                  pixelFormat: MTLPixelFormat?,// = .rgba16Float,
                   toneMapping: Bool = false,
-                  colorSpace: CGColorSpace = .init(name: CGColorSpace.displayP3)!) {
+                  colorSpace: CGColorSpace?){// = .init(name: CGColorSpace.displayP3)!) {
         self.useEDR = useEDR
         self.pixelFormat = pixelFormat
         self.toneMapping = toneMapping
