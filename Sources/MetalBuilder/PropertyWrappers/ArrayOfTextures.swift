@@ -91,6 +91,15 @@ public extension ArrayOfTexturesContainer{
         self.textures = []
     }
     
+    func addMTLTexturesWithoutCopying(textures inTextures: [MTLTexture?]) throws{
+        let containers = inTextures.map{ t in
+            let container = MTLTextureContainer()
+            container.texture = t
+            return container
+        }
+        try addTextures(containers: containers)
+    }
+    
     func create(textures inTextures: [MTLTexture?], 
                 usage: MTLTextureUsage = [.shaderRead, .shaderWrite],
                 device: MTLDevice, commandBuffer: MTLCommandBuffer,
@@ -99,12 +108,7 @@ public extension ArrayOfTexturesContainer{
         
         guard useHeap
         else{
-            let containers = inTextures.map{ t in
-                let container = MTLTextureContainer()
-                container.texture = t
-                return container
-            }
-            try addTextures(containers: containers)
+            try addMTLTexturesWithoutCopying(textures: inTextures)
             return
         }
         
