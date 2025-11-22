@@ -19,11 +19,16 @@ public struct BlitArrayOfTextures: MetalBuilderComponent{
     
     var sourceSlice: MetalBinding<Int> = .constant(0)
     var destinationSlice: MetalBinding<Int> = .constant(0)
+    var copyToSlices: Bool = false
     
     var sliceCount: MetalBinding<Int> = MetalBinding<Int>.constant(1)
     
     var size: MetalBinding<MTLSize>?
-    public init(){
+    
+    let label: String
+    
+    public init(_ label: String=""){
+        self.label = label
     }
 }
 
@@ -47,11 +52,13 @@ public extension BlitArrayOfTextures{
         b.outRange = range
         return b
     }
+    //copy to slices will copy from textures id to slices of array texture
     func destination(_ singleTexture: MTLTextureContainer,
-                     slice: MetalBinding<Int>=MetalBinding<Int>.constant(0))->BlitArrayOfTextures{
+                     slice: MetalBinding<Int>=MetalBinding<Int>.constant(0), copyToSlices: Bool = false)->BlitArrayOfTextures{
         var b = self
         b.destinationSlice = slice
         b.outContainer = singleTexture
+        b.copyToSlices = copyToSlices
         return b
     }
     func sliceCount(_ binding: MetalBinding<Int>)->BlitArrayOfTextures{

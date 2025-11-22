@@ -21,7 +21,7 @@ class BlitArrayOfTexturesPass: MetalPass{
         let commandBuffer = passInfo.getCommandBuffer()
         
         let sourceSlice = component.sourceSlice.wrappedValue
-        let destinationSlice = component.destinationSlice.wrappedValue
+        var destinationSlice = component.destinationSlice.wrappedValue
         
         let blitTextureEncoder = commandBuffer.makeBlitCommandEncoder()
         
@@ -40,6 +40,11 @@ class BlitArrayOfTexturesPass: MetalPass{
             
             guard let outTexture = component.outContainer?.texture ?? component.outArray?[outId]?.texture
             else { return }
+            
+            // if destination is a single texture, can copy to slices:
+            if component.copyToSlices{
+                destinationSlice = outId
+            }
             
             print("blit textureIn size: \(inTexture.width)x\(inTexture.height)")
             print("blit textureOut size: \(outTexture.width)x\(outTexture.height)")
