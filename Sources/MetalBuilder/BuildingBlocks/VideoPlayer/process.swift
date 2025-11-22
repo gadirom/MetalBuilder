@@ -9,17 +9,26 @@ import MetalKit
 import AVFoundation
 
 extension MBVideoController{
-    
+    //nonisolated
     func process(device: MTLDevice, textureContainer: MTLTextureContainer){
+        
+        //print("process")
         
         guard (isPlaying && !isBlockingPlayback) || isSeeking
         else{ return }
         
-        if let (pixelBuffer, time) = getPixelBufferAndTime(),
+        //print("tried to get frame for time: ", _currentTime)
+        //if isSeeking{ print("while seeking") }
+        
+        if let (pixelBuffer, time) = getPixelBufferAndTime(
+            //currentTime: isSeeking ? _currentTime : nil),
+            currentTime: nil),
            let texture = createTexture(device: device,
                                        pixelBuffer: pixelBuffer){
             
             textureContainer.texture = texture
+            
+            //print("frame ready, for time: ", time)
             
             if seekingIsFinished{
                 seekingIsFinished = false
@@ -35,14 +44,14 @@ extension MBVideoController{
         }
     }
     
-    func getPixelBufferAndTime() -> (CVPixelBuffer, CMTime)?{
+    func getPixelBufferAndTime(currentTime: CMTime?) -> (CVPixelBuffer, CMTime)?{
         
         guard let videoPlayerItemOutput
         else{
             return nil
         }
         
-        let currentTime = videoPlayerItemOutput
+        let currentTime = currentTime ?? videoPlayerItemOutput
             .itemTime(forHostTime: CACurrentMediaTime())
         
         if videoPlayerItemOutput.hasNewPixelBuffer(forItemTime: currentTime),
@@ -57,7 +66,18 @@ extension MBVideoController{
     func createTexture(device: MTLDevice, pixelBuffer: CVPixelBuffer) -> MTLTexture?{
 
         if textureCache == nil{
-            let ret = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &textureCache)
+            
+            let chacheAttributes = [kCVMetalTextureUsage: MTLTextureUsage.shaderRead] as CFDictionary
+            
+            let textureAttributes = [:] as CFDictionary
+            
+            let ret = CVMetalTextureCacheCreate(
+                kCFAllocatorDefault,
+                chacheAttributes,
+                device,
+                textureAttributes,
+                &textureCache)
+            
             if ret != 0{
                 print("Texture Cash creating error: \(ret)")
                 return nil

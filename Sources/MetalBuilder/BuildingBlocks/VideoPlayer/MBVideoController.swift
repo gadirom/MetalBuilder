@@ -8,6 +8,7 @@
 import AVFoundation
 import SwiftUI
 
+//@MainActor
 @Observable
 public final class MBVideoController{
     public init(){}
@@ -22,7 +23,20 @@ public final class MBVideoController{
         }
     }
     
-    public var isBlockingPlayback: Bool = false //  to block playback if seeking but holding
+    public var isBlockingPlayback: Bool = false{
+        didSet{
+            if !isBlockingPlayback && shouldRestartPlayback{
+                shouldRestartPlayback = false
+                if currentTime == duration{
+                    playerItemDidPlayToEnd()
+                }else{
+                    videoPlayer.play()
+                }
+            }
+        }
+    } //  to block playback if seeking but holding
+    
+    public var shouldRestartPlayback: Bool = false // if was holding near while playing
     
     public var currentTime: CMTime{
         get{
@@ -42,9 +56,21 @@ public final class MBVideoController{
     
     public var loop: Bool = true
     
+    public var isMuted: Bool = false{
+        didSet{
+            videoPlayer.isMuted = isMuted
+        }
+    }
+    
+    public var orientation: CGAffineTransform?
+    
+    public var errorHandler: ((MetalBuilderVideoPlayerError) -> ())?
+//    @MainActor
+//    public var formatDescriptions: [CMFormatDescription]?
+    
     @ObservationIgnored
     @MetalState public var nextFrameReady: Bool = false
-    
+
     internal var _currentTime: CMTime = .zero
     
 //    @ObservationIgnored
@@ -70,6 +96,11 @@ public final class MBVideoController{
 //    internal var pendingTime: CMTime?
 
     internal func start(){
+        if currentTime == duration{
+            //print("should start from start")
+            currentTime = .zero
+            seek(to: .zero)
+        }
         videoPlayer.play()
     }
     internal func stop(){
@@ -77,14 +108,26 @@ public final class MBVideoController{
     }
     
     internal func seek(to time: CMTime) {
+        //print(" seeking to time: ", time)
         // Create a CMTime value for the passed in time interval.
         //let time = CMTime(seconds: timeInterval, preferredTimescale: 600)
+        //videoPlayer.automaticallyWaitsToMinimizeStalling = false
+        if isPlaying{
+            videoPlayer.pause() // for some reason this was needed to corectly jump to the ending frame
+        }
         videoPlayer.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero){ finished in
             if finished{
-                print("seeking finiished")
+                //print("seeking finiished")
                 self.seekingIsFinished = true
+                if self.isPlaying{
+                    if self.isBlockingPlayback{
+                        self.shouldRestartPlayback = true
+                    }else{
+                        self.videoPlayer.play() // this is needed (explained above)
+                    }
+                }
             }else{
-                print("seeking not finished")
+                //print("seeking not finished")
             }
         }
         isSeeking = true
@@ -92,12 +135,17 @@ public final class MBVideoController{
     
 }
 public extension MBVideoController{
-    
     func close(){
         isPlaying = false
-        self.videoPlayer.replaceCurrentItem(with: nil)
+        videoIsLoaded = false
         self.videoPlayerItemOutput = nil
+        self.videoPlayer.replaceCurrentItem(with: nil)
+        
         self.statusObserver = nil
+        
+        self.cvTexture = nil
+        self.textureCache = nil
+
         
         //empty cache!!
     }

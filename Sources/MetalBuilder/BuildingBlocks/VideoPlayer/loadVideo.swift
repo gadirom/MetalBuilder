@@ -8,10 +8,10 @@
 import AVFoundation
 
 public extension MBVideoController{
+    @MainActor
     func load(_ url: URL, outputColorProperties: VideoColorProperties) throws{
         
         videoIsLoaded = false
-        
         
         let asset = AVURLAsset(url: url)
         let videoPlayerItem = AVPlayerItem(asset: asset)
@@ -20,6 +20,7 @@ public extension MBVideoController{
         self.videoPlayer.replaceCurrentItem(with: videoPlayerItem)
         
         
+        self.orientation = getVideoOrientation(from: asset)
 //        Looping!
 //        player = AVQueuePlayer()
 //        loopy = AVPlayerLooper(player: player as! AVQueuePlayer,
@@ -51,14 +52,14 @@ public extension MBVideoController{
         
         //createTexture = true
         
-        print(videoPlayer.currentItem?.status)
+        //print(videoPlayer.currentItem?.status)
         
     }
 }
 
 extension MBVideoController{
     
-    func onLoaded(_ item: AVPlayerItem){
+    func onLoaded(_ item: AVPlayerItem) {
         if item.status == . readyToPlay, let videoPlayerItemOutput{
             item.add(videoPlayerItemOutput)
             
@@ -71,6 +72,7 @@ extension MBVideoController{
             self.duration = item.duration
             
             currentTime = .zero
+            item.forwardPlaybackEndTime = item.duration 
             seek(to: .zero)
             
             
@@ -79,15 +81,29 @@ extension MBVideoController{
                 selector: #selector(playerItemDidPlayToEnd),
                 name: .AVPlayerItemDidPlayToEndTime,
                 object: item)
-            
+
+            loadDescription(item)
             //print("\(self.videoPlayer.currentItem?.status)")
             //print("\(self.videoPlayer.error)")
             
+        }else{
+            close()
+            errorHandler?(.couldNotOpenTheFile)
         }
     }
     
     @objc
     func playerItemDidPlayToEnd(){
+        
+        print("played to end")
+        
+        guard !isBlockingPlayback
+        else{
+            shouldRestartPlayback = true
+            print("debug:shouldrestart was set!")
+            return
+        }
+        
         if loop{
             currentTime = .zero
             seek(to: .zero)
@@ -96,6 +112,22 @@ extension MBVideoController{
             isPlaying = false
         }
     }
+    
+    func loadDescription(_ item: AVPlayerItem){
+        Task{ @MainActor in
+            let formatDescriptions =  try! await item.tracks.first!.assetTrack?.load(.formatDescriptions)
+            
+            print(formatDescriptions)
+            //await self.setFormatDescriptions(formatDescriptions)
+
+        }
+    }
+//    
+//    //nonisolated(nonsending)
+//    @MainActor
+//    func setFormatDescriptions(_ formatDescriptions: [CMFormatDescription]?) async{
+//        self.formatDescriptions = formatDescriptions
+//    }
     
     func loadVideoMetadata(asset: AVURLAsset) throws{
         
@@ -139,3 +171,9 @@ extension MBVideoController{
     }
 }
 
+func getVideoOrientation(from asset: AVAsset) -> CGAffineTransform? {
+    guard let videoTrack = asset.tracks(withMediaType: .video).first else {
+        return nil
+    }
+    return videoTrack.preferredTransform
+}
