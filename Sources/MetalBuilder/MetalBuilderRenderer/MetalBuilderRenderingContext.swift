@@ -31,6 +31,8 @@ public final class MetalBuilderRenderingContext{
     
     public let device: MTLDevice
     
+    public var showDrawable: Bool = true // set it to false if nothing was rendered
+    
     let commandQueue: MTLCommandQueue
     
     init(commandQueue: MTLCommandQueue){

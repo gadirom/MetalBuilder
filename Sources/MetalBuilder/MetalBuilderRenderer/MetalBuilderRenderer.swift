@@ -145,6 +145,9 @@ public extension MetalBuilderRenderer{
             try pass.encode(passInfo: passInfo)
                 
         }
+        
+        let drawable = renderData.context.showDrawable ? drawable : nil
+        renderData.context.showDrawable = true
 
         endEncode(commandBuffer: commandBuffer, drawable: drawable)
         
