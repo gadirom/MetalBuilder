@@ -46,7 +46,7 @@ public struct QuadRenderer: MetalBuildingBlock, Renderable {
         """
             constexpr sampler s(address::clamp_to_zero, filter::\(String(describing: filter)));
             float4 color = inTexture.sample(s, in.uv);
-            return color;
+            out = color;
         """)
             .texture(sampleTexture, argument: .init(type: "float", access: "sample", name: "inTexture"))
         }
