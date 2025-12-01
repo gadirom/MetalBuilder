@@ -15,9 +15,9 @@ public struct EDRSettings{
     
     public init(){}
     public var useEDR: Bool = false
-    public var pixelFormat: MTLPixelFormat? = .rgba16Float
+    public var pixelFormat: MTLPixelFormat? = .bgra8Unorm//.rgba16Float
     public var toneMapping: Bool = false
-    public var colorSpace: CGColorSpace? = .init(name: CGColorSpace.displayP3)!
+    public var colorSpace: CGColorSpace? = .init(name: CGColorSpace.sRGB)!//.init(name: CGColorSpace.displayP3)!
 }
 
 @MainActor
