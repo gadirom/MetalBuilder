@@ -4,18 +4,21 @@ import MetalKit
 public func gpuStartCapture(_ object: Any?=nil){
     // capture
     
-    let object = object != nil ? object : MTLCreateSystemDefaultDevice()
+    let object = object ?? MTLCreateSystemDefaultDevice()
 
     let captureDescriptor = MTLCaptureDescriptor()
     captureDescriptor.captureObject = object
     // destination is developerTools by default
 
+    print("starting GPU capture of ", object)
+    
     try? MTLCaptureManager.shared().startCapture(with: captureDescriptor)
 }
 public func gpuStopCapture(){
     if MTLCaptureManager.shared().isCapturing {
-           MTLCaptureManager.shared().stopCapture()
-       }
+        MTLCaptureManager.shared().stopCapture()
+        print("stopped GPU capture")
+    }
 }
 
 
