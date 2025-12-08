@@ -21,6 +21,44 @@ public extension EnumForPicker{
         .init(uniqueKeysWithValues: Self.allCases.map{ ($0.name, $0.rawValue) })
     }
 }
+public extension EnumForPicker{
+    func equals(to rawValueGetter: @escaping ()->(EnumForPickerRawValue))-> MetalBinding<Bool>{
+        .init{
+            rawValueGetter() == self.rawValue
+        }
+    }
+    static func `switch`(_ rawValueGetter: @escaping ()->(EnumForPickerRawValue),
+                         _ cases: (Self, MetalBuildingBlock)...) -> EncodeGroup{
+        EncodeGroup(metalContent:
+            cases.map { `case`, block in
+                EncodeGroup(active: `case`.equals(to: rawValueGetter)){
+                    block
+                }
+            }
+        )
+    }
+    //compares binding.rawValue with source value
+    //if they are equal returns false
+    //if not - set binding to source and return true
+    static func compareAndSet(_ binding: MetalBinding<Self>,
+                       _ rawValueGetter: @escaping ()->(EnumForPickerRawValue)) -> MetalBinding<Bool>{
+        .init(get: {
+            let sourceValue = rawValueGetter()
+            if binding.wrappedValue.rawValue == sourceValue{
+                return false
+            }else{
+                binding.wrappedValue = Self(rawValue: sourceValue)!
+                return true
+            }
+        })
+    }
+}
+
+public extension MetalBinding where T: EnumForPicker{
+    static func ===(lhs: MetalBinding<T>, rhs: @escaping ()->(EnumForPickerRawValue)) -> MetalBinding<Bool>{
+        T.compareAndSet(lhs, rhs)
+    }
+}
 //
 //enum PickerVariants: UInt8, EnumForPicker{
 //    case first
