@@ -70,6 +70,12 @@ public final class MTLTextureContainer{
         }
     }
     
+    public func createLike(size: simd_uint2, device: any MTLDevice) throws{
+        guard self.texture?.size_uint2 != size
+        else{ return }
+        try create(device: device, size2D: size)
+    }
+    
     public func create(device: MTLDevice, drawable: CAMetalDrawable?=nil, newDescriptor: TextureDescriptor?=nil) throws{
         if let desc = newDescriptor{
             self.descriptor = desc
