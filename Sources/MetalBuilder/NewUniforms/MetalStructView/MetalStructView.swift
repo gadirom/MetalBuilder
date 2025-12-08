@@ -41,7 +41,22 @@ public struct MetalStructView<T: MetalStruct>: View {
         state.initForView(onChangeForUI: onChange)
         //self.onChange = onChange
         //self.helpers = state.getBindings(onChange: onChange ?? {_ in })
+        changer = state.helpers
+            .filter{ state.state.uiRefreshers.contains($0.key) }
+            .map{
+                $0.value.1.first!
+            }
         
+        _helpers = .init(initialValue: getHelpers())// getHelpers()
+    }
+    
+    @State var x = 1
+    
+    var changer: [ObservableValue]
+    var changerValue: Double{
+        changer.reduce(0) { result, element in
+            result + element.doubleBinding.wrappedValue
+        }
     }
     
     let title: String?
@@ -50,6 +65,13 @@ public struct MetalStructView<T: MetalStruct>: View {
     let convertToColorSpace: Color.RGBColorSpace
     
     let collapsable: Bool
+    
+    @State var helpers: [StoredMetalState<T>.Helpers.Elements.Element] = []
+    
+    func getHelpers() -> [StoredMetalState<T>.Helpers.Elements.Element] {
+        state.helpers.elements
+            .filter{ state.state.filterKeys($0.key) }
+    }
     
     //@StateObject var updater = ViewUpdater()
     
@@ -95,14 +117,23 @@ public struct MetalStructView<T: MetalStruct>: View {
         Group{
             //        ForEach(Array(state.state.dict.elements.enumerated()), id: \.element.key){ a in
             //if initialized{
-                ForEach(state.helpers.elements, id: \.key){ a in
+            ForEach(helpers, id: \.key){ a in
                     
                     FieldView(info: a.value.0, values: a.value.1, convertToColorSpace: convertToColorSpace)
+                
                     //.environment(updater)
                     // .id(updater.id(i))
                     //.padding([.top, .bottom])
                 }
             //}
+        }
+        
+        //.animation(.default, value: changer?.doubleBinding.wrappedValue)
+        //.transition(.opacity)
+        .onChange(of: changerValue) {
+            withAnimation {
+                self.helpers = getHelpers()
+            }
         }
     }
     
@@ -122,7 +153,9 @@ public struct MetalStructView<T: MetalStruct>: View {
                 content
             }
         }
+        
         .onAppear{
+            //helpers = getHelpers()
             //self.initialize()
 //            self.state.forceUpdateView = self.updater.forceUpdateView
 //            self.updater.onChange = self.onChange

@@ -53,7 +53,10 @@ public final class StoredMetalState<T: MetalStruct>{
     var wasInitForUI = false
     
     //var forceUpdateView: (()->())? = nil
-    var helpers: OrderedDictionary<String, (EditableFieldInfo, [ObservableValue])> = [:]
+    typealias Helpers = OrderedDictionary<
+        String, (EditableFieldInfo, [ObservableValue])
+    >
+    var helpers: Helpers = [:]
     
     func whatValuesWereChanged(_ newValue: T) -> [String]{
         _state.dict.keys.filter{ key in
