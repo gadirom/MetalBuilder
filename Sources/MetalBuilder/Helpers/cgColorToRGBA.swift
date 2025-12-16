@@ -10,16 +10,13 @@ import simd
 
 func cgColorToRGBA<T: BinaryFloatingPoint>(_ cgColor: CGColor) -> SIMD4<T> {
     // Get the RGB colorspace for conversion
-    guard let rgbColorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
-        // Fallback to device RGB if sRGB is not available
-        let fallbackColorSpace = CGColorSpaceCreateDeviceRGB()
-        return convertToRGBA(cgColor, targetColorSpace: fallbackColorSpace)
-    }
+    let rgbColorSpace = cgColor.colorSpace ?? CGColorSpaceCreateDeviceRGB()
     
     return convertToRGBA(cgColor, targetColorSpace: rgbColorSpace)
 }
 
-private func convertToRGBA<T: BinaryFloatingPoint>(_ cgColor: CGColor, targetColorSpace: CGColorSpace) -> SIMD4<T> {
+private func convertToRGBA<T: BinaryFloatingPoint>(_ cgColor: CGColor,
+                                                   targetColorSpace: CGColorSpace) -> SIMD4<T> {
     // Convert to target colorspace if needed
     let convertedColor: CGColor
     if let currentColorSpace = cgColor.colorSpace,
