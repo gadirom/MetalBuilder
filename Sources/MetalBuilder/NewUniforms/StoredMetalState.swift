@@ -8,6 +8,17 @@ typealias EditableFieldInfo = (style: FieldStyle,
                                count: Int,
                                integer: Bool)
 
+protocol AnyStoredMetalState: AnyObject{
+    typealias Helpers = OrderedDictionary<
+        String, (EditableFieldInfo, [ObservableValue])
+    >
+    
+    var helpers: Helpers{ get }
+    func initForView(onChangeForUI: ((Bool)->())?)
+    func filterKeys(_ key: String) -> Bool
+    var  uiRefreshers: [String]{ get }
+}
+
 public final class StoredMetalState<T: MetalStruct>{
     
     private var _state: T
@@ -44,19 +55,22 @@ public final class StoredMetalState<T: MetalStruct>{
     
     var onChange: (([String])->())? = nil
     
-    var onChangeForUI: ((Bool)->())?
+    var onChangeForUI: ((Bool)->())? // this will be called from MetalStructView
+    
+    public var onChangeForUISelf: ((Bool)->())? // this is local handler to use in classes
     
     func onChangeForHelpers(_ fromUI: Bool){
-        onChangeForUI?(fromUI)
+        
+        onChangeForUISelf?(fromUI) // runs first
+        
+        onChangeForUI?(fromUI) // view callback runs second
     }
     
     var wasInitForUI = false
     
     //var forceUpdateView: (()->())? = nil
-    typealias Helpers = OrderedDictionary<
-        String, (EditableFieldInfo, [ObservableValue])
-    >
-    var helpers: Helpers = [:]
+
+    var helpers: AnyStoredMetalState.Helpers = [:]
     
     func whatValuesWereChanged(_ newValue: T) -> [String]{
         _state.dict.keys.filter{ key in
@@ -93,7 +107,6 @@ public final class StoredMetalState<T: MetalStruct>{
         self.metalType = metalType
         self.metalName = metalName
         
-        //self.onChange = onChange
         self.saveToDefaults = storeInDefaults
         self.containerName = containerName ?? StoredMetalState<T>.containerNameFromType
         
@@ -140,6 +153,12 @@ extension StoredMetalState{
             }
             self.onChangeForHelpers(false)
         }
+    }
+    func filterKeys(_ key: String) -> Bool{
+        state.filterKeys(key)
+    }
+    var uiRefreshers: [String]{
+        state.uiRefreshers
     }
 }
 

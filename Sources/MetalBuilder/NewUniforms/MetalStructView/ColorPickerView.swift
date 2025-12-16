@@ -55,8 +55,10 @@ struct SwiftUIColorPickerView: View{
             to: convertToColorSpace.cgColorSpace,
             intent: .absoluteColorimetric,
             options: nil)
+        //print("Color: out color: \(outColor!)")
         
         if let rgba = outColor?.float4{
+            //print("Color: set to: \(rgba)")
             r.doubleBinding.wrappedValue = Double(rgba.x)
             g.doubleBinding.wrappedValue = Double(rgba.y)
             b.doubleBinding.wrappedValue = Double(rgba.z)
@@ -76,6 +78,7 @@ struct SwiftUIColorPickerView: View{
             let rgba = simd_float4(rgb, a)
             color = rgba.color(convertToColorSpace)
         }else{
+            //print("Color: updated: \(rgb.color(convertToColorSpace))")
             color = rgb.color(convertToColorSpace)
         }
     }
@@ -89,19 +92,28 @@ struct SwiftUIColorPickerView: View{
     
     @State var color: Color = .black
     
+    @State var preventLoop = false
+    
     var body: some View {
         ColorPicker(selection: $color,
                     supportsOpacity: supportsOpacity) {
             SubtitleView(text: title)
         }
         .onChange(of: color, initial: false){
-            print("Color: \(color)")
-            setRGBA()
+            //print("Color: \(color)")
+            //preventLoop = true
+            if preventLoop{
+                preventLoop = false
+            }else{
+                setRGBA()
+            }
         }
         .onChange(of: rgbaChange, initial: false){
+            preventLoop = true
             updateColor()
         }
         .onAppear{
+            preventLoop = true
             updateColor()
         }
     }

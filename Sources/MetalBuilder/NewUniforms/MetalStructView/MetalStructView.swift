@@ -25,8 +25,20 @@ public class MetalStructViewFonts{
     var valueFont: Font = .title2.monospacedDigit()
 }
 
-public struct MetalStructView<T: MetalStruct>: View {
-    public init(_ state: StoredMetalState<T>,
+@MainActor
+public struct MetalStructView: View {
+    public init<T: MetalStruct>(_ state: StoredMetalState<T>,
+                title: String?=nil,
+                collapsable: Bool = true,
+                convertToColorSpace: Color.RGBColorSpace = .displayP3,
+                                onChange: ((Bool)->())?=nil){
+        self.init(state as! any AnyStoredMetalState,
+                  title: title,
+                  collapsable: collapsable,
+                  convertToColorSpace: convertToColorSpace,
+                  onChange: onChange)
+    }
+    init(_ state: AnyStoredMetalState,
                 title: String?=nil,
                 collapsable: Bool = true,
                 convertToColorSpace: Color.RGBColorSpace = .displayP3,
@@ -42,7 +54,7 @@ public struct MetalStructView<T: MetalStruct>: View {
         //self.onChange = onChange
         //self.helpers = state.getBindings(onChange: onChange ?? {_ in })
         changer = state.helpers
-            .filter{ state.state.uiRefreshers.contains($0.key) }
+            .filter{ state.uiRefreshers.contains($0.key) }
             .map{
                 $0.value.1.first!
             }
@@ -60,17 +72,17 @@ public struct MetalStructView<T: MetalStruct>: View {
     }
     
     let title: String?
-    let state: StoredMetalState<T>
+    let state: AnyStoredMetalState
     
     let convertToColorSpace: Color.RGBColorSpace
     
     let collapsable: Bool
     
-    @State var helpers: [StoredMetalState<T>.Helpers.Elements.Element] = []
+    @State var helpers: [AnyStoredMetalState.Helpers.Elements.Element] = []
     
-    func getHelpers() -> [StoredMetalState<T>.Helpers.Elements.Element] {
+    func getHelpers() -> [AnyStoredMetalState.Helpers.Elements.Element] {
         state.helpers.elements
-            .filter{ state.state.filterKeys($0.key) }
+            .filter{ state.filterKeys($0.key) }
     }
     
     //@StateObject var updater = ViewUpdater()
