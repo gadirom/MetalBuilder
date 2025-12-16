@@ -71,7 +71,8 @@ public final class MTLTextureContainer{
     }
     
     public func createLike(size: simd_uint2, device: any MTLDevice) throws{
-        guard self.texture?.size_uint2 != size
+        guard self.texture?.size_uint2 != size,
+              size.x>0, size.y>0
         else{ return }
         try create(device: device, size2D: size)
     }
