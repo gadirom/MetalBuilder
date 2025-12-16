@@ -334,6 +334,12 @@ public extension TextureDescriptor{
         d = fixedSize(mtlSize)
         return d
     }
+    func fixedSize(_ size: simd_uint2) -> TextureDescriptor {
+        var d = self
+        let mtlSize = MTLSize(width: size.0, height: size.1, depth: 1)
+        d = fixedSize(mtlSize)
+        return d
+    }
     func fixedSize(_ mtlSize: MTLSize) -> TextureDescriptor {
         var d = self
         d.size = .fixed(mtlSize)
