@@ -98,6 +98,8 @@ public extension MetalPassInfo{
                                    height: Double(outTexture.height), znear: 0.0, zfar: 1.0)
         }
         
+        renderPassDescriptor.renderTargetArrayLength = renderableData.renderTargetArrayLength
+        
         return (renderPassDescriptor, viewport)
     }
 }

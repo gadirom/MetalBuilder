@@ -37,7 +37,7 @@ public struct RenderableData{
     public var depthBias: MetalBinding<DepthBias>?
     public var cullMode: MetalBinding<CullMode>?
     public var sampleCount: Int?
-    public var renderTargetArrayLength: Int?
+    public var renderTargetArrayLength: Int = 1
 }
 
 public extension RenderableData{
@@ -67,9 +67,9 @@ public extension RenderableData{
         if let sampleCount = data.sampleCount{
             self.sampleCount = sampleCount
         }
-        if let renderTargetArrayLength = data.renderTargetArrayLength{
-            self.renderTargetArrayLength = renderTargetArrayLength
-        }
+        
+        self.renderTargetArrayLength = data.renderTargetArrayLength
+        
         pipelineColorAttachments = pipelineColorAttachments.merging(data.pipelineColorAttachments) { (current, _) in current }
     }
 }
