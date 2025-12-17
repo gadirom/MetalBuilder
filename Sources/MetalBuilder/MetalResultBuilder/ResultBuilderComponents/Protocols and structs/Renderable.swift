@@ -372,6 +372,11 @@ public extension MetalBuilderComponent where Self: Renderable{
         r.renderableData.sampleCount = count
         return r
     }
+    func renderTargetArrayLength(_ renderTargetArrayLength: Int)->Self{
+        var r = self
+        r.renderableData.renderTargetArrayLength = renderTargetArrayLength
+        return r
+    }
 }
 
 public extension MetalBinding<Color>{
