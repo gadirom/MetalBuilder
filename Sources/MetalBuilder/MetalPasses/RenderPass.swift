@@ -43,6 +43,8 @@ final class RenderPass: MetalPass{
 
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         
+        renderPipelineDescriptor.inputPrimitiveTopology = component.topology
+        
         //depth and stencil routine
         if let depthStencilState = self.component.renderableData.depthStencilState{
             depthStencilState.create(device: renderInfo.device)

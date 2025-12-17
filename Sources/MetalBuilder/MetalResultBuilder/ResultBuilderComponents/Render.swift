@@ -362,3 +362,21 @@ public extension Render{
     }
 }
 
+extension Render{
+    var topology: MTLPrimitiveTopologyClass{
+        switch self.type!{
+        case .point:
+                .point
+        case .line:
+                .line
+        case .lineStrip:
+                .line
+        case .triangle:
+                .triangle
+        case .triangleStrip:
+                .triangle
+        @unknown default:
+            fatalError("Unknown topology")
+        }
+    }
+}
