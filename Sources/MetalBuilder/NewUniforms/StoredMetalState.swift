@@ -19,7 +19,7 @@ protocol AnyStoredMetalState: AnyObject{
     var  uiRefreshers: [String]{ get }
 }
 
-public final class StoredMetalState<T: MetalStruct>{
+public final class StoredMetalState<T: MetalStruct>: AnyStoredMetalState{
     
     private var _state: T
     

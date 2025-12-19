@@ -32,7 +32,7 @@ public struct MetalStructView: View {
                 collapsable: Bool = true,
                 convertToColorSpace: Color.RGBColorSpace = .displayP3,
                                 onChange: ((Bool)->())?=nil){
-        self.init(state as! any AnyStoredMetalState,
+        self.init(state,
                   title: title,
                   collapsable: collapsable,
                   convertToColorSpace: convertToColorSpace,
