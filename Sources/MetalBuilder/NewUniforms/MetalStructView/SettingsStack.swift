@@ -31,7 +31,7 @@ open class SettingsStack{
         self.settings = settings
     }
     public var settings: [StoredMetalStateItem] = []
-    var view: some View{
+    public var view: some View{
         ForEach(Array(settings.enumerated()), id: \.offset){ item in
             let s = item.element
             MetalStructView(s.state,
