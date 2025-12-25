@@ -25,17 +25,6 @@ public class MetalStructViewFonts{
     var valueFont: Font = .title2.monospacedDigit()
 }
 
-private struct MetalStructViewFontsKey: EnvironmentKey {
-    static let defaultValue = MetalStructViewFonts()
-}
-
-public extension EnvironmentValues {
-    var fonts: MetalStructViewFonts {
-        get { self[MetalStructViewFontsKey.self] }
-        set { self[MetalStructViewFontsKey.self] = newValue }
-    }
-}
-
 @MainActor
 public struct MetalStructView: View {
     public init<T: MetalStruct>(_ state: StoredMetalState<T>,
