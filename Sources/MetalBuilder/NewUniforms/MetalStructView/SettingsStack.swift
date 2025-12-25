@@ -29,6 +29,9 @@ public struct StoredMetalStateItem {
 open class SettingsStack{
     public init(settings: [StoredMetalStateItem]) {
         self.settings = settings
+//        for s in settings{
+//            s.state.
+//        }
     }
     public var settings: [StoredMetalStateItem] = []
     public var view: some View{
