@@ -25,6 +25,10 @@ public class MetalStructViewFonts{
     var valueFont: Font = .title2.monospacedDigit()
 }
 
+public extension EnvironmentValues {
+    @Entry var fonts = MetalStructViewFonts()
+}
+
 @MainActor
 public struct MetalStructView: View {
     public init<T: MetalStruct>(_ state: StoredMetalState<T>,
