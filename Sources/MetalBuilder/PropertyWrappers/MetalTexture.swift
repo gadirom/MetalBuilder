@@ -14,12 +14,20 @@ public final class MetalTexture{
         self.wrappedValue = wrappedValue
     }
     
+    public convenience init(){
+        self.init(.init().manual())
+    }
+    
     public init(_ descriptor: TextureDescriptor=TextureDescriptor().manual(),
-                label: String?=nil,
-                fromImage: ImageForTexture? = nil){
+                label: String="",
+                fromImage: ImageForTexture? = nil,
+                group: String?=nil,
+                addToArgBuffers:  [(ArgumentBuffer, MetalTextureArgument)]?=nil){
         self.wrappedValue = MTLTextureContainer(descriptor,
                                                 label: label,
-                                                fromImage: fromImage)
+                                                fromImage: fromImage,
+                                                group: group,
+                                                addToArgBuffers: addToArgBuffers)
     }
 }
 
@@ -28,12 +36,13 @@ case textureNotCreated, noDescriptor, descriptorSizeContainsZero,
     pixelFormatFromDrawable, noDeviceProvided
 }
 
-public final class MTLTextureContainer{
+public final class MTLTextureContainer: ResourceManager.Entry{
     public var descriptor: TextureDescriptor
-    public var label: String?
+    public var label: String = ""
     public var texture: MTLTexture?{
         didSet{
             updateResourceInArgumentBuffers()
+            sourceTexture = nil
         }
     }
     var image: ImageForTexture?
@@ -41,14 +50,23 @@ public final class MTLTextureContainer{
     internal var argBufferInfo = ArgBufferInfo()
     internal var dataType: MTLDataType = .texture
     
-    init(){
-        descriptor = TextureDescriptor()
-    }
+    // this is to hold a texture source if a texture view is used
+    internal var sourceTexture: MTLTexture?
     
-    public init(_ descriptor: TextureDescriptor, label: String?=nil, fromImage: ImageForTexture? = nil){
+    public init(_ descriptor: TextureDescriptor=TextureDescriptor().manual(),
+                label: String="",
+                fromImage: ImageForTexture? = nil,
+                group: String?=nil,
+                addToArgBuffers:  [(ArgumentBuffer, MetalTextureArgument)]?=nil){
         self.descriptor = descriptor
         self.image = fromImage
         self.label = label
+        
+        ResourceManager.registerTexture(
+            group: group,
+            texture: self,
+            argumentBuffers: addToArgBuffers
+        )
     }
     
     //creates or loads the texture
@@ -139,9 +157,9 @@ public final class MTLTextureContainer{
             throw MetalBuilderTextureError
                 .textureNotCreated
         }
-        if let label{
+        //if let label{
             texture.label = label
-        }
+        //}
         self.texture = texture
     }
 }

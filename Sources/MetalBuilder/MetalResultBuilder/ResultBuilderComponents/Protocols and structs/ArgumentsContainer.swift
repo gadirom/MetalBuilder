@@ -187,7 +187,7 @@ extension ArgumentsContainer{
     mutating func texture(_ container: MTLTextureContainer,
                   argument: MetalTextureArgument){
         checkIfTextureIsNew(container: container,
-                            argumentName: argument.name)
+                            argumentName: argument.name!)
         var argument = argument
         argument.textureType = container.descriptor.type
         let tex = Texture(container: container, index: 0)

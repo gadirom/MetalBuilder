@@ -37,7 +37,7 @@ public enum MetalFunctionArgument{
     }
     var name: String{
         switch self{
-        case .texture(let arg): return arg.name
+        case .texture(let arg): return arg.name!
         case .buffer(let arg): return arg.name
         case .bytes(let arg): return arg.name
         case .custom: return "custom"
@@ -59,7 +59,7 @@ public struct MetalTextureArgument{
     let type: String
     var textureType: MTLTextureType?=nil
     let access: String
-    let name: String
+    var name: String?
     var index: Int?
     var forArgBuffer: Bool
     var arrayOfTexturesCount: Int?
@@ -84,7 +84,7 @@ public struct MetalTextureArgument{
         guard let index
         else{
             throw  MetalBuilderFunctionArgumentsError
-                .noIndex(name)
+                .noIndex(name!)
         }
         let base: String
         if let arrayOfTexturesCount{
@@ -94,9 +94,9 @@ public struct MetalTextureArgument{
         }
         
         if forArgBuffer{
-            return "\(base) \(name) [[id(\(index))]]"
+            return "\(base) \(name!) [[id(\(index))]]"
         }else{
-            return "\(base) \(name) [[texture(\(index))]]"
+            return "\(base) \(name!) [[texture(\(index))]]"
         }
         
     }
@@ -109,14 +109,26 @@ public struct MetalTextureArgument{
     /// If nil, the index will be set automatically by MetalBuilder.
     /// (Once you pass nil for the index of a texture argument of a component,
     /// avoid passing non-nil values in texture arguments of the same component.)
-    public init(type: String, access: String, name: String, index: Int?=nil,
-                forArgBuffer: Bool = false, arrayOfTexturesCount: Int? = nil) {
+    public init(type: String, access: String, name: String?, index: Int?=nil,
+                arrayOfTexturesCount: Int? = nil) {
         self.type = type
         self.access = access
         self.name = name
         self.index = index
-        self.forArgBuffer = forArgBuffer
+        self.forArgBuffer = false
         self.arrayOfTexturesCount = arrayOfTexturesCount
+    }
+    
+    public init(type: String, access: String, index: Int?=nil,
+                arrayOfTexturesCount: Int? = nil) {
+        self = Self(type: type, access: access, name: nil, index: index,
+                    arrayOfTexturesCount: arrayOfTexturesCount)
+    }
+    
+    init(type: String, access: String, name: String, index: Int?=nil,
+         forArgBuffer: Bool, arrayOfTexturesCount: Int? = nil) {
+        self = Self(type: type, access: access, name: name, index: index, arrayOfTexturesCount: arrayOfTexturesCount)
+        self.forArgBuffer = forArgBuffer
     }
 }
 

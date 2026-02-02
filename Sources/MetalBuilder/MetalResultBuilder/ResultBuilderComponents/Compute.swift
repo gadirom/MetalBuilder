@@ -100,7 +100,7 @@ public extension Compute{
         var c = self
         c.drawableTextureIndex = c.argumentsContainer.drawable(argument: argument)
         if fitThreads || gridScale != nil{
-            c.gridFit = .drawable(argument.name, gridScale ?? (1,1,1))
+            c.gridFit = .drawable(argument.name!, gridScale ?? (1,1,1))
         }
         return c
     }

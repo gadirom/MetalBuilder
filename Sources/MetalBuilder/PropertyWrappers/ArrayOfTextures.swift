@@ -10,12 +10,17 @@ public final class ArrayOfTextures{
         self
     }
     
-    public init(type: MTLTextureType, maxCount: Int, label: String?=nil,
-                useHeap: Bool = true){
+    public init(type: MTLTextureType, maxCount: Int,
+                label: String?=nil,
+                useHeap: Bool = true,
+                groups: [(String, TextureDescriptor)]?=nil,
+                addToArgBuffers:  [(ArgumentBuffer, MetalTextureArgument)]?=nil){
         wrappedValue = ArrayOfTexturesContainer(type: type,
                                                 maxCount: maxCount,
                                                 label: label,
-                                                useHeap: useHeap)
+                                                useHeap: useHeap,
+                                                groups: groups,
+                                                addToArgBuffers: addToArgBuffers)
     }
     
 //    public init(fromImages: [ImageForTexture]? = nil){
@@ -43,14 +48,22 @@ extension ArrayOfTexturesContainerError: LocalizedError{
     }
 }
 
-public final class ArrayOfTexturesContainer{
+public final class ArrayOfTexturesContainer: ResourceManager.Entry{
     public init(type: MTLTextureType, maxCount: Int, label: String? = nil,
-                useHeap: Bool){
+                useHeap: Bool,
+                groups: [(String, TextureDescriptor)]?=nil,
+                addToArgBuffers:  [(ArgumentBuffer, MetalTextureArgument)]?=nil){
         self.type = type
         self.maxCount = maxCount
         self.label = label
         self.heap = MTLHeapContainer()
         self.useHeap = useHeap
+        
+        ResourceManager.registerArrayOfTextures(
+            groups: groups,
+            aot: self,
+            argumentBuffers: addToArgBuffers
+        )
     }
     
     internal var type: MTLTextureType
@@ -226,7 +239,7 @@ public extension ArrayOfTexturesContainer{
     }
     
     
-    func addTextures(containers: [MTLTextureContainer]) throws{
+    func addTextures(containers: [MTLTextureContainer]) {
         textures = []
         for c in containers{
             try addTexture(container: c)
@@ -234,7 +247,7 @@ public extension ArrayOfTexturesContainer{
         //useHeap = false
     }
     
-    private func addTexture(container: MTLTextureContainer) throws{
+    private func addTexture(container: MTLTextureContainer){
         
         container.argBufferInfo = self.argBufferInfo.withArrayIndex(textures.count)
                 

@@ -197,7 +197,7 @@ public extension ReceiverOfArgumentsContainer{
         var c = self
         c.argumentsContainer.texture(container, argument: argument)
         if fitThreads || gridScale != nil{
-            c.gridFit = .fitTexture(container, argument.name, gridScale ?? (1,1,1))
+            c.gridFit = .fitTexture(container, argument.name!, gridScale ?? (1,1,1))
         }
         return c
     }
@@ -207,7 +207,7 @@ public extension ReceiverOfArgumentsContainer{
         var c = self
         _=c.argumentsContainer.drawable(argument: argument)
         if fitThreads || gridScale != nil{
-            c.gridFit = .drawable(argument.name, gridScale ?? (1,1,1))
+            c.gridFit = .drawable(argument.name!, gridScale ?? (1,1,1))
         }
         return c
     }

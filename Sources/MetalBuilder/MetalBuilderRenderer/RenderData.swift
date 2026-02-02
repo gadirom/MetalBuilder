@@ -67,6 +67,8 @@ struct RenderData{
         Self.librarySourceHashes = []
         Self.helpersHashes = []
         
+        ResourceManager.shared.setup()
+        
         if let setupFunction = setupFunction{
             self.setupFunctions.append(setupFunction)
         }

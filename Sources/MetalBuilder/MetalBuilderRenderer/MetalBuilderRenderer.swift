@@ -17,7 +17,8 @@ extension MetalBuilderRendererError: LocalizedError{
 public final class MetalBuilderRenderer{
     
     init(){
-        ArgumentBuffer.clearAll()
+        //ArgumentBuffer.clearAll()
+        //print("argBuffer cleared!")
     }
     
     var renderData: RenderData!

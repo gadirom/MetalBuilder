@@ -59,6 +59,9 @@ public class ArgumentBuffer{
     
     nonisolated(unsafe)
     static var argumentBuffersSingleton: [ArgumentBuffer] = []
+    static public subscript(_ bufferName: String) -> ArgumentBuffer?{
+        argumentBuffersSingleton.first(where: { $0.name == bufferName })
+    }
     
     static func clearAll(){
         Self.argumentBuffersSingleton = []
@@ -74,10 +77,12 @@ public class ArgumentBuffer{
     var wasSetUp = false
     
     public static func new(_ name: String, desc: ArgumentBufferDescriptor) -> ArgumentBuffer{
-        if let argBuf = argumentBuffersSingleton.first(where: { $0.name == name }){
+        if let argBuf = ArgumentBuffer[name]{
             return argBuf
         }else{
-            return self.init(name, desc: desc)
+            let argBuf = self.init(name, desc: desc)
+            print("created new argBuf, name: \(name), \(Unmanaged.passUnretained(argBuf).toOpaque())")
+            return argBuf
         }
     }
     required init(_ name: String, desc: ArgumentBufferDescriptor){

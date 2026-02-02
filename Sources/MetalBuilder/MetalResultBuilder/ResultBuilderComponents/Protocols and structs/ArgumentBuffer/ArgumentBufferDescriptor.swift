@@ -45,6 +45,11 @@ public extension ArgumentBufferDescriptor{
         argument.textureType = container.descriptor.type
         argument.index = indexCounter
         argument.forArgBuffer = true
+        
+        if argument.name == nil{
+            argument.name = container.label
+        }
+        
         d.arguments.append((ArgumentBufferDescriptorEntry(resource: container,
                                                           offset: .constant(0)),
         
@@ -53,8 +58,11 @@ public extension ArgumentBufferDescriptor{
         return d
     }
     func arrayOfTextures(_ array: ArrayOfTexturesContainer,
-                       type: String, access: String, name: String)->Self{
+                       type: String, access: String, name: String?=nil)->Self{
         var d = self
+        
+        let name = name ?? array.label!
+        
         var argument = MetalTextureArgument(type: type,
                                             access: access,
                                             name: name,
@@ -62,6 +70,7 @@ public extension ArgumentBufferDescriptor{
                                             forArgBuffer: true)
         argument.arrayOfTexturesCount = array.maxCount
         argument.textureType = array.type
+        
         d.indexCounter +=  array.maxCount
         d.arguments.append((ArgumentBufferDescriptorEntry(resource: nil,
                                                           array: array,
