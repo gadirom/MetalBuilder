@@ -171,8 +171,8 @@ extension MTLTextureContainer: Equatable{
 }
 
 extension MTLTextureContainer: MTLResourceContainer{
-    var mtlResource: MTLResource{
-        texture!
+    var mtlResources: [MTLResource]{
+        [texture!]
     }
     func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int){
         argBuffer.encoder!.setTexture(self.texture, index: id)

@@ -236,17 +236,17 @@ final class RenderPass: MetalPass{
             .argumentsContainer
             .resourcesUsages
             .allResourcesUsages ?? []{
-            renderPassEncoder.useResource(resourceUsage.resource.mtlResource,
-                                          usage: resourceUsage.usage,
-                                          stages: resourceUsage.stages ?? .fragment)
+            renderPassEncoder.useResources(resourceUsage.resource.mtlResources,
+                                           usage: resourceUsage.usage,
+                                           stages: resourceUsage.stages ?? .fragment)
         }
         for resourceUsage in component.vertexShader!
             .argumentsContainer
             .resourcesUsages
             .allResourcesUsages{
-            renderPassEncoder.useResource(resourceUsage.resource.mtlResource,
-                                          usage: resourceUsage.usage,
-                                          stages: resourceUsage.stages ?? .vertex)
+            renderPassEncoder.useResources(resourceUsage.resource.mtlResources,
+                                           usage: resourceUsage.usage,
+                                           stages: resourceUsage.stages ?? .vertex)
         }
         
         //Use Heaps

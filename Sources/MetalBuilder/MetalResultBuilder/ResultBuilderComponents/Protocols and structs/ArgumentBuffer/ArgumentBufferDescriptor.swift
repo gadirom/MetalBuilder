@@ -72,7 +72,8 @@ public extension ArgumentBufferDescriptor{
         argument.textureType = array.type
         
         d.indexCounter +=  array.maxCount
-        d.arguments.append((ArgumentBufferDescriptorEntry(resource: nil,
+        
+        d.arguments.append((ArgumentBufferDescriptorEntry(resource: array,
                                                           array: array,
                                                           offset: .constant(0)),
         

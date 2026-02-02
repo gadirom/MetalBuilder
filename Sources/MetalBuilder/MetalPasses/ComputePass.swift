@@ -145,7 +145,7 @@ final class ComputePass: MetalPass{
         
         //Use Resources
         for resourceUsage in component.argumentsContainer.resourcesUsages.allResourcesUsages{
-            computeCommandEncoder.useResource(resourceUsage.resource.mtlResource,
+            computeCommandEncoder.useResources(resourceUsage.resource.mtlResources,
                                               usage: resourceUsage.usage)
         }
         

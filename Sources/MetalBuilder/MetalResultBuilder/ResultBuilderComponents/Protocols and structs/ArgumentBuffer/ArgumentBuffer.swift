@@ -36,7 +36,7 @@ struct ArgBufferInfo{
 }
 
 protocol MTLResourceContainer: AnyObject{
-    var mtlResource: MTLResource{ get }
+    var mtlResources: [MTLResource]{ get }
     var argBufferInfo: ArgBufferInfo {get set}
     var dataType: MTLDataType { get }
     func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int)

@@ -258,6 +258,17 @@ public extension ArrayOfTexturesContainer{
     }
 }
 
+extension ArrayOfTexturesContainer: MTLResourceContainer{
+    var mtlResources: [MTLResource]{
+        useHeap ? [] : mtlTextures
+    }
+    func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int){
+        //no need to update resources for array of textures
+        //argBuffer.encoder!.setTexture(self.texture, index: id)
+        //print("updated texture resource [\(id)] in \(argBuffer.name)")
+    }
+}
+
 func newDescriptorFromTexture(texture: MTLTexture,
                               storageMode: MTLStorageMode?) -> MTLTextureDescriptor{
         let descriptor = MTLTextureDescriptor()

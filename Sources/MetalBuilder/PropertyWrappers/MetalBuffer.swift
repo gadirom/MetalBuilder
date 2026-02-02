@@ -174,8 +174,8 @@ public class BufferContainer: MTLResourceContainer{
 }
 
 extension BufferContainer{
-    var mtlResource: MTLResource{
-        buffer!
+    var mtlResources: [MTLResource]{
+        [buffer!]
     }
     func updateResource(argBuffer: ArgumentBuffer, id: Int, offset: Int){
         argBuffer.encoder!.setBuffer(self.buffer, offset: offset, index: id)
