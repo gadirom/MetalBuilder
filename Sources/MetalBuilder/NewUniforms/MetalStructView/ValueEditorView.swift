@@ -87,35 +87,49 @@ struct SliderView: View{
 struct ValuePickersView: View{
     
     let values: [ObservableValue]
+    let choice: ([Double], ChoiceStyle)
+    let count: Int
+    let title: String
+    
+    var body: some View {
+        switch choice.1{
+        case .inline: ValuePickersInlineView(values: values, choice: choice.0, count: count, title: title)
+        case .segmented: ValuePickersSegmentedView(values: values, choice: choice.0, count: count, title: title)
+        }
+    }
+}
+
+struct ValuePickersInlineView: View{
+    
+    let values: [ObservableValue]
     let choice: [Double]
     let count: Int
     let title: String
     
     var body: some View {
         HStack{
-            
             if count == 1{
                 HStack{
                     SubtitleView(text: title)
                     Spacer()
-                    ValuePickerView(value: values.first!,
-                                    choice: choice)
+                    ValuePickerInlineView(value: values.first!,
+                                          choice: choice)
                 }
             }else{
                 ForEach(0..<count){ i in
                     HStack{
                         SubtitleView(text: componentTitle(i))
                         Spacer()
-                        ValuePickerView(value: values[i],
-                                        choice: choice)
+                        ValuePickerInlineView(value: values[i],
+                                              choice: choice)
                     }
                 }
             }
-        }
+        }.padding([.bottom])
     }
 }
 
-struct ValuePickerView: View{
+struct ValuePickerInlineView: View{
     
     var value: ObservableValue
     let choice: [Double]
@@ -127,6 +141,51 @@ struct ValuePickerView: View{
                 ValueView(value: v, integer: value.isInteger).tag(fv)
             }
         }
+    }
+}
+
+struct ValuePickersSegmentedView: View{
+    
+    let values: [ObservableValue]
+    let choice: [Double]
+    let count: Int
+    let title: String
+    
+    var body: some View {
+        VStack{
+            if count == 1{
+                VStack{
+                    SubtitleView(text: title)
+                    //Spacer()
+                    ValuePickerSegmentedView(value: values.first!,
+                                             choice: choice)
+                }
+            }else{
+                ForEach(0..<count){ i in
+                    VStack{
+                        SubtitleView(text: componentTitle(i))
+                        //Spacer()
+                        ValuePickerSegmentedView(value: values[i],
+                                                 choice: choice)
+                    }
+                }
+            }
+        }.padding([.bottom])
+    }
+}
+
+struct ValuePickerSegmentedView: View{
+    
+    var value: ObservableValue
+    let choice: [Double]
+    
+    var body: some View {
+        Picker("", selection: value.doubleBinding){
+            ForEach(choice, id: \.self){ v in
+                let fv = Float(v)
+                ValueView(value: v, integer: value.isInteger).tag(fv)
+            }
+        }.pickerStyle(.segmented)
     }
 }
 

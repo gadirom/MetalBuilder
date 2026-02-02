@@ -29,12 +29,16 @@ public struct StoredMetalStateItem {
 open class SettingsStack{
     public init(settings: [StoredMetalStateItem]) {
         self.settings = settings
-//        for s in settings{
-//            s.state.
-//        }
     }
+    
+    public func setup(){
+        for s in settings{
+            s.state.onChangeForUISelf?(true)// true since logically it is from UI?
+        }
+    }
+    
     public var settings: [StoredMetalStateItem] = []
-    public var view: some View{
+    public var view: some View {
         ForEach(Array(settings.enumerated()), id: \.offset){ item in
             let s = item.element
             MetalStructView(s.state,
