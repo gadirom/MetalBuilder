@@ -60,6 +60,7 @@ public final class ArrayOfTexturesContainer: ResourceManager.Entry{
         self.useHeap = useHeap
         
         ResourceManager.registerArrayOfTextures(
+            type: type,
             groups: groups,
             aot: self,
             argumentBuffers: addToArgBuffers

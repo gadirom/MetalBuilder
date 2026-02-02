@@ -42,6 +42,7 @@ extension ResourceManager{
         }
     }
     static func registerArrayOfTextures(
+        type: MTLTextureType,
         groups: [(String, TextureDescriptor)]?,
         aot: ArrayOfTexturesContainer,
         argumentBuffers: [(ArgumentBuffer, MetalTextureArgument)]?){
@@ -49,7 +50,7 @@ extension ResourceManager{
         var textures: [MTLTextureContainer] = []
         if let groups{
             for group in groups{
-                textures.append(.init(group.1))
+                textures.append(.init(group.1.type(type)))
                 registerResource(group: group.0, resource: textures.last!, additionalData: "")
             }
         }
