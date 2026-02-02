@@ -63,6 +63,8 @@ extension ImageForTexture{
         }else{
             texture.texture = try new2DTexture(options: options, device: device)
         }
+        
+        texture.createViewForGrayscaleImage()
     }
 }
 
@@ -73,6 +75,48 @@ extension TextureDescriptor{
         options[.textureStorageMode] = self.storageMode.rawValue
         options[.textureUsage] = self.usage.rawValue
         return options
+    }
+}
+
+extension MTLTextureContainer{
+    func createViewForGrayscaleImage(){
+        
+        var swizzle: MTLTextureSwizzleChannels?
+        
+        guard let texture
+        else{ return }
+        
+        switch texture.pixelFormat {
+        case .r8Unorm, .r16Float, .r32Float,
+                .r8Unorm_srgb:
+            // Map Red to RGB, set Alpha to 1
+            swizzle = MTLTextureSwizzleChannels(red: .red, green: .red, blue: .red, alpha: .one)
+            
+        case .rg8Unorm, .rg16Float,
+                .rg8Unorm_srgb:
+            // Common for Grayscale + Alpha. Map Red to RGB, Green to Alpha
+            swizzle = MTLTextureSwizzleChannels(red: .red, green: .red, blue: .red, alpha: .green)
+            
+        default:
+            // Return original for standard RGBA textures
+            return
+        }
+        
+        // 3. Create a view with the corrected mapping
+        if let swizzle,
+            let view = texture.makeTextureView(
+                pixelFormat: texture.pixelFormat,
+                textureType: texture.textureType,
+                levels: 0..<texture.mipmapLevelCount,
+                slices: 0..<texture.arrayLength,
+                swizzle: swizzle
+            ){
+            
+            let t = self.texture
+            self.texture = view
+            self.sourceTexture = t
+            
+        }
     }
 }
 
