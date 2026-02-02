@@ -17,6 +17,7 @@ protocol AnyStoredMetalState: AnyObject{
     func initForView(onChangeForUI: ((Bool)->())?)
     func filterKeys(_ key: String) -> Bool
     var  uiRefreshers: [String]{ get }
+    var onChangeForUISelf: ((Bool)->())?{ get }
 }
 
 public final class StoredMetalState<T: MetalStruct>: AnyStoredMetalState{
