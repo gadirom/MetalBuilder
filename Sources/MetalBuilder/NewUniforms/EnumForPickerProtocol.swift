@@ -59,6 +59,21 @@ public extension MetalBinding where T: EnumForPicker{
         T.compareAndSet(lhs, rhs)
     }
 }
+
+public extension EnumForPicker{
+    static func metalSwitch(_ value: String, _ cases: (Self, String)...) -> String{
+        """
+        switch(\(value)){
+            \(cases.map{ caseValue, code in
+            """
+            case \(caseValue.rawValue): \(code)
+            break;
+            """
+        }.joined(separator: "\n"))
+        }
+        """
+    }
+}
 //
 //enum PickerVariants: UInt8, EnumForPicker{
 //    case first
