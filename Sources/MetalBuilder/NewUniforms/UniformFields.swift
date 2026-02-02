@@ -22,10 +22,10 @@ public extension UniformFields{
 }
 
 public enum ValueStyle{
-    case slider(ClosedRange<Double>)         // range of the slider
-    case picker([Double])                    // picker variants
-    case stepper(Double, ClosedRange<Double>)// step size and range
-    case manual(ClosedRange<Double>)         // enter manually, clamping to range
+    case slider(ClosedRange<Double>)                // range of the slider
+    case picker([Double], ChoiceStyle = .inline)    // picker variants, style
+    case stepper(Double, ClosedRange<Double>)       // step size and range
+    case manual(ClosedRange<Double>)                // enter manually, clamping to range
 }
 
 public enum ToggleStyle{
