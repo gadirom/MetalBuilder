@@ -51,9 +51,12 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
         }
         
         let arg = try gridFit!
-            .computeKernelArguments(bodyCode: bodySource,
-                                    indexType: indexType, 
-                                    gidCountBufferIndex: argumentsContainer.buffersAndBytesContainer.indexCounter)
+            .computeKernelArguments(
+                bodyCode: bodySource,
+                indexType: indexType,
+                gidCountBufferIndex: argumentsContainer
+                                            .buffersAndBytesContainer
+                                            .indexCounter)
         var strArgs = stringArguments.joined(separator: ", ")
         if strArgs != ""{
             strArgs = ", " + strArgs

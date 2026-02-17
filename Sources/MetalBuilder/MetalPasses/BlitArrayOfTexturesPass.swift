@@ -46,8 +46,8 @@ class BlitArrayOfTexturesPass: MetalPass{
                 destinationSlice = outId
             }
             
-            print("blit textureIn size: \(inTexture.width)x\(inTexture.height)")
-            print("blit textureOut size: \(outTexture.width)x\(outTexture.height)")
+            //print("blit textureIn size: \(inTexture.width)x\(inTexture.height)")
+            //print("blit textureOut size: \(outTexture.width)x\(outTexture.height)")
             
             
             blitTextureEncoder?.copy(from: inTexture,

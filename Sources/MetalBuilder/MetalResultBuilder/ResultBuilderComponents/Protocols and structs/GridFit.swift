@@ -112,18 +112,25 @@ extension GridFit{
                                 indexType: IndexType,
                                 gidCountBufferIndex: Int) throws -> String{
         let dim = try threadPositionInGridDim
-        let type = if dim>1 { "\(indexType)\(dim)" }
-        else { "\(indexType)" }
+        let scalarType = "\(indexType)"
+        let dimentionalType = if dim>1 { "\(indexType)\(dim)" } else { scalarType }
         var argsArr = computeKernelArgumentsDict
             .compactMap{ key, value in
                 if isThereIdentifierInCode(code: bodyCode,
                                            identifier: key){
-                    return "\(type) \(key) [[\(value)]]"
+                    let t: String = switch value.argType{
+                    case .scalar:
+                        scalarType
+                    case .dimentional:
+                        dimentionalType
+                    }
+                    return "\(t) \(key) [[\(value.argAttr)]]"
                 }else{
                     return nil
                 }
             }
-        argsArr.append("constant \(type)& gidCount [[buffer(\(gidCountBufferIndex))]]")
+        
+        argsArr.append("constant \(dimentionalType)& gidCount [[buffer(\(gidCountBufferIndex))]]")
         return argsArr.joined(separator: ",")
         
         //
@@ -211,10 +218,16 @@ func isThereIdentifierInCode(code: String, identifier: String) -> Bool{
     return code.contains(regX)
 }
 
-let computeKernelArgumentsDict: [String: String] =
+enum ArgType{
+    case scalar      // indices that are always scalars, like simdgroup index
+    case dimentional // dimentional, like thread position in grid
+}
+
+let computeKernelArgumentsDict: [String: (argAttr: String, argType: ArgType)] =
 [
-    "gid"   : "thread_position_in_grid",
-    "tid"   : "thread_position_in_threadgroup",
-    "t_gid" : "threadgroup_position_in_grid",
-    "tpt"   : "threads_per_threadgroup",
+    "gid"   : ("thread_position_in_grid"       , .dimentional),
+    "tid"   : ("thread_position_in_threadgroup", .dimentional),
+    "t_gid" : ("threadgroup_position_in_grid"  , .dimentional),
+    "tpt"   : ("threads_per_threadgroup"       , .dimentional),
+    "sid"   : ("thread_index_in_simdgroup"     , .scalar),
 ]
