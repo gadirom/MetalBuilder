@@ -108,7 +108,8 @@ extension GridFit{
         }
     }
     //returns declarations of arguments for compute shader
-    func computeKernelArguments(bodyCode: String,
+    func computeKernelArguments(addGidCount: Bool,
+                                bodyCode: String,
                                 indexType: IndexType,
                                 gidCountBufferIndex: Int) throws -> String{
         let dim = try threadPositionInGridDim
@@ -129,8 +130,9 @@ extension GridFit{
                     return nil
                 }
             }
-        
-        argsArr.append("constant \(dimentionalType)& gidCount [[buffer(\(gidCountBufferIndex))]]")
+        if addGidCount{
+            argsArr.append("constant \(dimentionalType)& gidCount [[buffer(\(gidCountBufferIndex))]]")
+        }
         return argsArr.joined(separator: ",")
         
         //

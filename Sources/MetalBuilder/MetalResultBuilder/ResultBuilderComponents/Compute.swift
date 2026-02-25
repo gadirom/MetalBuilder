@@ -6,6 +6,8 @@ public typealias AdditionalEncodeClosureForCompute = (MTLComputeCommandEncoder)-
 public typealias AdditionalPiplineSetupClosureForCompute = (MTLComputePipelineState, MTLLibrary)->()
 public typealias PiplineSetupClosureForCompute = (MTLDevice, MTLLibrary)->(MTLComputePipelineState)
 
+public typealias IndirectComputeDispatchArguments = MTLBufferContainer<UInt32>
+
 /// The component for dispatching compute kernels.
 public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
     
@@ -28,6 +30,10 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
     var additionalPiplineSetupClosure: MetalBinding<AdditionalPiplineSetupClosureForCompute>?
     var piplineSetupClosure: MetalBinding<PiplineSetupClosureForCompute>?
     
+    var dispatchIndirect: Bool = false
+    var indirectDispatchBufferOffset: MetalBinding<Int> = .constant(0)
+    var indirectDispatchArguments: IndirectComputeDispatchArguments!
+    
     public init(_ kernel: String, source: String = ""){
         self.kernel = kernel
     }
@@ -45,13 +51,14 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
         
         var bodySource = bodySource
         
-        if addGridCheck{
+        if addGridCheck && !dispatchIndirect{
             let gridCheck = try gridFit!.gridCheck
             bodySource = gridCheck + bodySource
         }
         
         let arg = try gridFit!
             .computeKernelArguments(
+                addGidCount: !dispatchIndirect,
                 bodyCode: bodySource,
                 indexType: indexType,
                 gidCountBufferIndex: argumentsContainer
@@ -65,9 +72,9 @@ public struct Compute: MetalBuilderComponent, ReceiverOfArgumentsContainer{
         return librarySource + kernelDecl + bodySource + "}"
     }
     mutating func setupGrid() throws{
-        if gridFit == nil{
+        if gridFit == nil{//} && !dispatchIndirect{
             throw MetalBuilderComputeError
-            .noGridFit("No information for threads dispatching was set for the kernel: " +
+            .noGridFit("No information for threads non-indirect dispatching was set for the kernel: " +
                        kernel +
                        "\nUse 'grid' modifier or set index for drawable!")
         }
@@ -226,4 +233,15 @@ public extension Compute{
         c.stringArguments.append(string)
         return c
     }
+    
+    
+    func indirectGrid(_ indirectBuffer: IndirectComputeDispatchArguments,
+                      offset: MetalBinding<Int> = .constant(0)) -> Compute{
+        var c = self
+        c.dispatchIndirect = true
+        c.indirectDispatchArguments = indirectBuffer
+        c.indirectDispatchBufferOffset = offset
+        return c
+    }
+    
 }

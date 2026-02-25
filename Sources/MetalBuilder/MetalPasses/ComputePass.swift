@@ -98,34 +98,45 @@ final class ComputePass: MetalPass{
     
     func dispatch(size: MTLSize, commandEncoder: MTLComputeCommandEncoder){
         
-        encodeGIDCount(encoder: commandEncoder,
-                       size: size,
-                       indexType: component.indexType,
-                       bufferIndex: component.argumentsContainer.buffersAndBytesContainer.indexCounter,
-                       dim: gidCountDim)
-        
-        let w = computePiplineState.threadExecutionWidth
-        let h = min(size.height, computePiplineState.maxTotalThreadsPerThreadgroup / w)
-        
-        //threads per threadgroup
-        var threadsPerThreadgroup: MTLSize
-        if let t = component.threadsPerThreadgroup{
-            threadsPerThreadgroup = t.wrappedValue
-        }else{
-            threadsPerThreadgroup = MTLSize(width: w, height: h, depth: 1)
-        }
-        
-        if supportsFamily4{
-            commandEncoder.dispatchThreads(size,
-                            threadsPerThreadgroup: threadsPerThreadgroup)
+        if component.dispatchIndirect{
+            let threadsPerThreadgroup = component.threadsPerThreadgroup!.wrappedValue
+                
+            commandEncoder.dispatchThreadgroups(
+                indirectBuffer: component.indirectDispatchArguments.buffer!,
+                indirectBufferOffset: component.indirectDispatchBufferOffset.wrappedValue,
+                threadsPerThreadgroup: threadsPerThreadgroup)
         }else{
             
-            let threadgroupsPerGrid = MTLSize(
-                width: Int(ceil(Double(size.width)/Double(w))),
-                height: Int(ceil(Double(size.height)/Double(h))), depth: size.depth)
+            encodeGIDCount(encoder: commandEncoder,
+                           size: size,
+                           indexType: component.indexType,
+                           bufferIndex: component.argumentsContainer.buffersAndBytesContainer.indexCounter,
+                           dim: gidCountDim)
             
-            commandEncoder.dispatchThreadgroups(threadgroupsPerGrid,
-                                                threadsPerThreadgroup: threadsPerThreadgroup)
+            let w = computePiplineState.threadExecutionWidth
+            let h = min(size.height, computePiplineState.maxTotalThreadsPerThreadgroup / w)
+            
+            //threads per threadgroup
+            var threadsPerThreadgroup: MTLSize
+            if let t = component.threadsPerThreadgroup{
+                threadsPerThreadgroup = t.wrappedValue
+            }else{
+                threadsPerThreadgroup = MTLSize(width: w, height: h, depth: 1)
+            }
+            
+            
+            if supportsFamily4{
+                commandEncoder.dispatchThreads(size,
+                                               threadsPerThreadgroup: threadsPerThreadgroup)
+            }else{
+                
+                let threadgroupsPerGrid = MTLSize(
+                    width: Int(ceil(Double(size.width)/Double(w))),
+                    height: Int(ceil(Double(size.height)/Double(h))), depth: size.depth)
+                
+                commandEncoder.dispatchThreadgroups(threadgroupsPerGrid,
+                                                    threadsPerThreadgroup: threadsPerThreadgroup)
+            }
         }
     
     }
