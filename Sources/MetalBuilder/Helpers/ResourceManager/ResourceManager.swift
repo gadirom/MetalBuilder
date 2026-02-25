@@ -19,7 +19,7 @@ extension ResourceManager{
         for tForAOT in texturesToAddToArrayOfTextures{
             tForAOT.0.addTextures(containers: tForAOT.1)
         }
-        texturesToAddToArrayOfTextures = []
+        //texturesToAddToArrayOfTextures = []
     }
 }
 //resources

@@ -398,7 +398,8 @@ struct RenderData{
 
     func createBuffers(device: MTLDevice, withNoArgBufInfo: Bool) throws{
         for buf in argumentsData.buffers{
-            if buf.bContainer.argBufferInfo.argBuffers.isEmpty == withNoArgBufInfo{
+            if buf.bContainer.argBufferInfo.argBuffers.isEmpty == withNoArgBufInfo,
+               !buf.bContainer.dontCreate{
                 try buf.create(device: device)
             }
         }

@@ -163,6 +163,11 @@ public class BufferContainer: MTLResourceContainer{
     public var metalType: String?
     public var metalName: String?
     
+    // in case another MB renderer accesses it
+    // but the buffer is created, so to not wipe it by statrup creation, set this to true
+    // ??? think of a better solution!!!
+    public var dontCreate: Bool = false
+    
     init(count: Int? = nil, metalType: String? = nil, metalName: String? = nil) {
         self.metalType = metalType
         self.metalName = metalName
