@@ -26,7 +26,7 @@ extension ResourceManager{
 extension ResourceManager{
     nonisolated(unsafe) static let shared = ResourceManager()
     
-    static func registerTexture(group: String?,
+    public static func registerTexture(group: String?,
                                 texture: MTLTextureContainer,
                                 argumentBuffers: [(ArgumentBuffer, MetalTextureArgument)]?){
         if let group{
@@ -41,7 +41,7 @@ extension ResourceManager{
             
         }
     }
-    static func registerArrayOfTextures(
+    public static func registerArrayOfTextures(
         type: MTLTextureType,
         groups: [(String, TextureDescriptor)]?,
         aot: ArrayOfTexturesContainer,

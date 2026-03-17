@@ -69,7 +69,7 @@ public class ArgumentBuffer{
     
     let name: String
     let type: String
-    var descriptor: ArgumentBufferDescriptor!
+    public var descriptor: ArgumentBufferDescriptor!
     
     var buffer = MTLBufferContainer<CChar>(count: 1, passAs: .singleReference)
     var encoder: MTLArgumentEncoder!
