@@ -30,7 +30,7 @@ public struct MetalStructView: View {
     public init<T: MetalStruct>(_ state: StoredMetalState<T>,
                 title: String?=nil,
                 collapsable: Bool = true,
-                convertToColorSpace: Color.RGBColorSpace = .displayP3,
+                                convertToColorSpace: Color.RGBColorSpace = .displayP3,
                                 onChange: ((Bool)->())?=nil){
         self.init(state,
                   title: title,
@@ -150,21 +150,24 @@ public struct MetalStructView: View {
     }
     
     public var body: some View {
-        VStack{
-            //Divider()
-            if let title{
-                if collapsable{
-                    CollapsableTitle(title: title){
-                        content
-                    }
-                }else{
-                    TitleView(text: title)
-                    content
-                }
-            }else{
-                content
-            }
+        CollapsableView(title: title, collapsable: collapsable){
+            content
         }
+//        VStack{
+//            //Divider()
+//            if let title{
+//                if collapsable{
+//                    CollapsableTitle(title: title){
+//                        content
+//                    }
+//                }else{
+//                    TitleView(text: title)
+//                    content
+//                }
+//            }else{
+//                content
+//            }
+//        }
         
         .onAppear{
             //helpers = getHelpers()
