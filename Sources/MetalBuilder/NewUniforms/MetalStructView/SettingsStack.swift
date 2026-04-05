@@ -27,8 +27,13 @@ public struct StoredMetalStateItem {
 @Observable
 @MainActor
 open class SettingsStack{
-    public init(settings: [StoredMetalStateItem]) {
+    public init(settings: [StoredMetalStateItem],
+                title: String? = nil,
+                collapsable: Bool = false) {
         self.settings = settings
+        
+        self.title = title
+        self.collapsable = collapsable
     }
     
     public func setup(){
@@ -37,14 +42,19 @@ open class SettingsStack{
         }
     }
     
+    let title: String?
+    let collapsable: Bool
+    
     public var settings: [StoredMetalStateItem] = []
     public var view: some View {
-        ForEach(Array(settings.enumerated()), id: \.offset){ item in
-            let s = item.element
-            MetalStructView(s.state,
-                            title: s.title,
-                            collapsable: s.collapsable
-            )
+        CollapsableView(title: title, collapsable: collapsable) {
+            ForEach(Array(self.settings.enumerated()), id: \.offset){ item in
+                let s = item.element
+                MetalStructView(s.state,
+                                title: s.title,
+                                collapsable: s.collapsable
+                )
+            }
         }
     }
 }
