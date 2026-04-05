@@ -187,7 +187,7 @@ final class ComputePass: MetalPass{
             guard let texture = tex.container.texture
             else{
                 throw MetalBuilderComputeError
-                    .gridFitTextureIsNil("Texture \(tex.index) for the kernel  '"+component.kernel+"' is nil!")
+                    .textureIsNil("Texture \(tex.index) for the kernel  '"+component.kernel+"' is nil!")
             }
             computeCommandEncoder.setTexture(texture, index: tex.index)
         }
